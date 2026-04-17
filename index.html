@@ -746,14 +746,6 @@
   .tab-btn.active { color: var(--text-primary); }
   .tab-btn:hover:not(.active) { color: var(--text-secondary); }
 
-  /* Dots indicator for image sub-pane */
-  .sub-dots-row {
-    flex-shrink: 0; display: flex; gap: 4px;
-    align-items: center; height: 0; overflow: hidden;
-    transition: height 0.3s ease;
-  }
-  .sub-dots-row.visible { height: 10px; }
-
   /* Pane body */
   .pane-body {
     flex: 1; min-height: 0; position: relative; overflow: hidden;
@@ -797,37 +789,6 @@
     font-family: var(--font-serif);
     font-size: clamp(0.85rem, 2.5vw, 1.1rem);
     color: var(--text-primary); letter-spacing: 0.05em; font-weight: 300;
-  }
-
-  /* Image sub-pane */
-  #pane-images { flex-direction: column; }
-  .img-dot {
-    flex: 1; height: 2px; border-radius: 2px;
-    background: var(--dot-inactive); cursor: pointer; transition: background 0.3s;
-  }
-  .img-dot.active { background: var(--dot-active); }
-  .img-track-wrap { flex: 1; min-height: 0; overflow: hidden; margin: 8px 0 0; }
-  .img-track {
-    display: flex; height: 100%;
-    transition: transform 0.5s cubic-bezier(0.77,0,0.175,1);
-    will-change: transform;
-  }
-  .img-slide { min-width: 100%; height: 100%; position: relative; }
-
-  /* Stack area inside img-slide */
-  .stack-area { position: absolute; inset: 0; overflow: hidden; }
-  .stack-area-cards { width: 100%; height: 100%; position: relative; }
-  .mini-stack-card {
-    position: absolute;
-    border: var(--border-hair) var(--border-strong);
-    border-radius: var(--radius-sm);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; transition: box-shadow 0.2s; overflow: hidden;
-  }
-  .mini-stack-card:hover { box-shadow: var(--card-hover-shadow); }
-  .mini-stack-card span {
-    font-size: 0.55rem; color: var(--text-faint);
-    letter-spacing: 0.2em; text-transform: uppercase;
   }
 
   /* File list */
@@ -1616,27 +1577,11 @@
           </button>
         </div>
 
-        <div class="sub-dots-row" id="subDotsRow">
-          <div class="img-dot active" id="imgDot0"></div>
-          <div class="img-dot" id="imgDot1"></div>
-        </div>
-
         <div class="pane-body" id="paneBody">
 
-          <!-- Pane 0: Images + Files -->
+          <!-- Pane 0: Files -->
           <div class="pane" id="pane-images">
-            <div class="img-track-wrap">
-              <div class="img-track" id="imgTrack">
-                <div class="img-slide">
-                  <div class="stack-area" id="miniStackArea">
-                    <div class="stack-area-cards" id="miniStackCards"></div>
-                  </div>
-                </div>
-                <div class="img-slide">
-                  <div class="file-list no-scrollbar" id="fileList"></div>
-                </div>
-              </div>
-            </div>
+            <div class="file-list no-scrollbar" id="fileList"></div>
           </div>
 
           <!-- Pane 1: Contact -->
@@ -2509,18 +2454,13 @@ const contactPanel    = document.getElementById('contactPanel');
 const tabSwitcher     = document.getElementById('tabSwitcher');
 const tabSlider       = document.getElementById('tabSlider');
 const tabBtns         = [...tabSwitcher.querySelectorAll('.tab-btn')];
-const subDotsRow      = document.getElementById('subDotsRow');
 const paneBody        = document.getElementById('paneBody');
-const imgDot0         = document.getElementById('imgDot0');
-const imgDot1         = document.getElementById('imgDot1');
 const panes           = ['pane-images','pane-contact','pane-redeem'].map(id => document.getElementById(id));
-const imgTrack        = document.getElementById('imgTrack');
-const miniStackCards  = document.getElementById('miniStackCards');
 const fileListEl      = document.getElementById('fileList');
 const fileModal       = document.getElementById('fileModal');
 const fileInfoEl      = document.getElementById('fileInfo');
 
-let curTab = 1, imgSubCur = 0;
+let curTab = 1;
 
 /* ── Contact ── */
 document.getElementById('emailVal').textContent = contactData.email;
@@ -2566,89 +2506,6 @@ fileModal.addEventListener('click', e => { if (e.target === fileModal) fileModal
 document.getElementById('fileModalClose').addEventListener('click', () => fileModal.classList.remove('visible'));
 document.getElementById('fileModalDownload').addEventListener('click', () => fileModal.classList.remove('visible'));
 
-/* ── Mini stack (pane 0 sub-slide 0) ── */
-const MINI_STACK_COUNT = 5;
-const miniLightColors  = ['#ddd8d0','#e0dbd2','#d8d3ca','#e4dfd7','#dbd5cc'];
-const miniDarkColors   = ['#3a3535','#383330','#352f2a','#3c3830','#332e2a'];
-function getMiniColor(i) {
-  return document.documentElement.classList.contains('dark') ? miniDarkColors[i] : miniLightColors[i];
-}
-
-let miniOrder = [], miniTimer = null;
-
-function createMiniStack() {
-  miniStackCards.innerHTML = ''; miniOrder = [];
-  for (let i = 0; i < MINI_STACK_COUNT; i++) {
-    const card = document.createElement('div');
-    card.className = 'mini-stack-card';
-    card.style.background = getMiniColor(i);
-    const lbl = document.createElement('span');
-    lbl.textContent = `0${i + 1}`;
-    card.appendChild(lbl);
-    card.addEventListener('click', () => {
-      const isTop = miniOrder.indexOf(card) === miniOrder.length - 1;
-      if (isTop) { openLightbox(`0${i + 1}`); }
-      else { miniToTop(card); }
-    });
-    miniStackCards.appendChild(card);
-    miniOrder.push(card);
-  }
-}
-function applyMiniZ() { miniOrder.forEach((c, i) => { c.style.zIndex = i; }); }
-function miniInitPositions() {
-  const area = document.getElementById('miniStackArea');
-  const cards = [...miniStackCards.querySelectorAll('.mini-stack-card')];
-  const bw = area.offsetWidth, bh = area.offsetHeight;
-  const cx = bw / 2, cy = 16 + (bh - 16) / 2;
-  const w = bw * 0.52, h = w * (4 / 3);
-  cards.forEach(card => {
-    const rx = rand(-bw * 0.10, bw * 0.10);
-    const ry = rand(-bh * 0.08, bh * 0.08);
-    const rot = rand(-12, 12);
-    card.dataset.sl = cx - w / 2 + rx;
-    card.dataset.st = cy - h / 2 + ry;
-    card.style.cssText += `width:${w}px;height:${h}px;left:${card.dataset.sl}px;top:${card.dataset.st}px;rotate:${rot}deg;transition:box-shadow 0.2s;`;
-  });
-  applyMiniZ();
-}
-function miniToTop(card) {
-  const idx = miniOrder.indexOf(card);
-  if (idx === -1 || idx === miniOrder.length - 1) return;
-  miniOrder.splice(idx, 1); miniOrder.push(card); applyMiniZ();
-}
-function startMiniAuto() {
-  miniTimer = setInterval(() => {
-    const top = miniOrder.pop(); miniOrder.unshift(top); applyMiniZ();
-  }, 2400);
-}
-function stopMiniAuto() { clearInterval(miniTimer); miniTimer = null; }
-
-/* ── Image sub-pane switching ── */
-function goImgSub(n) {
-  imgSubCur = Math.max(0, Math.min(1, n));
-  imgTrack.style.transform = `translateX(-${imgSubCur * 100}%)`;
-  imgDot0.classList.toggle('active', imgSubCur === 0);
-  imgDot1.classList.toggle('active', imgSubCur === 1);
-}
-imgDot0.addEventListener('click', () => goImgSub(0));
-imgDot1.addEventListener('click', () => goImgSub(1));
-
-let imgSubDragX = null;
-const imgTrackWrap = document.querySelector('.img-track-wrap');
-imgTrackWrap.addEventListener('mousedown',  e => { imgSubDragX = e.clientX; });
-imgTrackWrap.addEventListener('mouseup',    e => {
-  if (imgSubDragX === null) return;
-  const dx = e.clientX - imgSubDragX; imgSubDragX = null;
-  if (Math.abs(dx) > 40) goImgSub(imgSubCur + (dx < 0 ? 1 : -1));
-});
-imgTrackWrap.addEventListener('mouseleave', () => { imgSubDragX = null; });
-imgTrackWrap.addEventListener('touchstart', e => { imgSubDragX = e.touches[0].clientX; }, { passive: true });
-imgTrackWrap.addEventListener('touchend',   e => {
-  if (imgSubDragX === null) return;
-  const dx = e.changedTouches[0].clientX - imgSubDragX; imgSubDragX = null;
-  if (Math.abs(dx) > 40) goImgSub(imgSubCur + (dx < 0 ? 1 : -1));
-}, { passive: true });
-
 /* ── Tab slider ── */
 function updateTabSlider(tab) {
   const el = tabBtns[tab];
@@ -2658,10 +2515,9 @@ function updateTabSlider(tab) {
 
 /* ── Main tab switch ── */
 function switchTab(tab) {
-  const prev = curTab; curTab = tab;
+  curTab = tab;
   updateTabSlider(tab);
   tabBtns.forEach((t, i) => t.classList.toggle('active', i === tab));
-  subDotsRow.classList.toggle('visible', tab === 0);
 
   panes.forEach((pane, i) => {
     pane.classList.remove('active');
@@ -2672,12 +2528,6 @@ function switchTab(tab) {
   paneBody.classList.toggle('redeem-mode', tab === 2);
   contactPanel.classList.toggle('redeem-mode', tab === 2);
 
-  if (tab === 0) {
-    stopMiniAuto();
-    setTimeout(() => { miniInitPositions(); startMiniAuto(); }, prev === 2 ? 420 : 50);
-  } else {
-    stopMiniAuto();
-  }
   if (tab === 2) setTimeout(() => redeemInputEl.focus(), 350);
   else redeemInputEl.blur();
 }
@@ -2691,8 +2541,6 @@ panes[1].classList.add('active');
 panes[2].style.transform = 'translateX(100%)';
 tabBtns[1].classList.add('active');
 requestAnimationFrame(() => updateTabSlider(1));
-
-createMiniStack();
 
 /* ============================================================
    PAGE 8 — REDEEM LOGIC
@@ -3021,7 +2869,7 @@ let currentPage = 0, pageSwitching = false, pageSwipeCooldown = false;
 
 function stopAllAutos() {
   stopProjectAuto(); stopStackAuto(); stopEventAuto();
-  stopBlogAuto(); stopMemberAuto(); stopMiniAuto();
+  stopBlogAuto(); stopMemberAuto();
 }
 
 function goToPage(n) {
@@ -3038,9 +2886,7 @@ function goToPage(n) {
     case 4: startBlogAuto(); break;
     case 5: startEventAuto(); break;
     case 6: startMemberAuto(); break;
-    case 7:
-      if (curTab === 0) setTimeout(() => { miniInitPositions(); startMiniAuto(); }, 50);
-      break;
+    case 7: break;
     case 8: startFinalAnim(); break;
   }
 }
