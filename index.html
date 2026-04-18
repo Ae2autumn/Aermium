@@ -2002,11 +2002,32 @@ const emailModal = document.getElementById('emailModal');
 let pendingHref  = null;
 const CONTACT_EMAIL = 'hello@aermium.com';
 
-function openModal(el)  { el.classList.add('visible'); }
-function closeModal(el) { el.classList.remove('visible'); }
+/* ============================================================
+   FOCUS STACK
+   每次打开一个窗口就压栈，关闭时弹栈。
+   Space/Enter/Esc 只作用于栈顶窗口（不含 Toast）。
+   菜单优先级最高，独立于栈之外单独处理。
+============================================================ */
+const focusStack = [];
 
-linkModal.addEventListener('click',  e => { if (e.target === linkModal)  closeModal(linkModal); });
-emailModal.addEventListener('click', e => { if (e.target === emailModal) closeModal(emailModal); });
+function focusPush(id) {
+  // 防止重复压栈
+  if (focusStack[focusStack.length - 1] === id) return;
+  focusStack.push(id);
+}
+function focusPop(id) {
+  const idx = focusStack.lastIndexOf(id);
+  if (idx !== -1) focusStack.splice(idx, 1);
+}
+function focusTop() {
+  return focusStack[focusStack.length - 1] || null;
+}
+
+function openModal(el)  { el.classList.add('visible');    focusPush(el.id); }
+function closeModal(el) { el.classList.remove('visible'); focusPop(el.id); }
+
+linkModal.addEventListener('click',  e => { if (e.target === linkModal  && focusTop() === 'linkModal')  closeModal(linkModal); });
+emailModal.addEventListener('click', e => { if (e.target === emailModal && focusTop() === 'emailModal') closeModal(emailModal); });
 
 document.getElementById('linkModalCancel').addEventListener('click', () => closeModal(linkModal));
 document.getElementById('linkModalGo').addEventListener('click', () => {
@@ -2025,12 +2046,20 @@ document.getElementById('emailModalSend').addEventListener('click', () => {
 /* ============================================================
    SHEET OVERLAY HELPERS (project / blog / about)
 ============================================================ */
-function openSheet(overlayId)  { document.getElementById(overlayId).classList.add('visible'); }
-function closeSheet(overlayId) { document.getElementById(overlayId).classList.remove('visible'); }
+function openSheet(overlayId)  {
+  const el = document.getElementById(overlayId);
+  el.classList.add('visible');
+  focusPush(overlayId);
+}
+function closeSheet(overlayId) {
+  const el = document.getElementById(overlayId);
+  el.classList.remove('visible');
+  focusPop(overlayId);
+}
 
 /* About */
 const aboutOverlay = document.getElementById('aboutOverlay');
-aboutOverlay.addEventListener('click', e => { if (e.target === aboutOverlay) closeSheet('aboutOverlay'); });
+aboutOverlay.addEventListener('click', e => { if (e.target === aboutOverlay && focusTop() === 'aboutOverlay') closeSheet('aboutOverlay'); });
 document.getElementById('aboutClose').addEventListener('click', () => closeSheet('aboutOverlay'));
 
 /* Project */
@@ -2045,7 +2074,7 @@ function openProject(idx) {
   openSheet('projectOverlay');
 }
 function closeProject() { closeSheet('projectOverlay'); }
-projectOverlay.addEventListener('click', e => { if (e.target === projectOverlay) closeProject(); });
+projectOverlay.addEventListener('click', e => { if (e.target === projectOverlay && focusTop() === 'projectOverlay') closeProject(); });
 document.getElementById('projectClose').addEventListener('click', closeProject);
 
 /* Blog */
@@ -2060,7 +2089,7 @@ function openBlog(idx) {
   openSheet('blogOverlay');
 }
 function closeBlog() { closeSheet('blogOverlay'); }
-blogOverlay.addEventListener('click', e => { if (e.target === blogOverlay) closeBlog(); });
+blogOverlay.addEventListener('click', e => { if (e.target === blogOverlay && focusTop() === 'blogOverlay') closeBlog(); });
 document.getElementById('blogClose').addEventListener('click', closeBlog);
 
 /* ============================================================
@@ -2068,9 +2097,16 @@ document.getElementById('blogClose').addEventListener('click', closeBlog);
 ============================================================ */
 const lightbox      = document.getElementById('lightbox');
 const lightboxLabel = document.getElementById('lightboxLabel');
-function openLightbox(label) { lightboxLabel.textContent = label; lightbox.classList.add('visible'); }
-function closeLightbox()     { lightbox.classList.remove('visible'); }
-lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
+function openLightbox(label) {
+  lightboxLabel.textContent = label;
+  lightbox.classList.add('visible');
+  focusPush('lightbox');
+}
+function closeLightbox() {
+  lightbox.classList.remove('visible');
+  focusPop('lightbox');
+}
+lightbox.addEventListener('click', e => { if (e.target === lightbox && focusTop() === 'lightbox') closeLightbox(); });
 
 /* ============================================================
    PAGE 2 — PROJECT CAROUSEL
@@ -2501,10 +2537,12 @@ function openFileModal(i) {
     <div class="file-info-row"><span class="file-info-key">SHA-256</span><span class="file-info-val">${f.hash}</span></div>
   `;
   fileModal.classList.add('visible');
+  focusPush('fileModal');
 }
-fileModal.addEventListener('click', e => { if (e.target === fileModal) fileModal.classList.remove('visible'); });
-document.getElementById('fileModalClose').addEventListener('click', () => fileModal.classList.remove('visible'));
-document.getElementById('fileModalDownload').addEventListener('click', () => fileModal.classList.remove('visible'));
+function closeFileModal() { fileModal.classList.remove('visible'); focusPop('fileModal'); }
+fileModal.addEventListener('click', e => { if (e.target === fileModal && focusTop() === 'fileModal') closeFileModal(); });
+document.getElementById('fileModalClose').addEventListener('click', () => closeFileModal());
+document.getElementById('fileModalDownload').addEventListener('click', () => closeFileModal());
 
 /* ── Tab slider ── */
 function updateTabSlider(tab) {
@@ -2875,7 +2913,11 @@ function stopAllAutos() {
 function goToPage(n) {
   currentPage = Math.max(0, Math.min(n, 8));
   pageContainerEl.style.transform = `translateY(-${currentPage * 100}vh)`;
-  aboutOverlay.classList.remove('visible');
+  // 切页时关闭 about overlay 并同步清栈
+  if (aboutOverlay.classList.contains('visible')) {
+    aboutOverlay.classList.remove('visible');
+    focusPop('aboutOverlay');
+  }
 
   stopAllAutos();
   switch (currentPage) {
@@ -2924,11 +2966,13 @@ buildMasonry();
 
 function openGallery() {
   galleryOverlay.classList.add('visible');
+  focusPush('galleryOverlay');
 }
 function closeGallery() {
   galleryOverlay.classList.remove('visible');
+  focusPop('galleryOverlay');
 }
-galleryOverlay.addEventListener('click', e => { if (e.target === galleryOverlay) closeGallery(); });
+galleryOverlay.addEventListener('click', e => { if (e.target === galleryOverlay && focusTop() === 'galleryOverlay') closeGallery(); });
 
 /* Long-press on stackBox */
 (function() {
@@ -3011,11 +3055,13 @@ buildBlogList();
 
 function openBlogList() {
   blogListOverlay.classList.add('visible');
+  focusPush('blogListOverlay');
 }
 function closeBlogList() {
   blogListOverlay.classList.remove('visible');
+  focusPop('blogListOverlay');
 }
-blogListOverlay.addEventListener('click', e => { if (e.target === blogListOverlay) closeBlogList(); });
+blogListOverlay.addEventListener('click', e => { if (e.target === blogListOverlay && focusTop() === 'blogListOverlay') closeBlogList(); });
 
 /* Long-press on blogCarousel */
 (function() {
@@ -3062,15 +3108,27 @@ blogListOverlay.addEventListener('click', e => { if (e.target === blogListOverla
 })();
 
 function anyOverlayOpen() {
-  return aboutOverlay.classList.contains('visible')
-    || projectOverlay.classList.contains('visible')
-    || blogOverlay.classList.contains('visible')
-    || blogListOverlay.classList.contains('visible')
-    || galleryOverlay.classList.contains('visible')
-    || linkModal.classList.contains('visible')
-    || emailModal.classList.contains('visible')
-    || fileModal.classList.contains('visible')
-    || lightbox.classList.contains('visible');
+  return focusStack.length > 0;
+}
+
+/* ── 关闭焦点栈顶部的窗口 ── */
+function closeTopFocus() {
+  const top = focusTop();
+  if (!top) return false;
+  switch (top) {
+    case 'menuOverlay':    closeMenu();                      break;
+    case 'aboutOverlay':   closeSheet('aboutOverlay');       break;
+    case 'projectOverlay': closeProject();                   break;
+    case 'blogOverlay':    closeBlog();                      break;
+    case 'blogListOverlay':closeBlogList();                  break;
+    case 'galleryOverlay': closeGallery();                   break;
+    case 'lightbox':       closeLightbox();                  break;
+    case 'linkModal':      closeModal(linkModal);            break;
+    case 'emailModal':     closeModal(emailModal);           break;
+    case 'fileModal':      closeFileModal();                 break;
+    default: return false;
+  }
+  return true;
 }
 
 function tryPageNav(dir) {
@@ -3127,9 +3185,9 @@ const soundBtn    = document.getElementById('soundBtn');
 const iconPlay    = document.getElementById('iconPlay');
 const iconPause   = document.getElementById('iconPause');
 
-function openMenu()  { menuOpen = true;  menuOverlay.classList.add('visible'); }
-function closeMenu() { menuOpen = false; menuOverlay.classList.remove('visible'); }
-menuOverlay.addEventListener('click', e => { if (e.target === menuOverlay) closeMenu(); });
+function openMenu()  { menuOpen = true;  menuOverlay.classList.add('visible');    focusPush('menuOverlay'); }
+function closeMenu() { menuOpen = false; menuOverlay.classList.remove('visible'); focusPop('menuOverlay'); }
+menuOverlay.addEventListener('click', e => { if (e.target === menuOverlay && focusTop() === 'menuOverlay') closeMenu(); });
 
 function applyTheme(i) {
   themeCur = i;
@@ -3168,43 +3226,49 @@ soundBtn.addEventListener('click', () => setSound(!isPlaying));
    KEYBOARD NAVIGATION
    Page 1 : Enter → advance
    Pages 2–8: ↑/W ↓/S → page nav; ←/A →/D → item nav
-   E: toggle menu
-   Esc/Space: close overlay
+   E: toggle menu（最高优先级，不受焦点栈影响）
+   Esc/Space/Enter: 只关闭焦点栈顶部的窗口
 ============================================================ */
 document.addEventListener('keydown', e => {
   const key = e.key;
   if (key === 'Enter') e.preventDefault();
 
-  /* E: toggle menu */
-  if (key === 'e' || key === 'E') { e.preventDefault(); menuOpen ? closeMenu() : openMenu(); return; }
-
-  /* Menu open */
-  if (menuOpen) {
-    if (key === 'ArrowLeft')              { e.preventDefault(); applyTheme(Math.max(0, themeCur - 1)); return; }
-    if (key === 'ArrowRight')             { e.preventDefault(); applyTheme(Math.min(2, themeCur + 1)); return; }
-    if (key === 'Enter')                  { e.preventDefault(); setSound(!isPlaying); return; }
-    if (key === 'Escape' || key === ' ')  { e.preventDefault(); closeMenu(); return; }
+  /* E: toggle menu — 不管栈状态，始终可用 */
+  if (key === 'e' || key === 'E') {
+    e.preventDefault();
+    if (menuOpen) closeMenu(); else openMenu();
     return;
   }
 
-  /* Close overlays */
-  if (key === 'Escape' || key === ' ' || key === 'Enter') {
-    if (aboutOverlay.classList.contains('visible'))      { e.preventDefault(); closeSheet('aboutOverlay'); return; }
-    if (projectOverlay.classList.contains('visible'))   { e.preventDefault(); closeProject(); return; }
-    if (blogOverlay.classList.contains('visible'))       { e.preventDefault(); closeBlog(); return; }
-    if (galleryOverlay.classList.contains('visible'))    { e.preventDefault(); closeGallery(); return; }
-    if (blogListOverlay.classList.contains('visible'))   { e.preventDefault(); closeBlogList(); return; }
-    if (emailModal.classList.contains('visible'))     { e.preventDefault(); closeModal(emailModal); return; }
-    if (fileModal.classList.contains('visible'))      { e.preventDefault(); fileModal.classList.remove('visible'); return; }
-    if (lightbox.classList.contains('visible'))       { e.preventDefault(); closeLightbox(); return; }
-    if (linkModal.classList.contains('visible')) {
+  /* 菜单在栈顶时，专属按键处理 */
+  if (focusTop() === 'menuOverlay') {
+    if (key === 'ArrowLeft')             { e.preventDefault(); applyTheme(Math.max(0, themeCur - 1)); return; }
+    if (key === 'ArrowRight')            { e.preventDefault(); applyTheme(Math.min(2, themeCur + 1)); return; }
+    if (key === 'Enter')                 { e.preventDefault(); setSound(!isPlaying); return; }
+    if (key === 'Escape' || key === ' ') { e.preventDefault(); closeMenu(); return; }
+    return; /* 菜单开着时屏蔽其他所有按键 */
+  }
+
+  /* linkModal 在栈顶时，Enter 确认、其他关闭键取消 */
+  if (focusTop() === 'linkModal') {
+    if (key === 'Escape' || key === ' ' || key === 'Enter') {
       e.preventDefault();
       if (key === 'Enter') document.getElementById('linkModalGo').click();
       else closeModal(linkModal);
+    }
+    return;
+  }
+
+  /* Esc / Space / Enter：只关闭栈顶窗口，关了就停止 */
+  if (key === 'Escape' || key === ' ' || key === 'Enter') {
+    if (focusStack.length > 0) {
+      e.preventDefault();
+      closeTopFocus();
       return;
     }
   }
 
+  /* 没有任何 overlay 打开才处理页面导航 */
   if (anyOverlayOpen()) return;
 
   /* Page 1: ↓ opens menu */
