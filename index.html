@@ -904,6 +904,10 @@
     display: flex; align-items: center; justify-content: center; padding: 0 14px;
     transition: border-color 0.25s, background 0.25s;
     -webkit-tap-highlight-color: transparent;
+    /* [修改] position:relative 确保 shimmer 光效以整个输入框为基准定位，
+       而不是跑到外层容器上 */
+    position: relative;
+    overflow: hidden; /* 同时裁掉超出输入框边界的光效 */
   }
   .redeem-input-row.input-error {
     border-color: rgba(192,57,43,0.7); animation: shake 0.4s ease;
@@ -942,29 +946,37 @@
 
   /* ── Redeem pending state ── */
   .redeem-input-row.pending {
-    border-color: rgba(210, 160, 40, 0.7);
-    background: rgba(210, 160, 40, 0.12);
-    overflow: hidden;
+    /* [修改] 边框和背景颜色调浅，视觉更柔和 */
+    border-color: rgba(210, 160, 40, 0.45);   /* 原 0.7，改为 0.45 */
+    background: rgba(210, 160, 40, 0.07);     /* 原 0.12，改为 0.07 */
+    /* overflow:hidden 已移到 .redeem-input-row 基础样式，此处无需重复 */
     cursor: not-allowed;
   }
   .redeem-input-row.pending .redeem-input {
-    color: rgba(180, 130, 20, 0.85);
+    /* [修改] 文字颜色调亮，提升可读性 */
+    color: rgba(200, 155, 40, 1);             /* 原 rgba(180,130,20,0.85)，不透明度提满 */
     pointer-events: none;
   }
   :root.dark .redeem-input-row.pending .redeem-input {
-    color: rgba(230, 185, 60, 0.9);
+    /* [修改] dark 模式文字同样调亮 */
+    color: rgba(245, 205, 80, 1);             /* 原 rgba(230,185,60,0.9)，饱和度/亮度略升 */
   }
 
-  /* Glass sweep shimmer */
+  /* Glass sweep shimmer
+     ─────────────────────────────────────────────────────────────
+     [修改] 光效覆盖整个输入框：.redeem-input-row 已加 position:relative + overflow:hidden，
+            shimmer 用 inset:0/width:100% 覆盖完整宽度，沿 X 轴平移实现扫光。
+     [修改] 颜色调浅：亮光中心透明度从 0.45 降到 0.22（light），0.3 降到 0.15（dark）。
+  ─────────────────────────────────────────────────────────────── */
   .redeem-shimmer {
     position: absolute;
-    top: 0; left: -120%;
-    width: 60%; height: 100%;
+    inset: 0;
+    width: 100%;
     background: linear-gradient(
       105deg,
-      transparent 20%,
-      rgba(255, 230, 100, 0.45) 50%,
-      transparent 80%
+      transparent 38%,
+      rgba(255, 220, 0, 0.55) 50%,     /* [修改] 亮黄色，光束收窄至 38%~62% */
+      transparent 62%
     );
     pointer-events: none;
     animation: redeemSweep 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
@@ -972,15 +984,32 @@
   :root.dark .redeem-shimmer {
     background: linear-gradient(
       105deg,
-      transparent 20%,
-      rgba(255, 215, 60, 0.3) 50%,
-      transparent 80%
+      transparent 38%,
+      rgba(255, 225, 20, 0.45) 50%,    /* [修改] dark 模式：亮黄，光束同样收窄 */
+      transparent 62%
     );
   }
   @keyframes redeemSweep {
-    0%   { left: -70%; }
-    100% { left: 130%; }
+    /* [修改] 改用 translateX 驱动，确保光效始终在 .redeem-input-row 内扫过 */
+    0%   { transform: translateX(-120%); }
+    100% { transform: translateX(120%); }
   }
+
+  /* ── 如何对接真实后端 ────────────────────────────────────────────
+     找到下方 JS 函数 mockBackendRedeem()，将其替换为真实 fetch 请求，例如：
+
+       async function mockBackendRedeem(val) {
+         const res = await fetch('/api/redeem', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ code: val })
+         });
+         return res.json(); // 需返回 { ok: bool, result?: string, toast: string }
+       }
+
+     接口契约：POST /api/redeem → { ok: true, result: "兑换内容", toast: "提示文字" }
+                              或  { ok: false, toast: "错误提示" }
+  ──────────────────────────────────────────────────────────────── */
 
   /* ============================================================
      PAGE 9 — FINAL / OUTRO
@@ -2744,7 +2773,9 @@ function exitRedeemPending() {
   if (redeemShimmerEl) { redeemShimmerEl.remove(); redeemShimmerEl = null; }
 }
 
-/* ── Mock backend call ── */
+/* ── Mock backend call ──
+   [真实后端替换说明] 将此函数替换为 fetch 请求即可接入真实接口，
+   详见 CSS 中"如何对接真实后端"注释块，接口契约保持不变。 */
 function mockBackendRedeem(val) {
   return new Promise(resolve => {
     setTimeout(() => {
