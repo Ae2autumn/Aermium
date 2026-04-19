@@ -1759,68 +1759,29 @@
 <!-- ============================================================
      SHEET OVERLAYS (project / blog / about) — shared .sheet-overlay
 ============================================================ -->
-<div class="sheet-overlay" id="aboutOverlay">
+<!-- ============================================================
+     SHEET OVERLAY — 统一骨架，project / blog / about 共用
+     data-sheet-type 由 JS 注入，用于区分当前类型
+============================================================ -->
+<div class="sheet-overlay" id="sheetOverlay">
   <div class="sheet-frame">
-    <div class="sheet-inner" id="aboutSheet">
-      <button class="sheet-close" id="aboutClose"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button>
+    <div class="sheet-inner" id="sheetInner">
+      <button class="sheet-close" id="sheetClose">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+      </button>
       <div class="sheet-header">
-        <div class="sheet-image-bg"><span>Image</span></div>
+        <div class="sheet-image-bg"><span id="sheetImageLabel">Image</span></div>
         <div class="sheet-header-content">
-          <div class="sheet-date">Est. 2021 · Shanghai</div>
-          <div class="sheet-title">Aermium Studio</div>
-          <div class="sheet-tags">
-            <span class="sheet-tag">Design</span>
-            <span class="sheet-tag">Identity</span>
-            <span class="sheet-tag">Editorial</span>
-          </div>
+          <div class="sheet-date"  id="sheetDate"></div>
+          <div class="sheet-title" id="sheetTitle"></div>
+          <div class="sheet-tags"  id="sheetTags"></div>
         </div>
       </div>
-      <div class="sheet-body no-scrollbar">
-        <div class="sheet-content">
-          <p>Aermium is an independent design studio founded in Shanghai in 2021. We work at the intersection of brand identity, editorial design, and spatial experience — always with an emphasis on restraint, precision, and long-term thinking.</p>
-          <p>Our practice is built around the belief that good design is quiet. It does not announce itself. It serves, it endures, and it earns attention through clarity rather than spectacle.</p>
-          <p>We work with cultural institutions, independent brands, and founders who share this sensibility. Each project is treated as a long-term collaboration, not a transaction.</p>
-          <p>The studio is small by intention. We maintain a tight core team and bring in trusted collaborators when a project demands it. This keeps our work considered and our relationships direct.</p>
-          <p>Current areas of focus include visual identity systems, publication design, digital experience, and environmental graphics. We are always open to conversations about new work.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="sheet-overlay" id="projectOverlay">
-  <div class="sheet-frame">
-    <div class="sheet-inner" id="projectSheet">
-      <button class="sheet-close" id="projectClose"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button>
-      <div class="sheet-header">
-        <div class="sheet-image-bg"><span>Image</span></div>
-        <div class="sheet-header-content">
-          <div class="sheet-date"  id="projectDate"></div>
-          <div class="sheet-title" id="projectTitle"></div>
-          <div class="sheet-tags"  id="projectTags"></div>
-        </div>
-      </div>
-      <div class="sheet-body no-scrollbar">
-        <div class="sheet-content" id="projectContent"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="sheet-overlay" id="blogOverlay">
-  <div class="sheet-frame">
-    <div class="sheet-inner" id="blogSheet">
-      <button class="sheet-close" id="blogClose"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button>
-      <div class="sheet-header">
-        <div class="sheet-image-bg"><span>Essay</span></div>
-        <div class="sheet-header-content">
-          <div class="sheet-date"  id="blogPostDate"></div>
-          <div class="sheet-title" id="blogPostTitle"></div>
-          <div class="sheet-tags"  id="blogPostTags"></div>
-        </div>
-      </div>
-      <div class="sheet-body no-scrollbar">
-        <div class="sheet-content" id="blogPostContent"></div>
+      <div class="sheet-body no-scrollbar" id="sheetBody">
+        <div class="sheet-content" id="sheetContent"></div>
       </div>
     </div>
   </div>
@@ -1885,9 +1846,20 @@ function createDots(container, count, dotClass, onClick) {
  * createCarousel({ trackEl, dotsContainer, dotClass, dragEl, interval? })
  * 封装轮播逻辑，返回 { go, startAuto, stopAuto, stopByUser, getCur }。
  */
-function createCarousel({ trackEl, dotsContainer, dotClass, dragEl, interval = 3500 }) {
-  const total = trackEl.querySelectorAll(':scope > *').length;
+function createCarousel({ trackEl, dotsContainer, dotClass, dragEl, interval = 3500, total }) {
+  // total 由调用方从数据数组传入，是唯一数据来源
   let cur = 0, timer = null, userStopped = false;
+
+  // 自动生成 dots，数量与 total 严格同步
+  if (dotsContainer && total) {
+    dotsContainer.innerHTML = '';
+    for (let i = 0; i < total; i++) {
+      const d = document.createElement('div');
+      d.className = dotClass + (i === 0 ? ' active' : '');
+      d.addEventListener('click', () => { stopByUser(); go(i); });
+      dotsContainer.appendChild(d);
+    }
+  }
 
   const setDotActive = dotsContainer
     ? idx => dotsContainer.querySelectorAll('.' + dotClass)
@@ -2127,53 +2099,76 @@ document.getElementById('emailModalSend').addEventListener('click', () => {
 });
 
 /* ============================================================
-   SHEET OVERLAY HELPERS (project / blog / about)
+   SHEET OVERLAY — 注册表 + 统一骨架
+   openSheet(type, data?) 查表渲染，data-sheet-type 标记当前类型
 ============================================================ */
-function openSheet(overlayId)  {
-  const el = document.getElementById(overlayId);
-  el.classList.add('visible');
-  focusPush(overlayId);
-}
-function closeSheet(overlayId) {
-  const el = document.getElementById(overlayId);
-  el.classList.remove('visible');
-  focusPop(overlayId);
+const sheetOverlay   = document.getElementById('sheetOverlay');
+const sheetDateEl    = document.getElementById('sheetDate');
+const sheetTitleEl   = document.getElementById('sheetTitle');
+const sheetTagsEl    = document.getElementById('sheetTags');
+const sheetContentEl = document.getElementById('sheetContent');
+const sheetBodyEl    = document.getElementById('sheetBody');
+const sheetImageLbl  = document.getElementById('sheetImageLabel');
+
+const SHEET_REGISTRY = {
+  project: {
+    imageLabel: 'Image',
+    render: d => ({
+      date:    d.date,
+      title:   d.title,
+      tags:    d.tags.map(t => `<span class="sheet-tag">${t}</span>`).join(''),
+      content: d.content,
+    }),
+  },
+  blog: {
+    imageLabel: 'Essay',
+    render: d => ({
+      date:    d.date,
+      title:   d.title,
+      tags:    `<span class="sheet-tag">${d.category}</span><span class="sheet-tag">${d.readTime}</span>`,
+      content: d.content,
+    }),
+  },
+  about: {
+    imageLabel: 'Image',
+    render: () => ({
+      date:  'Est. 2021 · Shanghai',
+      title: 'Aermium Studio',
+      tags:  ['Design','Identity','Editorial'].map(t => `<span class="sheet-tag">${t}</span>`).join(''),
+      content: `<p>Aermium is an independent design studio founded in Shanghai in 2021. We work at the intersection of brand identity, editorial design, and spatial experience — always with an emphasis on restraint, precision, and long-term thinking.</p><p>Our practice is built around the belief that good design is quiet. It does not announce itself. It serves, it endures, and it earns attention through clarity rather than spectacle.</p><p>We work with cultural institutions, independent brands, and founders who share this sensibility. Each project is treated as a long-term collaboration, not a transaction.</p><p>The studio is small by intention. We maintain a tight core team and bring in trusted collaborators when a project demands it. This keeps our work considered and our relationships direct.</p><p>Current areas of focus include visual identity systems, publication design, digital experience, and environmental graphics. We are always open to conversations about new work.</p>`,
+    }),
+  },
+};
+
+function openSheet(type, data) {
+  const reg = SHEET_REGISTRY[type];
+  const cfg = reg.render(data);
+  sheetOverlay.dataset.sheetType = type;        // 唯一标记，关闭时/调试时可读
+  sheetImageLbl.textContent      = reg.imageLabel;
+  sheetDateEl.textContent        = cfg.date;
+  sheetTitleEl.textContent       = cfg.title;
+  sheetTagsEl.innerHTML          = cfg.tags;
+  sheetContentEl.innerHTML       = cfg.content;
+  sheetBodyEl.scrollTop          = 0;
+  sheetOverlay.classList.add('visible');
+  focusPush('sheetOverlay');
 }
 
-/* About */
-const aboutOverlay = document.getElementById('aboutOverlay');
-aboutOverlay.addEventListener('click', e => { if (e.target === aboutOverlay && focusTop() === 'aboutOverlay') closeSheet('aboutOverlay'); });
-document.getElementById('aboutClose').addEventListener('click', () => closeSheet('aboutOverlay'));
-
-/* Project */
-const projectOverlay = document.getElementById('projectOverlay');
-function openProject(idx) {
-  const d = projectData[idx];
-  document.getElementById('projectDate').textContent    = d.date;
-  document.getElementById('projectTitle').textContent   = d.title;
-  document.getElementById('projectTags').innerHTML      = d.tags.map(t => `<span class="sheet-tag">${t}</span>`).join('');
-  document.getElementById('projectContent').innerHTML   = d.content;
-  document.getElementById('projectSheet').querySelector('.sheet-body').scrollTop = 0;
-  openSheet('projectOverlay');
+function closeSheet() {
+  sheetOverlay.classList.remove('visible');
+  focusPop('sheetOverlay');
 }
-function closeProject() { closeSheet('projectOverlay'); }
-projectOverlay.addEventListener('click', e => { if (e.target === projectOverlay && focusTop() === 'projectOverlay') closeProject(); });
-document.getElementById('projectClose').addEventListener('click', closeProject);
 
-/* Blog */
-const blogOverlay = document.getElementById('blogOverlay');
-function openBlog(idx) {
-  const d = blogData[idx];
-  document.getElementById('blogPostDate').textContent  = d.date;
-  document.getElementById('blogPostTitle').textContent = d.title;
-  document.getElementById('blogPostTags').innerHTML    = `<span class="sheet-tag">${d.category}</span><span class="sheet-tag">${d.readTime}</span>`;
-  document.getElementById('blogPostContent').innerHTML = d.content;
-  document.getElementById('blogSheet').querySelector('.sheet-body').scrollTop = 0;
-  openSheet('blogOverlay');
-}
-function closeBlog() { closeSheet('blogOverlay'); }
-blogOverlay.addEventListener('click', e => { if (e.target === blogOverlay && focusTop() === 'blogOverlay') closeBlog(); });
-document.getElementById('blogClose').addEventListener('click', closeBlog);
+sheetOverlay.addEventListener('click', e => {
+  if (e.target === sheetOverlay && focusTop() === 'sheetOverlay') closeSheet();
+});
+document.getElementById('sheetClose').addEventListener('click', closeSheet);
+
+/* 对外保持原有调用接口不变 */
+function openProject(idx) { openSheet('project', projectData[idx]); }
+function closeProject()   { closeSheet(); }
+function openBlog(idx)    { openSheet('blog', blogData[idx]); }
+function closeBlog()      { closeSheet(); }
 
 /* ============================================================
    LIGHTBOX
@@ -2199,12 +2194,12 @@ renderProjectSlides(projectTrackEl);
 
 const projectDotsEl = document.getElementById('projectDots');
 const projectCarouselCtrl = createCarousel({
-  trackEl: projectTrackEl,
+  trackEl:       projectTrackEl,
   dotsContainer: projectDotsEl,
-  dotClass: 'dot-bar',
-  dragEl: document.getElementById('projectCarousel'),
+  dotClass:      'dot-bar',
+  dragEl:        document.getElementById('projectCarousel'),
+  total:         projectData.length,  // 数组是唯一数据来源，dots 自动同步
 });
-createDots(projectDotsEl, projectData.length, 'dot-bar', i => projectCarouselCtrl.go(i));
 
 /* Aliases for page nav calls */
 const goProjectSlide    = n  => projectCarouselCtrl.go(n);
@@ -2423,14 +2418,12 @@ renderBlogSlides(blogTrackEl);
 
 const blogDotsEl = document.getElementById('blogDots');
 const blogCarouselCtrl = createCarousel({
-  trackEl: blogTrackEl,
+  trackEl:       blogTrackEl,
   dotsContainer: blogDotsEl,
-  dotClass: 'dot-bar',
-  dragEl: document.getElementById('blogCarousel'),
-  interval: 4000,
-});
-createDots(blogDotsEl, blogData.length, 'dot-bar', i => {
-  blogCarouselCtrl.stopByUser(); blogCarouselCtrl.go(i);
+  dotClass:      'dot-bar',
+  dragEl:        document.getElementById('blogCarousel'),
+  interval:      4000,
+  total:         blogData.length,     // 数组是唯一数据来源，dots 自动同步
 });
 
 const stopBlogAuto   = () => blogCarouselCtrl.stopAuto();
@@ -2833,7 +2826,7 @@ const finalByEl     = document.getElementById('finalBy');
 const finalNameEl   = document.getElementById('finalName');
 let finalToken = 0, finalDone = false;
 
-document.getElementById('page9').addEventListener('click', () => { if (finalDone) openSheet('aboutOverlay'); });
+document.getElementById('page9').addEventListener('click', () => { if (finalDone) openSheet('about'); });
 
 function startFinalAnim() {
   const token = ++finalToken;
@@ -3041,10 +3034,10 @@ function stopAllAutos() {
 function goToPage(n) {
   currentPage = Math.max(0, Math.min(n, 8));
   pageContainerEl.style.transform = `translateY(-${currentPage * 100}vh)`;
-  // 切页时关闭 about overlay 并同步清栈
-  if (aboutOverlay.classList.contains('visible')) {
-    aboutOverlay.classList.remove('visible');
-    focusPop('aboutOverlay');
+  // 切页时关闭 sheet overlay 并同步清栈
+  if (sheetOverlay.classList.contains('visible')) {
+    sheetOverlay.classList.remove('visible');
+    focusPop('sheetOverlay');
   }
 
   stopAllAutos();
@@ -3255,16 +3248,14 @@ function closeTopFocus() {
   const top = focusTop();
   if (!top) return false;
   switch (top) {
-    case 'menuOverlay':    closeMenu();                      break;
-    case 'aboutOverlay':   closeSheet('aboutOverlay');       break;
-    case 'projectOverlay': closeProject();                   break;
-    case 'blogOverlay':    closeBlog();                      break;
-    case 'blogListOverlay':closeBlogList();                  break;
-    case 'galleryOverlay': closeGallery();                   break;
-    case 'lightbox':       closeLightbox();                  break;
-    case 'linkModal':      closeModal(linkModal);            break;
-    case 'emailModal':     closeModal(emailModal);           break;
-    case 'fileModal':      closeFileModal();                 break;
+    case 'menuOverlay':    closeMenu();        break;
+    case 'sheetOverlay':   closeSheet();       break;
+    case 'blogListOverlay':closeBlogList();    break;
+    case 'galleryOverlay': closeGallery();     break;
+    case 'lightbox':       closeLightbox();    break;
+    case 'linkModal':      closeModal(linkModal);  break;
+    case 'emailModal':     closeModal(emailModal); break;
+    case 'fileModal':      closeFileModal();   break;
     default: return false;
   }
   return true;
@@ -3425,7 +3416,7 @@ document.addEventListener('keydown', e => {
   if (key === 'Enter' && currentPage === 1) { e.preventDefault(); openProject(getProjectCur()); return; }
 
   /* Page 9: Enter opens about */
-  if (key === 'Enter' && currentPage === 8) { e.preventDefault(); if (finalDone) openSheet('aboutOverlay'); return; }
+  if (key === 'Enter' && currentPage === 8) { e.preventDefault(); if (finalDone) openSheet('about'); return; }
 
   /* Vertical page nav */
   if ((key === 'ArrowUp' || key === 'w' || key === 'W') && currentPage > 0) { e.preventDefault(); tryPageNav(-1); return; }
