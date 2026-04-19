@@ -2935,7 +2935,18 @@ function goToPage(n) {
   switch (currentPage) {
     case 0: pageSwitching = true; resetPage1(); break;
     case 1: startProjectAuto(); break;
-    case 2: isListMode = false; initStackPositions(); startStackAuto(); break;
+    case 2:
+      if (isListMode) {
+        stackProgress.classList.add('visible');
+        updateProgress(listCur);
+        applyListPositions();
+        startListAuto();
+      } else {
+        stackProgress.classList.remove('visible');
+        initStackPositions();
+        startStackAuto();
+      }
+      break;
     case 3: /* doc viewer — no auto */ break;
     case 4: startBlogAuto(); break;
     case 5: startEventAuto(); break;
