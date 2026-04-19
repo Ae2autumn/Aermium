@@ -940,6 +940,48 @@
   }
   .redeem-input-row.copied .redeem-check { display: block; color: #5cb87e; }
 
+  /* ── Redeem pending state ── */
+  .redeem-input-row.pending {
+    border-color: rgba(210, 160, 40, 0.7);
+    background: rgba(210, 160, 40, 0.12);
+    overflow: hidden;
+    cursor: not-allowed;
+  }
+  .redeem-input-row.pending .redeem-input {
+    color: rgba(180, 130, 20, 0.85);
+    pointer-events: none;
+  }
+  :root.dark .redeem-input-row.pending .redeem-input {
+    color: rgba(230, 185, 60, 0.9);
+  }
+
+  /* Glass sweep shimmer */
+  .redeem-shimmer {
+    position: absolute;
+    top: 0; left: -120%;
+    width: 60%; height: 100%;
+    background: linear-gradient(
+      105deg,
+      transparent 20%,
+      rgba(255, 230, 100, 0.45) 50%,
+      transparent 80%
+    );
+    pointer-events: none;
+    animation: redeemSweep 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+  :root.dark .redeem-shimmer {
+    background: linear-gradient(
+      105deg,
+      transparent 20%,
+      rgba(255, 215, 60, 0.3) 50%,
+      transparent 80%
+    );
+  }
+  @keyframes redeemSweep {
+    0%   { left: -70%; }
+    100% { left: 130%; }
+  }
+
   /* ============================================================
      PAGE 9 — FINAL / OUTRO
   ============================================================ */
@@ -2677,19 +2719,62 @@ function execCopy(text) {
   try { document.execCommand('copy'); } catch(_) {}
   document.body.removeChild(ta);
 }
+/* ── Pending state helpers ── */
+let redeemPending = false;
+let redeemShimmerEl = null;
+
+function enterRedeemPending() {
+  redeemPending = true;
+  redeemLocked  = true;
+  redeemInputEl.blur();
+  redeemInputEl.disabled = true;
+  redeemInputRow.classList.add('pending');
+
+  /* inject shimmer element */
+  redeemShimmerEl = document.createElement('span');
+  redeemShimmerEl.className = 'redeem-shimmer';
+  redeemInputRow.appendChild(redeemShimmerEl);
+}
+
+function exitRedeemPending() {
+  redeemPending = false;
+  redeemLocked  = false;
+  redeemInputEl.disabled = false;
+  redeemInputRow.classList.remove('pending');
+  if (redeemShimmerEl) { redeemShimmerEl.remove(); redeemShimmerEl = null; }
+}
+
+/* ── Mock backend call ── */
+function mockBackendRedeem(val) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      if (val === 'redeem') resolve({ ok: true,  result: '来生再会', toast: '感谢相遇，愿我们在雨中重逢' });
+      else                  resolve({ ok: false, toast: '无效' });
+    }, 3000);
+  });
+}
+
 function submitRedeem() {
-  if (redeemLocked) return;
+  if (redeemLocked || redeemPending) return;
   const val = redeemInputEl.value.trim();
   if (!val) { triggerRedeemError(); showToast('未输入', true); return; }
-  if (val === 'end') {
-    showToast('感谢相遇，愿我们在雨中重逢');
-    showRedeemResult('来生再会');
-  } else {
-    showToast('无效', true); redeemInputEl.value = ''; triggerRedeemError();
-  }
+
+  enterRedeemPending();
+
+  mockBackendRedeem(val).then(res => {
+    exitRedeemPending();
+    if (res.ok) {
+      showToast(res.toast);
+      showRedeemResult(res.result);
+    } else {
+      showToast(res.toast, true);
+      redeemInputEl.value = '';
+      triggerRedeemError();
+    }
+  });
 }
 redeemInputRow.addEventListener('click', () => copyRedeemCode());
-redeemInputEl.addEventListener('keydown', e => { if (e.key === 'Enter') submitRedeem(); });
+redeemInputEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !redeemPending) submitRedeem(); });
 
 /* Soft keyboard dismiss */
 if ('visualViewport' in window) {
