@@ -2216,7 +2216,16 @@ const stackCards    = document.getElementById('stackCards');
 const stackOverlay  = document.getElementById('stackOverlay');
 const stackProgress = document.getElementById('stackProgress');
 
-const STACK_COUNT  = 6;
+/* stackData 是 Page 3 的唯一数据来源，数量自动同步 */
+const stackData = [
+  { label: '01' },
+  { label: '02' },
+  { label: '03' },
+  { label: '04' },
+  { label: '05' },
+  { label: '06' },
+];
+const STACK_COUNT  = stackData.length;
 const stackLightColors = ['#ddd8d0','#e0dbd2','#d8d3ca','#e4dfd7','#dbd5cc','#e2ddd5'];
 const stackDarkColors  = ['#3a3535','#383330','#352f2a','#3c3830','#332e2a','#3a3630'];
 function getStackColor(i) {
@@ -2229,13 +2238,13 @@ let listAutoTimer = null, listUserStopped = false;
 
 function createStackCards() {
   stackCards.innerHTML = ''; stackOrder = [];
-  for (let i = 0; i < STACK_COUNT; i++) {
+  stackData.forEach((d, i) => {
     const card = document.createElement('div');
     card.className = 'stack-card';
     card.dataset.idx = i;
     card.style.background = getStackColor(i);
     const lbl = document.createElement('span');
-    lbl.textContent = `0${i + 1}`;
+    lbl.textContent = d.label;
     card.appendChild(lbl);
     card.addEventListener('click', () => {
       if (!isListMode) {
@@ -2248,7 +2257,7 @@ function createStackCards() {
     });
     stackCards.appendChild(card);
     stackOrder.push(card);
-  }
+  });
 }
 
 function applyStackZIndices() {
@@ -2487,8 +2496,8 @@ const eventCarouselCtrl = createCarousel({
   dotsContainer: eventDotsEl,
   dotClass: 'dot-bar',
   dragEl: document.getElementById('eventCarousel'),
+  total: eventData.length,   // 数组是唯一数据来源，dots 自动同步
 });
-createDots(eventDotsEl, eventData.length, 'dot-bar');
 
 const stopEventAuto   = () => eventCarouselCtrl.stopAuto();
 const startEventAuto  = () => eventCarouselCtrl.startAuto();
