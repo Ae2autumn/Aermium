@@ -1581,11 +1581,6 @@
         </div>
         <div class="doc-tabs no-scrollbar" id="docTabs">
           <div class="doc-tab-spacer"></div>
-          <div class="doc-tab active" data-idx="0">Brief.md</div>
-          <div class="doc-tab" data-idx="1">Notes.txt</div>
-          <div class="doc-tab" data-idx="2">Proposal.md</div>
-          <div class="doc-tab" data-idx="3">References.txt</div>
-          <div class="doc-tab" data-idx="4">Feedback.md</div>
           <div class="doc-tab-spacer"></div>
         </div>
       </div>
@@ -2443,8 +2438,18 @@ const goBlog         = n  => blogCarouselCtrl.go(n);
 const docTextEl  = document.getElementById('docText');
 const docTabsEl  = document.getElementById('docTabs');
 const docContent = document.getElementById('docContent');
-const docTabEls  = [...docTabsEl.querySelectorAll('.doc-tab')];
 let docCurIdx = 0;
+
+/* 根据 docFiles 动态生成 tab，与数组自动对齐 */
+const [spacerFirst, spacerLast] = docTabsEl.querySelectorAll('.doc-tab-spacer');
+docFiles.forEach((f, i) => {
+  const tab = document.createElement('div');
+  tab.className = 'doc-tab' + (i === 0 ? ' active' : '');
+  tab.dataset.idx = i;
+  tab.textContent = f.name;
+  docTabsEl.insertBefore(tab, spacerLast);
+});
+const docTabEls = [...docTabsEl.querySelectorAll('.doc-tab')];
 
 function loadDoc(idx) {
   docCurIdx = idx;
