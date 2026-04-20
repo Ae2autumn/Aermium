@@ -2824,26 +2824,61 @@ function showToast(msg, error = false) {
 }
 
 /* ── Global toast (viewport top-right, independent stack) ── */
-const globalToastList  = [];
+const globalToastList = [];
+const DOWNLOAD_VARIANTS = new Set(['warning', 'success', 'error']);
+let downloadToastEntry = null;
+
+function dismissEntry(entry, list) {
+  clearTimeout(entry.timerId);
+  entry.el.classList.replace('enter', 'exit');
+  setTimeout(() => entry.el.remove(), TOAST_EXIT);
+  if (list) { const i = list.indexOf(entry); if (i !== -1) list.splice(i, 1); }
+}
+
 function showGlobalToast(msg, variant = '') {
   const globalToastStack = document.getElementById('globalToastStack');
+
+  /* 下载类 toast 互斥：强制清除所有下载类残留（含退场中的），再插入新的 */
+  if (DOWNLOAD_VARIANTS.has(variant)) {
+    /* 清 list 里的下载条目 */
+    for (let i = globalToastList.length - 1; i >= 0; i--) {
+      if (DOWNLOAD_VARIANTS.has(globalToastList[i].variant)) {
+        const old = globalToastList.splice(i, 1)[0];
+        clearTimeout(old.timerId);
+        old.el.remove();
+      }
+    }
+    /* 兜底：清 DOM 里所有带下载 variant class 的残留 el */
+    DOWNLOAD_VARIANTS.forEach(v => {
+      globalToastStack.querySelectorAll('.redeem-toast--' + v).forEach(el => el.remove());
+    });
+    downloadToastEntry = null;
+  }
+
+  /* 全局上限 3 个：超出时移除最旧的 */
+  while (globalToastList.length >= TOAST_MAX) {
+    const oldest = globalToastList.shift();
+    clearTimeout(oldest.timerId);
+    oldest.el.remove();
+  }
+
   const el = document.createElement('div');
   el.className = 'redeem-toast' + (variant ? ' redeem-toast--' + variant : '');
   el.textContent = msg;
   globalToastStack.insertBefore(el, globalToastStack.firstChild);
   requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('enter')));
-  const entry = { el, timerId: null };
+  const entry = { el, variant, timerId: null };
   entry.timerId = setTimeout(() => {
     el.classList.replace('enter', 'exit');
-    setTimeout(() => { el.remove(); globalToastList.splice(globalToastList.indexOf(entry), 1); }, TOAST_EXIT);
+    setTimeout(() => {
+      el.remove();
+      const i = globalToastList.indexOf(entry);
+      if (i !== -1) globalToastList.splice(i, 1);
+      if (downloadToastEntry === entry) downloadToastEntry = null;
+    }, TOAST_EXIT);
   }, TOAST_LIFE);
-  if (globalToastList.length >= TOAST_MAX) {
-    const oldest = globalToastList.shift();
-    clearTimeout(oldest.timerId);
-    oldest.el.classList.replace('enter', 'exit');
-    setTimeout(() => oldest.el.remove(), TOAST_EXIT);
-  }
   globalToastList.push(entry);
+  if (DOWNLOAD_VARIANTS.has(variant)) downloadToastEntry = entry;
 }
 function dismissToast(entry) {
   const idx = toastList.indexOf(entry);
@@ -3610,4 +3645,4 @@ document.addEventListener('keydown', e => {
 
 </script>
 </body>
-            </html>
+  </html>
