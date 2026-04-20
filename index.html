@@ -677,7 +677,10 @@
     border-radius: var(--radius-sm);
     background: var(--bg-avatar);
     display: flex; align-items: center; justify-content: center; overflow: hidden;
+    cursor: pointer;
+    transition: opacity 0.2s;
   }
+  .member-avatar-box:hover { opacity: 0.82; }
   .member-avatar-box span {
     font-size: 0.5rem; color: var(--text-faint);
     letter-spacing: 0.16em; text-transform: uppercase;
@@ -1116,7 +1119,10 @@
     position: absolute; inset: 0;
     background: var(--bg-project);
     display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: opacity 0.2s;
   }
+  .sheet-image-bg:hover { opacity: 0.88; }
   .sheet-image-bg span {
     font-size: 0.6rem; color: var(--text-faint);
     letter-spacing: 0.25em; text-transform: uppercase;
@@ -2186,7 +2192,7 @@ const SHEET_REGISTRY = {
 function openSheet(type, data) {
   const reg = SHEET_REGISTRY[type];
   const cfg = reg.render(data);
-  sheetOverlay.dataset.sheetType = type;        // 唯一标记，关闭时/调试时可读
+  sheetOverlay.dataset.sheetType = type;
   sheetImageLbl.textContent      = reg.imageLabel;
   sheetDateEl.textContent        = cfg.date;
   sheetTitleEl.textContent       = cfg.title;
@@ -2196,6 +2202,9 @@ function openSheet(type, data) {
   // 应用封面图（有图显示图，无图显示占位文字，永不裂图）
   const sheetImageBgEl = document.querySelector('.sheet-image-bg');
   applyBgImage(sheetImageBgEl, cfg.image, reg.imageLabel);
+  // 存储当前图片信息供灯箱使用
+  sheetImageBgEl.dataset.lbSrc = cfg.image || '';
+  sheetImageBgEl.dataset.lbAlt = cfg.title  || reg.imageLabel;
   sheetOverlay.classList.add('visible');
   focusPush('sheetOverlay');
 }
@@ -2209,6 +2218,18 @@ sheetOverlay.addEventListener('click', e => {
   if (e.target === sheetOverlay && focusTop() === 'sheetOverlay') closeSheet();
 });
 document.getElementById('sheetClose').addEventListener('click', closeSheet);
+
+/* 点击 sheet 封面图 → 灯箱 */
+document.querySelector('.sheet-image-bg').addEventListener('click', () => {
+  const el = document.querySelector('.sheet-image-bg');
+  openLightbox({ src: el.dataset.lbSrc || '', alt: el.dataset.lbAlt || 'Image' });
+});
+
+/* 点击 member avatar → 灯箱 */
+document.querySelector('.member-avatar-box').addEventListener('click', () => {
+  const d = memberData[memberCur];
+  if (d) openLightbox({ src: d.avatar || '', alt: d.name || 'Avatar' });
+});
 
 /* 对外保持原有调用接口不变 */
 function openProject(idx) { openSheet('project', projectData[idx]); }
@@ -2224,24 +2245,30 @@ const lightboxLabel = document.getElementById('lightboxLabel');
 const lightboxInner = lightbox.querySelector('.lightbox-inner');
 
 /**
- * openLightbox(idxOrSrc)
- *   number  → 从 stackData[idx] 取图片（stack card 点击）
- *   string  → 直接当文件名/标签显示占位（page 8 file icon 点击）
+ * openLightbox(arg)
+ *   { src, alt }  → 通用：直接显示图片或占位
+ *   number        → stack card 点击，从 stackData[idx] 取图
+ *   string        → 纯占位文字（file icon 等）
  */
-function openLightbox(idxOrSrc) {
-  if (typeof idxOrSrc === 'number') {
-    const d = stackData[idxOrSrc];
-    if (d && d.image) {
-      lightboxInner.innerHTML = `<img src="${d.image}" alt="${d.label}"
-        style="width:100%;height:100%;object-fit:contain;display:block;">`;
-    } else {
-      lightboxLabel.textContent = (d && d.label) ? d.label : String(idxOrSrc + 1).padStart(2, '0');
-      lightboxInner.innerHTML = '';
-      lightboxInner.appendChild(lightboxLabel);
-    }
+function openLightbox(arg) {
+  let src = '', alt = '';
+
+  if (arg && typeof arg === 'object') {
+    src = arg.src || '';
+    alt = arg.alt || '';
+  } else if (typeof arg === 'number') {
+    const d = stackData[arg];
+    src = (d && d.image) || '';
+    alt = (d && d.label) || String(arg + 1).padStart(2, '0');
   } else {
-    // 字符串：纯占位（如 file icon 触发）
-    lightboxLabel.textContent = idxOrSrc;
+    alt = String(arg || '');
+  }
+
+  if (src) {
+    lightboxInner.innerHTML = `<img src="${src}" alt="${alt}"
+      style="width:100%;height:100%;object-fit:contain;display:block;">`;
+  } else {
+    lightboxLabel.textContent = alt || 'Image';
     lightboxInner.innerHTML = '';
     lightboxInner.appendChild(lightboxLabel);
   }
@@ -3377,16 +3404,9 @@ function buildMasonry() {
       lbl.textContent = item.caption || String(i + 1).padStart(2, '0');
       el.appendChild(lbl);
     }
-    // 点击时在 lightbox 中预览（lightbox 只支持 stackData，gallery 独立预览用背景图）
+    // 点击时用统一灯箱预览
     el.addEventListener('click', () => {
-      if (item.image) {
-        const lb = document.getElementById('lightbox');
-        const inner = lb.querySelector('.lightbox-inner');
-        inner.innerHTML = `<img src="${item.image}" alt="${item.caption || ''}"
-          style="width:100%;height:100%;object-fit:contain;display:block;">`;
-        lb.classList.add('visible');
-        focusPush('lightbox');
-      }
+      openLightbox({ src: item.image || '', alt: item.caption || String(i + 1).padStart(2, '0') });
     });
     masonryGrid.appendChild(el);
   });
