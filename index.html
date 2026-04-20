@@ -888,7 +888,17 @@
   }
   .redeem-toast.enter { opacity: 1; transform: translateX(0); }
   .redeem-toast.exit  { opacity: 0; transform: translateX(20px); }
-  .redeem-toast--error { border-color: rgba(192,57,43,0.5); color: #e74c3c; }
+  .redeem-toast--error   { border-color: rgba(192,57,43,0.5);  color: #e74c3c; }
+  .redeem-toast--warning { border-color: rgba(180,130,0,0.45); color: #c49a00; }
+  .redeem-toast--success { border-color: rgba(39,174,96,0.45); color: #27ae60; }
+
+  /* ── Global toast container (viewport top-right, above modals) ── */
+  #globalToastStack {
+    position: fixed; top: 20px; right: 20px;
+    display: flex; flex-direction: column;
+    align-items: flex-end; gap: 6px;
+    z-index: 1050; pointer-events: none;
+  }
   .redeem-top {
     min-height: 150px;
     border: var(--border-hair) var(--border-mid);
@@ -1778,6 +1788,8 @@
     </div>
   </div>
 </div>
+
+<div id="globalToastStack"></div>
 
 <!-- ============================================================
      MODAL DIALOGS
@@ -2722,7 +2734,11 @@ fileModal.addEventListener('click', e => { if (e.target === fileModal && focusTo
 document.getElementById('fileModalClose').addEventListener('click', () => closeFileModal());
 document.getElementById('fileModalDownload').addEventListener('click', () => {
   const f = fileData[fileModalCurIdx];
-  if (!f || !f.url) return;
+  if (!f || !f.url) {
+    showGlobalToast('NO Url', 'error');
+    return;
+  }
+  showGlobalToast('Try to Downloading...', 'warning');
   fetch(f.url)
     .then(r => r.blob())
     .then(blob => {
@@ -2732,8 +2748,11 @@ document.getElementById('fileModalDownload').addEventListener('click', () => {
       a.click();
       URL.revokeObjectURL(a.href);
       closeFileModal();
+      showGlobalToast('Successfully', 'success');
     })
-    .catch(() => {});
+    .catch(() => {
+      showGlobalToast('Failed to Download', 'error');
+    });
 });
 
 /* ── Tab slider ── */
@@ -2802,6 +2821,29 @@ function showToast(msg, error = false) {
     oldest.el.classList.replace('enter', 'exit');
     setTimeout(() => { oldest.el.remove(); insert(); }, TOAST_EXIT);
   } else { insert(); }
+}
+
+/* ── Global toast (viewport top-right, independent stack) ── */
+const globalToastList  = [];
+function showGlobalToast(msg, variant = '') {
+  const globalToastStack = document.getElementById('globalToastStack');
+  const el = document.createElement('div');
+  el.className = 'redeem-toast' + (variant ? ' redeem-toast--' + variant : '');
+  el.textContent = msg;
+  globalToastStack.insertBefore(el, globalToastStack.firstChild);
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('enter')));
+  const entry = { el, timerId: null };
+  entry.timerId = setTimeout(() => {
+    el.classList.replace('enter', 'exit');
+    setTimeout(() => { el.remove(); globalToastList.splice(globalToastList.indexOf(entry), 1); }, TOAST_EXIT);
+  }, TOAST_LIFE);
+  if (globalToastList.length >= TOAST_MAX) {
+    const oldest = globalToastList.shift();
+    clearTimeout(oldest.timerId);
+    oldest.el.classList.replace('enter', 'exit');
+    setTimeout(() => oldest.el.remove(), TOAST_EXIT);
+  }
+  globalToastList.push(entry);
 }
 function dismissToast(entry) {
   const idx = toastList.indexOf(entry);
@@ -3568,4 +3610,4 @@ document.addEventListener('keydown', e => {
 
 </script>
 </body>
-</html>
+            </html>
