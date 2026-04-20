@@ -1958,12 +1958,12 @@ const contactData = {
 };
 
 const fileData = [
-  { name: 'brand-guidelines.pdf',  size: '4.2 MB',  date: '2026.03.14', hash: 'a3f8c1d290e4b57f' },
-  { name: 'logo-pack.zip',         size: '18.7 MB', date: '2026.03.14', hash: 'b9e2a04d3c718f52' },
-  { name: 'color-palette.ase',     size: '128 KB',  date: '2026.02.28', hash: 'c4d71b8e0af36290' },
-  { name: 'typeface-specimen.pdf', size: '2.1 MB',  date: '2026.02.20', hash: 'd0c83f2a1e94b756' },
-  { name: 'motion-reference.mp4',  size: '87.3 MB', date: '2026.01.30', hash: 'e7a12f04b5c9d38e' },
-  { name: 'icon-set.svg',          size: '340 KB',  date: '2026.01.15', hash: 'f5b09e3c2d841a76' },
+  { name: 'brand-guidelines.pdf',  size: '4.2 MB',  date: '2026.03.14', hash: 'a3f8c1d290e4b57f', url: '' },
+  { name: 'logo-pack.zip',         size: '18.7 MB', date: '2026.03.14', hash: 'b9e2a04d3c718f52', url: '' },
+  { name: 'color-palette.ase',     size: '128 KB',  date: '2026.02.28', hash: 'c4d71b8e0af36290', url: '' },
+  { name: 'typeface-specimen.pdf', size: '2.1 MB',  date: '2026.02.20', hash: 'd0c83f2a1e94b756', url: '' },
+  { name: 'motion-reference.mp4',  size: '87.3 MB', date: '2026.01.30', hash: 'e7a12f04b5c9d38e', url: '' },
+  { name: 'icon-set.svg',          size: '340 KB',  date: '2026.01.15', hash: 'f5b09e3c2d841a76', url: '' },
 ];
 
 const docFiles = [
@@ -2704,7 +2704,9 @@ fileData.forEach((f, i) => {
   fileListEl.appendChild(row);
 });
 
+let fileModalCurIdx = -1;
 function openFileModal(i) {
+  fileModalCurIdx = i;
   const f = fileData[i];
   fileInfoEl.innerHTML = `
     <div class="file-info-row"><span class="file-info-key">Name</span><span class="file-info-val">${f.name}</span></div>
@@ -2718,7 +2720,21 @@ function openFileModal(i) {
 function closeFileModal() { fileModal.classList.remove('visible'); focusPop('fileModal'); }
 fileModal.addEventListener('click', e => { if (e.target === fileModal && focusTop() === 'fileModal') closeFileModal(); });
 document.getElementById('fileModalClose').addEventListener('click', () => closeFileModal());
-document.getElementById('fileModalDownload').addEventListener('click', () => closeFileModal());
+document.getElementById('fileModalDownload').addEventListener('click', () => {
+  const f = fileData[fileModalCurIdx];
+  if (!f || !f.url) return;
+  fetch(f.url)
+    .then(r => r.blob())
+    .then(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = f.name;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      closeFileModal();
+    })
+    .catch(() => {});
+});
 
 /* ── Tab slider ── */
 function updateTabSlider(tab) {
