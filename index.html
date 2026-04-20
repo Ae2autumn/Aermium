@@ -1826,10 +1826,33 @@
 
 <script>
 /* ============================================================
-   SHARED UTILITIES
+   IMAGE HELPER
+   imgOrPlaceholder(src, alt?, cls?) — 有 src 则渲染 <img>，
+   无 src 则渲染原占位 <span>，永不裂图。
 ============================================================ */
+function imgOrPlaceholder(src, alt, cls) {
+  if (src) {
+    return `<img src="${src}" alt="${alt || ''}" class="${cls || ''}"
+      style="width:100%;height:100%;object-fit:cover;display:block;">`;
+  }
+  return `<span>${alt || 'Image'}</span>`;
+}
 
-function rand(a, b) { return a + Math.random() * (b - a); }
+/* 将图片 URL 应用到一个"背景容器"元素上（用于 sheet-image-bg、stack card 等） */
+function applyBgImage(el, src, placeholder) {
+  const span = el.querySelector('span');
+  if (src) {
+    el.style.backgroundImage    = `url(${src})`;
+    el.style.backgroundSize     = 'cover';
+    el.style.backgroundPosition = 'center';
+    if (span) span.style.display = 'none';
+  } else {
+    el.style.backgroundImage = '';
+    if (span) { span.style.display = ''; span.textContent = placeholder || 'Image'; }
+  }
+}
+
+
 
 /**
  * createDots(container, count, dotClass, onClick?)
@@ -1909,21 +1932,25 @@ function createCarousel({ trackEl, dotsContainer, dotClass, dragEl, interval = 3
 const projectData = [
   {
     date: '2026.01.15', title: 'Project Alpha', tags: ['Branding', 'Identity'],
+    image: '',   // e.g. 'images/projects/alpha.jpg'
     excerpt: 'Brand identity and visual system for a technology startup based in Shanghai.',
     content: `<p>This project began with a single question: what does trust look like in the context of a technology startup? The answer, we found, was not in bold statements or aggressive visual language, but in restraint.</p><p>We developed a brand identity system built around a refined typographic palette and a deliberately limited color range. Every decision was made in service of clarity and longevity.</p><p>The logo mark, a geometric form derived from the initial letter, was designed to function across all scales — from a favicon to a building sign. The supporting typeface was selected for its legibility and quiet authority.</p><p>The project was completed over eight weeks and delivered in full, including brand guidelines, digital templates, and a motion language document.</p>`
   },
   {
     date: '2026.02.08', title: 'Studio Blanc', tags: ['Editorial', 'Print'],
+    image: '',   // e.g. 'images/projects/studio-blanc.jpg'
     excerpt: 'Editorial design and art direction for an independent publishing house.',
     content: `<p>Studio Blanc approached us with a deceptively simple brief: make a publishing house feel like a place. Not a logo, not a website — a feeling.</p><p>We began with the physical. The texture of uncoated paper. The weight of a well-bound book. The smell of ink. From these sensory anchors, we built a visual system that translated the tactile into the digital.</p><p>The editorial design system we developed prioritizes reading above all else. Generous margins, careful leading, a type hierarchy that guides without intruding.</p>`
   },
   {
     date: '2026.02.28', title: 'Meridian', tags: ['Digital', 'UX'],
+    image: '',   // e.g. 'images/projects/meridian.jpg'
     excerpt: 'Digital experience and interaction design for a cultural institution.',
     content: `<p>Meridian is a digital experience project for a cultural institution navigating the tension between accessibility and depth. The challenge was to serve both the casual visitor and the dedicated scholar.</p><p>Our approach was layered navigation — a surface that reveals itself gradually, responding to curiosity rather than demanding attention. The interface is calm at first glance, dense with possibility on closer inspection.</p><p>The project included full UX research, interaction design, and a component library delivered for development handoff.</p>`
   },
   {
     date: '2026.03.20', title: 'Forma', tags: ['Motion', 'Spatial'],
+    image: '',   // e.g. 'images/projects/forma.jpg'
     excerpt: 'Motion and spatial design for a product launch event.',
     content: `<p>Forma was a commission for a product launch event — a rare opportunity to design in space and time simultaneously. We were responsible for the full environmental and motion design language of the event.</p><p>The brief called for something that felt inevitable. Not trend-forward, not retro — simply correct. We drew from the product's own material language, translating its surfaces and proportions into projected light and spatial rhythm.</p><p>The event was attended by three hundred guests and documented by a dedicated film crew. Excerpts were later used in the brand's global campaign.</p>`
   }
@@ -1957,10 +1984,14 @@ const blogData = [
 ];
 
 const memberData = [
-  { name: 'Ae1autumn', role: 'Creative Director', quote: '设计是一种沉默的说服，\n克制才是最高的表达。', bio: '工作室创始人，毕业于同济大学视觉传达专业。曾就职于数家国际设计事务所，后回国创立 Aermium。擅长将东方美学与现代设计语言融合，关注品牌叙事与空间感知之间的关系。近年专注于文化机构与独立品牌的视觉系统建设。' },
-  { name: 'Lin Muyao',  role: 'Senior Designer',    quote: '留白不是空白，\n是呼吸的空间。',         bio: '平面与字体设计师，本科就读于中央美术学院，硕士毕业于 RCA。对汉字结构与拉丁字母的相互借鉴有独到研究。负责工作室大部分印刷与出版类项目的视觉执行，并主导内部字体实验项目。' },
-  { name: 'Shen Zhiyu', role: 'Motion & Digital',   quote: '时间是设计里\n被忽视的维度。',          bio: '交互与动态设计师，曾参与多个国际文化机构的数字体验项目。在 Aermium 负责数字端的交互设计与动态语言制定，同时兼顾前端原型开发。相信好的动效应如呼吸般自然，不被察觉才是最高境界。' },
-  { name: 'Yuki Harada',role: 'Strategy & Research', quote: '品牌不是外表，\n是一种立场。',           bio: '品牌策略师，毕业于早稻田大学商学院，后于上海生活工作超过八年。为工作室提供品牌定位、受众研究与叙事策略支持。擅长在文化差异中寻找共鸣点，将抽象的价值观转化为可落地的设计方向。' }
+  { name: 'Ae1autumn', role: 'Creative Director', avatar: '',  // e.g. 'images/avatars/ae1autumn.jpg'
+    quote: '设计是一种沉默的说服，\n克制才是最高的表达。', bio: '工作室创始人，毕业于同济大学视觉传达专业。曾就职于数家国际设计事务所，后回国创立 Aermium。擅长将东方美学与现代设计语言融合，关注品牌叙事与空间感知之间的关系。近年专注于文化机构与独立品牌的视觉系统建设。' },
+  { name: 'Lin Muyao',  role: 'Senior Designer',    avatar: '',  // e.g. 'images/avatars/lin-muyao.jpg'
+    quote: '留白不是空白，\n是呼吸的空间。',         bio: '平面与字体设计师，本科就读于中央美术学院，硕士毕业于 RCA。对汉字结构与拉丁字母的相互借鉴有独到研究。负责工作室大部分印刷与出版类项目的视觉执行，并主导内部字体实验项目。' },
+  { name: 'Shen Zhiyu', role: 'Motion & Digital',   avatar: '',  // e.g. 'images/avatars/shen-zhiyu.jpg'
+    quote: '时间是设计里\n被忽视的维度。',          bio: '交互与动态设计师，曾参与多个国际文化机构的数字体验项目。在 Aermium 负责数字端的交互设计与动态语言制定，同时兼顾前端原型开发。相信好的动效应如呼吸般自然，不被察觉才是最高境界。' },
+  { name: 'Yuki Harada',role: 'Strategy & Research', avatar: '',  // e.g. 'images/avatars/yuki-harada.jpg'
+    quote: '品牌不是外表，\n是一种立场。',           bio: '品牌策略师，毕业于早稻田大学商学院，后于上海生活工作超过八年。为工作室提供品牌定位、受众研究与叙事策略支持。擅长在文化差异中寻找共鸣点，将抽象的价值观转化为可落地的设计方向。' }
 ];
 
 const contactData = {
@@ -2004,7 +2035,7 @@ function renderProjectSlides(trackEl) {
     slide.className = 'carousel-slide';
     slide.innerHTML = `
       <div class="slide-inner">
-        <div class="slide-image"><span>Image</span></div>
+        <div class="slide-image">${imgOrPlaceholder(d.image, 'Image')}</div>
         <div class="slide-content">
           <div class="slide-number">${String(i + 1).padStart(3, '0')}</div>
           <div class="slide-title">${d.title}</div>
@@ -2118,6 +2149,7 @@ const SHEET_REGISTRY = {
   project: {
     imageLabel: 'Image',
     render: d => ({
+      image:   d.image || '',
       date:    d.date,
       title:   d.title,
       tags:    d.tags.map(t => `<span class="sheet-tag">${t}</span>`).join(''),
@@ -2127,6 +2159,7 @@ const SHEET_REGISTRY = {
   blog: {
     imageLabel: 'Essay',
     render: d => ({
+      image:   d.image || '',
       date:    d.date,
       title:   d.title,
       tags:    `<span class="sheet-tag">${d.category}</span><span class="sheet-tag">${d.readTime}</span>`,
@@ -2135,7 +2168,9 @@ const SHEET_REGISTRY = {
   },
   about: {
     imageLabel: 'Image',
+    image: '',  // e.g. 'images/about/studio.jpg'
     render: () => ({
+      image:   '',  // same as above, or override here
       date:  'Est. 2021 · Shanghai',
       title: 'Aermium Studio',
       tags:  ['Design','Identity','Editorial'].map(t => `<span class="sheet-tag">${t}</span>`).join(''),
@@ -2154,6 +2189,9 @@ function openSheet(type, data) {
   sheetTagsEl.innerHTML          = cfg.tags;
   sheetContentEl.innerHTML       = cfg.content;
   sheetBodyEl.scrollTop          = 0;
+  // 应用封面图（有图显示图，无图显示占位文字，永不裂图）
+  const sheetImageBgEl = document.querySelector('.sheet-image-bg');
+  applyBgImage(sheetImageBgEl, cfg.image, reg.imageLabel);
   sheetOverlay.classList.add('visible');
   focusPush('sheetOverlay');
 }
@@ -2179,8 +2217,30 @@ function closeBlog()      { closeSheet(); }
 ============================================================ */
 const lightbox      = document.getElementById('lightbox');
 const lightboxLabel = document.getElementById('lightboxLabel');
-function openLightbox(label) {
-  lightboxLabel.textContent = label;
+const lightboxInner = lightbox.querySelector('.lightbox-inner');
+
+/**
+ * openLightbox(idxOrSrc)
+ *   number  → 从 stackData[idx] 取图片（stack card 点击）
+ *   string  → 直接当文件名/标签显示占位（page 8 file icon 点击）
+ */
+function openLightbox(idxOrSrc) {
+  if (typeof idxOrSrc === 'number') {
+    const d = stackData[idxOrSrc];
+    if (d && d.image) {
+      lightboxInner.innerHTML = `<img src="${d.image}" alt="${d.label}"
+        style="width:100%;height:100%;object-fit:contain;display:block;">`;
+    } else {
+      lightboxLabel.textContent = (d && d.label) ? d.label : String(idxOrSrc + 1).padStart(2, '0');
+      lightboxInner.innerHTML = '';
+      lightboxInner.appendChild(lightboxLabel);
+    }
+  } else {
+    // 字符串：纯占位（如 file icon 触发）
+    lightboxLabel.textContent = idxOrSrc;
+    lightboxInner.innerHTML = '';
+    lightboxInner.appendChild(lightboxLabel);
+  }
   lightbox.classList.add('visible');
   focusPush('lightbox');
 }
@@ -2222,12 +2282,24 @@ const stackProgress = document.getElementById('stackProgress');
 
 /* stackData 是 Page 3 的唯一数据来源，数量自动同步 */
 const stackData = [
-  { label: '01' },
-  { label: '02' },
-  { label: '03' },
-  { label: '04' },
-  { label: '05' },
-  { label: '06' },
+  { label: '01', image: '' },  // e.g. 'images/stack/01.jpg'
+  { label: '02', image: '' },
+  { label: '03', image: '' },
+  { label: '04', image: '' },
+  { label: '05', image: '' },
+  { label: '06', image: '' },
+];
+
+/* galleryData — Page 3 长按弹出的 masonry 图集，与 stackData 相互独立 */
+const galleryData = [
+  { image: '', caption: '01' },  // e.g. { image: 'images/gallery/01.jpg', caption: 'Forma — Event' }
+  { image: '', caption: '02' },
+  { image: '', caption: '03' },
+  { image: '', caption: '04' },
+  { image: '', caption: '05' },
+  { image: '', caption: '06' },
+  { image: '', caption: '07' },
+  { image: '', caption: '08' },
 ];
 const STACK_COUNT  = stackData.length;
 const stackLightColors = ['#ddd8d0','#e0dbd2','#d8d3ca','#e4dfd7','#dbd5cc','#e2ddd5'];
@@ -2246,17 +2318,27 @@ function createStackCards() {
     const card = document.createElement('div');
     card.className = 'stack-card';
     card.dataset.idx = i;
-    card.style.background = getStackColor(i);
-    const lbl = document.createElement('span');
-    lbl.textContent = d.label;
-    card.appendChild(lbl);
+    if (d.image) {
+      // 有图：背景透明，img 铺满
+      const img = document.createElement('img');
+      img.src = d.image;
+      img.alt = d.label;
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit;';
+      card.appendChild(img);
+    } else {
+      // 无图：色块 + label 占位
+      card.style.background = getStackColor(i);
+      const lbl = document.createElement('span');
+      lbl.textContent = d.label;
+      card.appendChild(lbl);
+    }
     card.addEventListener('click', () => {
       if (!isListMode) {
         const isTop = stackOrder.indexOf(card) === stackOrder.length - 1;
-        if (isTop) { openLightbox(`0${i + 1}`); }
+        if (isTop) { openLightbox(i); }
         else { stopStackByUser(); bringToTop(card); }
       } else {
-        openLightbox(`0${i + 1}`);
+        openLightbox(i);
       }
     });
     stackCards.appendChild(card);
@@ -2536,11 +2618,13 @@ createDots(memberDotsEl, memberData.length, 'dot-bar', i => {
 function goMember(n, instant) {
   memberCur = (n + memberData.length) % memberData.length;
   const d = memberData[memberCur];
+  const memberAvatarBoxEl = document.querySelector('.member-avatar-box');
   const render = () => {
     memberNameEl.textContent  = d.name;
     memberRoleEl.textContent  = d.role;
     memberQuoteEl.innerHTML   = '\u201c' + d.quote.replace(/\n/g, '<br>') + '\u201d';
     memberBioEl.textContent   = d.bio;
+    applyBgImage(memberAvatarBoxEl, d.avatar, 'Avatar');
   };
   if (instant) {
     render();
@@ -2548,9 +2632,12 @@ function goMember(n, instant) {
     [memberNameEl, memberRoleEl, memberQuoteEl, memberBioEl].forEach(el => {
       el.style.transition = 'opacity 0.25s ease'; el.style.opacity = '0';
     });
+    memberAvatarBoxEl.style.transition = 'opacity 0.25s ease';
+    memberAvatarBoxEl.style.opacity = '0';
     setTimeout(() => {
       render();
       [memberNameEl, memberRoleEl, memberQuoteEl, memberBioEl].forEach(el => { el.style.opacity = '1'; });
+      memberAvatarBoxEl.style.opacity = '1';
     }, 250);
   }
   memberDotsEl.querySelectorAll('.dot-bar').forEach((d, i) => d.classList.toggle('active', i === memberCur));
@@ -3264,26 +3351,39 @@ function goToPage(n) {
 const galleryOverlay = document.getElementById('galleryOverlay');
 const masonryGrid    = document.getElementById('masonryGrid');
 
-/* Build masonry items from imageData (reuses stackData labels for demo) */
-const galleryItems = Array.from({ length: 18 }, (_, i) => ({
-  label: String(i + 1).padStart(2, '0'),
-  /* Alternate tall / wide aspect ratios for visual variety */
-  tall: i % 3 !== 1,
-}));
-
 function buildMasonry() {
   masonryGrid.innerHTML = '';
-  galleryItems.forEach(item => {
+  galleryData.forEach((item, i) => {
     const el = document.createElement('div');
     el.className = 'masonry-item';
-    const lbl = document.createElement('span');
-    lbl.className = 'masonry-label';
-    lbl.textContent = item.label;
-    /* 用随机padding模拟不同图片高度，真实场景由<img>撑开 */
-    el.style.paddingTop = item.tall ? '80px' : '48px';
-    el.style.paddingBottom = item.tall ? '80px' : '48px';
-    el.appendChild(lbl);
-    el.addEventListener('click', () => openLightbox(item.label));
+    if (item.image) {
+      // 有图：img 自然撑开高度
+      el.style.padding = '0';
+      const img = document.createElement('img');
+      img.src = item.image;
+      img.alt = item.caption || String(i + 1).padStart(2, '0');
+      img.style.cssText = 'width:100%;display:block;border-radius:inherit;';
+      el.appendChild(img);
+    } else {
+      // 无图：占位色块，交替高度模拟瀑布流
+      el.style.paddingTop    = i % 3 !== 1 ? '80px' : '48px';
+      el.style.paddingBottom = i % 3 !== 1 ? '80px' : '48px';
+      const lbl = document.createElement('span');
+      lbl.className = 'masonry-label';
+      lbl.textContent = item.caption || String(i + 1).padStart(2, '0');
+      el.appendChild(lbl);
+    }
+    // 点击时在 lightbox 中预览（lightbox 只支持 stackData，gallery 独立预览用背景图）
+    el.addEventListener('click', () => {
+      if (item.image) {
+        const lb = document.getElementById('lightbox');
+        const inner = lb.querySelector('.lightbox-inner');
+        inner.innerHTML = `<img src="${item.image}" alt="${item.caption || ''}"
+          style="width:100%;height:100%;object-fit:contain;display:block;">`;
+        lb.classList.add('visible');
+        focusPush('lightbox');
+      }
+    });
     masonryGrid.appendChild(el);
   });
 }
