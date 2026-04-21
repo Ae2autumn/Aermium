@@ -2059,9 +2059,11 @@ function renderProjectSlides(trackEl) {
   });
 }
 
+const BLOG_DISPLAY_MAX = 7;
+
 function renderBlogSlides(trackEl) {
   trackEl.innerHTML = '';
-  blogData.forEach((d, i) => {
+  blogData.slice(0, BLOG_DISPLAY_MAX).forEach((d, i) => {
     const slide = document.createElement('div');
     slide.className = 'carousel-slide blog-slide';
     slide.innerHTML = `
@@ -2247,7 +2249,7 @@ const lightboxInner = lightbox.querySelector('.lightbox-inner');
 /**
  * openLightbox(arg)
  *   { src, alt }  → 通用：直接显示图片或占位
- *   number        → stack card 点击，从 stackData[idx] 取图
+ *   number        → stack card 点击，从 galleryData[idx] 取图
  *   string        → 纯占位文字（file icon 等）
  */
 function openLightbox(arg) {
@@ -2257,9 +2259,9 @@ function openLightbox(arg) {
     src = arg.src || '';
     alt = arg.alt || '';
   } else if (typeof arg === 'number') {
-    const d = stackData[arg];
+    const d = galleryData[arg];
     src = (d && d.image) || '';
-    alt = (d && d.label) || String(arg + 1).padStart(2, '0');
+    alt = (d && d.caption) || String(arg + 1).padStart(2, '0');
   } else {
     alt = String(arg || '');
   }
@@ -2311,17 +2313,7 @@ const stackCards    = document.getElementById('stackCards');
 const stackOverlay  = document.getElementById('stackOverlay');
 const stackProgress = document.getElementById('stackProgress');
 
-/* stackData 是 Page 3 的唯一数据来源，数量自动同步 */
-const stackData = [
-  { label: '01', image: '' },  // e.g. 'images/stack/01.jpg'
-  { label: '02', image: '' },
-  { label: '03', image: '' },
-  { label: '04', image: '' },
-  { label: '05', image: '' },
-  { label: '06', image: '' },
-];
-
-/* galleryData — Page 3 长按弹出的 masonry 图集，与 stackData 相互独立 */
+/* galleryData — Page 3 唯一数据来源：轮播取前7条，长按画廊显示全部 */
 const galleryData = [
   { image: '', caption: '01' },  // e.g. { image: 'images/gallery/01.jpg', caption: 'Forma — Event' }
   { image: '', caption: '02' },
@@ -2332,7 +2324,7 @@ const galleryData = [
   { image: '', caption: '07' },
   { image: '', caption: '08' },
 ];
-const STACK_COUNT  = stackData.length;
+const STACK_COUNT  = Math.min(7, galleryData.length);
 const stackLightColors = ['#ddd8d0','#e0dbd2','#d8d3ca','#e4dfd7','#dbd5cc','#e2ddd5'];
 const stackDarkColors  = ['#3a3535','#383330','#352f2a','#3c3830','#332e2a','#3a3630'];
 function getStackColor(i) {
@@ -2345,7 +2337,7 @@ let listAutoTimer = null, listUserStopped = false;
 
 function createStackCards() {
   stackCards.innerHTML = ''; stackOrder = [];
-  stackData.forEach((d, i) => {
+  galleryData.slice(0, STACK_COUNT).forEach((d, i) => {
     const card = document.createElement('div');
     card.className = 'stack-card';
     card.dataset.idx = i;
@@ -2353,14 +2345,14 @@ function createStackCards() {
       // 有图：背景透明，img 铺满
       const img = document.createElement('img');
       img.src = d.image;
-      img.alt = d.label;
+      img.alt = d.caption;
       img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit;';
       card.appendChild(img);
     } else {
-      // 无图：色块 + label 占位
+      // 无图：色块 + caption 占位
       card.style.background = getStackColor(i);
       const lbl = document.createElement('span');
-      lbl.textContent = d.label;
+      lbl.textContent = d.caption;
       card.appendChild(lbl);
     }
     card.addEventListener('click', () => {
@@ -2428,6 +2420,11 @@ function initProgress() {
   for (let i = 0; i < STACK_COUNT; i++) {
     const bar = document.createElement('div');
     bar.className = 'dot-bar';
+    bar.addEventListener('click', () => {
+      if (!isListMode) return;
+      listUserStopped = true; clearInterval(listAutoTimer);
+      listCur = i; updateProgress(i); applyListPositions();
+    });
     stackProgress.appendChild(bar);
   }
 }
@@ -2549,7 +2546,7 @@ const blogCarouselCtrl = createCarousel({
   dotClass:      'dot-bar',
   dragEl:        document.getElementById('blogCarousel'),
   interval:      4000,
-  total:         blogData.length,     // 数组是唯一数据来源，dots 自动同步
+  total:         Math.min(BLOG_DISPLAY_MAX, blogData.length),     // 最多取前7条
 });
 
 const stopBlogAuto   = () => blogCarouselCtrl.stopAuto();
