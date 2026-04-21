@@ -2373,9 +2373,11 @@ const lbDownloadBtn   = document.getElementById('lbDownloadBtn');
 const lbDownloadClose = document.getElementById('lbDownloadClose');
 
 /* 当前灯箱持有的文件信息 */
-let lbCurFile = null;   // fileData entry or null
-let lbCurType = '';     // 'image'|'video'|'audio'|'text'|'pdf'|'placeholder'
-let lbMediaEl = null;   // current <video> or <audio>
+let lbCurFile = null;         // fileData entry or null
+let lbCurType = '';           // 'image'|'video'|'audio'|'text'|'pdf'|'placeholder'
+let lbMediaEl = null;         // current <video> or <audio>
+let lbImgEl   = null;         // current <img> — 关闭时置空 src 中止加载
+let lbFetchController = null; // AbortController for in-flight text fetch
 
 /* ── localStorage: 保存/恢复媒体进度 ── */
 function lbStorageKey(url, name) {
@@ -2584,7 +2586,10 @@ lbDownloadBtn.addEventListener('click', () => {
 /* ── 渲染灯箱内容 ── */
 function lbRender(file) {
   if (lbMediaEl) { lbMediaEl.pause?.(); lbMediaEl = null; }
+  if (lbImgEl)   { lbImgEl.src = ''; lbImgEl = null; }
   stopAudioAnim();
+  /* 中止上一个正在进行的 fetch */
+  if (lbFetchController) { lbFetchController.abort(); lbFetchController = null; }
   /* 移除上次注入的 ctrl / copy bar */
   [...lightboxFrame.children].forEach(c => { if (c !== lightboxInner) c.remove(); });
   lightboxInner.innerHTML = '';
@@ -2611,6 +2616,7 @@ function lbRender(file) {
       img.className = 'lb-img'; img.loading = 'lazy'; img.alt = name;
       img.onerror = () => { lightboxInner.innerHTML = `<span class="lb-placeholder">${LB_PLACEHOLDER_LABELS.image}</span>`; };
       img.src = resolvedUrl;
+      lbImgEl = img;
       lightboxInner.appendChild(img);
       lbBindLongPress(lightboxInner);
       break;
@@ -2668,14 +2674,20 @@ function lbRender(file) {
       if (!resolvedUrl) { placeholder(LB_PLACEHOLDER_LABELS.text); break; }
       const pre = document.createElement('div'); pre.className = 'lb-text'; pre.textContent = '加载中...';
       lightboxInner.appendChild(pre);
-      fetch(resolvedUrl)
+      lbFetchController = new AbortController();
+      fetch(resolvedUrl, { signal: lbFetchController.signal })
         .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
         .then(text => {
+          lbFetchController = null;
           pre.textContent = text;
           lightboxFrame.appendChild(buildCopyBtn(text));
           lbBindLongPress(lightboxInner);
         })
-        .catch(() => { lightboxInner.innerHTML = `<span class="lb-placeholder">${LB_PLACEHOLDER_LABELS.text}</span>`; });
+        .catch(err => {
+          lbFetchController = null;
+          if (err.name === 'AbortError') return; // 灯箱已关闭，静默处理
+          lightboxInner.innerHTML = `<span class="lb-placeholder">${LB_PLACEHOLDER_LABELS.text}</span>`;
+        });
       break;
     }
 
@@ -2715,6 +2727,8 @@ function openLightbox(arg) {
 }
 
 function closeLightbox() {
+  if (lbFetchController) { lbFetchController.abort(); lbFetchController = null; }
+  if (lbImgEl)   { lbImgEl.src = ''; lbImgEl = null; }
   if (lbMediaEl) {
     const resolvedUrl = lbResolveUrl(lbCurFile?.url || '');
     lbSaveProgress(resolvedUrl, lbCurFile?.name || '', lbMediaEl.currentTime, lbMediaEl.paused);
