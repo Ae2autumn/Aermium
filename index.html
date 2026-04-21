@@ -2720,6 +2720,23 @@ document.getElementById('xBtn').addEventListener('click', e => {
   e.preventDefault(); pendingHref = contactData.xHref; openModal(linkModal);
 });
 
+/* ── URL type detection ── */
+const EXTERNAL_DOMAINS = [
+  'onedrive.live.com',
+  '1drv.ms',
+  '123pan.com',
+  'lanzou',   // covers lanzoux / lanzoui / lanzouw etc.
+];
+
+function getUrlType(url) {
+  if (!url) return 'none';
+  try {
+    const host = new URL(url).hostname;
+    if (EXTERNAL_DOMAINS.some(d => host.includes(d))) return 'external';
+  } catch(_) {}
+  return 'direct';
+}
+
 /* ── File icon by extension ── */
 function getFileIcon(name) {
   const ext = (name.split('.').pop() || '').toLowerCase();
@@ -2831,41 +2848,74 @@ fileData.forEach((f, i) => {
 });
 
 let fileModalCurIdx = -1;
+const fileModalDownloadBtn = document.getElementById('fileModalDownload');
+
 function openFileModal(i) {
   fileModalCurIdx = i;
   const f = fileData[i];
+  const type = getUrlType(f.url);
+
   fileInfoEl.innerHTML = `
     <div class="file-info-row"><span class="file-info-key">Name</span><span class="file-info-val">${f.name}</span></div>
     <div class="file-info-row"><span class="file-info-key">Size</span><span class="file-info-val">${f.size}</span></div>
     <div class="file-info-row"><span class="file-info-key">Date</span><span class="file-info-val">${f.date}</span></div>
     <div class="file-info-row"><span class="file-info-key">SHA-256</span><span class="file-info-val">${f.hash}</span></div>
   `;
+
+  /* 按钮文字 & 可用状态 */
+  if (type === 'external') {
+    fileModalDownloadBtn.textContent = 'Open';
+    fileModalDownloadBtn.disabled = false;
+    fileModalDownloadBtn.style.opacity = '';
+  } else if (type === 'direct') {
+    fileModalDownloadBtn.textContent = 'Download';
+    fileModalDownloadBtn.disabled = false;
+    fileModalDownloadBtn.style.opacity = '';
+  } else {
+    fileModalDownloadBtn.textContent = 'No Url';
+    fileModalDownloadBtn.disabled = true;
+    fileModalDownloadBtn.style.opacity = '0.35';
+  }
+
   fileModal.classList.add('visible');
   focusPush('fileModal');
 }
+
 function closeFileModal() { fileModal.classList.remove('visible'); focusPop('fileModal'); }
 fileModal.addEventListener('click', e => { if (e.target === fileModal && focusTop() === 'fileModal') closeFileModal(); });
 document.getElementById('fileModalClose').addEventListener('click', () => closeFileModal());
-document.getElementById('fileModalDownload').addEventListener('click', () => {
+
+fileModalDownloadBtn.addEventListener('click', () => {
   const f = fileData[fileModalCurIdx];
-  if (!f || !f.url) {
-    showGlobalToast('NO Url', 'error');
+  if (!f) return;
+  const type = getUrlType(f.url);
+
+  if (type === 'external') {
+    window.open(f.url, '_blank');
+    closeFileModal();
     return;
   }
-  showGlobalToast('Try to Downloading...', 'warning');
-  fetch(f.url)
-    .then(r => r.blob())
-    .then(blob => {
+
+  /* direct: HEAD 探测，成功则 <a download> */
+  showGlobalToast('Downloading...', 'warning');
+  fileModalDownloadBtn.disabled = true;
+  fileModalDownloadBtn.style.opacity = '0.35';
+
+  fetch(f.url, { method: 'HEAD' })
+    .then(() => {
       const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
+      a.href = f.url;
       a.download = f.name;
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(a.href);
+      document.body.removeChild(a);
       closeFileModal();
-      showGlobalToast('Successfully', 'success');
+      showGlobalToast('Success', 'success');
     })
     .catch(() => {
       showGlobalToast('Failed to Download', 'error');
+      fileModalDownloadBtn.disabled = false;
+      fileModalDownloadBtn.style.opacity = '';
     });
 });
 
