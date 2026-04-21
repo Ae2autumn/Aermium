@@ -2897,20 +2897,25 @@ fileModalDownloadBtn.addEventListener('click', () => {
   }
 
   /* direct: HEAD 探测，成功则 <a download> */
-  showGlobalToast('Downloading...', 'warning');
+  showGlobalToast('Try to Downloading...', 'warning');
   fileModalDownloadBtn.disabled = true;
   fileModalDownloadBtn.style.opacity = '0.35';
 
-  fetch(f.url, { method: 'HEAD' })
-    .then(() => {
+  fetch(f.url)
+    .then(r => {
+      if (!r.ok) throw new Error(r.status);
+      return r.blob();
+    })
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = f.url;
-      a.download = f.name;
+      a.href = url; a.download = f.name;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      URL.revokeObjectURL(url);
       closeFileModal();
-      showGlobalToast('Success', 'success');
+      showGlobalToast('Successfully', 'success');
     })
     .catch(() => {
       showGlobalToast('Failed to Download', 'error');
