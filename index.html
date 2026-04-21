@@ -1200,7 +1200,7 @@
   .modal-btn.danger:hover { background: var(--btn-danger-hover); }
 
   /* ============================================================
-     LIGHTBOX (p8 image preview)
+     LIGHTBOX
   ============================================================ */
   .lightbox-overlay {
     position: fixed; inset: 0; z-index: 1100;
@@ -1215,18 +1215,127 @@
     border: var(--border-hair) var(--border-strong);
     border-radius: var(--radius-lg); background: var(--bg-card);
     padding: var(--space-frame);
+    display: flex; flex-direction: column; gap: 8px;
     transform: scale(0.95); transition: var(--transition-snap);
+    /* 最大高度让内容自适应，不超出视口 */
+    max-height: calc(100vh - 64px);
   }
   .lightbox-overlay.visible .lightbox-frame { transform: scale(1); }
+
+  /* 内容区 */
   .lightbox-inner {
     border: var(--border-hair) var(--border-mid);
     border-radius: var(--radius-md); background: var(--bg-inner);
     overflow: hidden; width: 100%; min-height: 120px;
     display: flex; align-items: center; justify-content: center;
+    position: relative; flex: 1; min-height: 0;
   }
-  .lightbox-inner span {
+  .lightbox-inner span.lb-placeholder {
     font-size: 0.6rem; color: var(--text-faint);
     letter-spacing: 0.25em; text-transform: uppercase;
+  }
+
+  /* 图片 */
+  .lb-img {
+    width: 100%; height: 100%; object-fit: contain; display: block;
+    user-select: none; -webkit-user-drag: none;
+  }
+
+  /* 视频 */
+  .lb-video {
+    width: 100%; height: 100%; object-fit: contain; display: block;
+    background: #000;
+  }
+
+  /* 音频 — 内容区内的波形占位 */
+  .lb-audio-art {
+    width: 100%; height: 100%; min-height: 120px;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 12px;
+  }
+  .lb-audio-art-bars {
+    display: flex; align-items: flex-end; gap: 3px; height: 36px;
+  }
+  .lb-audio-bar {
+    width: 3px; border-radius: 2px;
+    background: var(--text-faint);
+    transition: height 0.15s ease, background 0.2s;
+  }
+  .lb-audio-playing .lb-audio-bar { background: var(--text-secondary); }
+  .lb-audio-title {
+    font-size: 0.6rem; color: var(--text-faint);
+    letter-spacing: 0.22em; text-transform: uppercase;
+    max-width: 80%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  /* 文本 */
+  .lb-text {
+    width: 100%; height: 100%;
+    overflow-y: auto; scrollbar-width: none;
+    padding: var(--space-slide-v) var(--space-slide-h);
+    font-size: 0.72rem; color: var(--text-secondary);
+    font-weight: 300; line-height: 1.9; letter-spacing: 0.04em;
+    white-space: pre-wrap; word-break: break-word;
+    box-sizing: border-box;
+  }
+  .lb-text::-webkit-scrollbar { display: none; }
+
+  /* PDF */
+  .lb-pdf {
+    width: 100%; height: 100%; border: none; display: block;
+    min-height: 320px;
+  }
+
+  /* ── 控制条（视频/音频共用） ── */
+  .lb-ctrl {
+    flex-shrink: 0;
+    position: relative; overflow: hidden;
+    height: 44px; border-radius: var(--radius-md);
+    border: var(--border-hair) var(--border-mid);
+    background: var(--bg-inner);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; user-select: none; -webkit-user-select: none;
+    touch-action: none;
+  }
+  /* 进度背景 */
+  .lb-ctrl-progress {
+    position: absolute; inset: 0; right: auto;
+    width: 0%; background: var(--hover-bg);
+    pointer-events: none; transition: width 0.1s linear;
+    border-radius: var(--radius-md);
+  }
+  /* 图标 */
+  .lb-ctrl-icon {
+    position: relative; z-index: 1;
+    color: var(--text-secondary); pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ── 文本复制条 ── */
+  .lb-copy-btn {
+    flex-shrink: 0;
+    height: 44px; border-radius: var(--radius-md);
+    border: var(--border-hair) var(--border-mid);
+    background: var(--bg-inner);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--text-secondary);
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+  }
+  .lb-copy-btn:hover { background: var(--hover-bg); color: var(--text-primary); }
+  .lb-copy-btn.copied {
+    border-color: rgba(92,184,126,0.6);
+    background: rgba(92,184,126,0.06);
+    color: #5cb87e; cursor: default;
+  }
+
+  /* ── 可预览行高亮 ── */
+  .file-row.previewable { cursor: pointer; }
+
+  /* 下载弹窗动态标题 */
+  #lbDownloadTitle {
+    font-size: 0.75rem; letter-spacing: 0.12em;
+    color: var(--modal-title); font-weight: 400;
+    text-align: center; line-height: 1.8;
   }
 
   /* ============================================================
@@ -1757,9 +1866,19 @@
      LIGHTBOX
 ============================================================ -->
 <div class="lightbox-overlay" id="lightbox">
-  <div class="lightbox-frame">
-    <div class="lightbox-inner">
-      <span id="lightboxLabel"></span>
+  <div class="lightbox-frame" id="lightboxFrame">
+    <div class="lightbox-inner" id="lightboxInner"></div>
+    <!-- ctrl bar / copy bar injected by JS -->
+  </div>
+</div>
+
+<!-- 灯箱长按下载弹窗 -->
+<div class="modal-overlay" id="lbDownloadModal">
+  <div class="modal">
+    <div id="lbDownloadTitle">下载此文件？</div>
+    <div class="modal-buttons">
+      <button class="modal-btn" id="lbDownloadClose">Close</button>
+      <button class="modal-btn danger" id="lbDownloadBtn">Download</button>
     </div>
   </div>
 </div>
@@ -2240,48 +2359,373 @@ function openBlog(idx)    { openSheet('blog', blogData[idx]); }
 function closeBlog()      { closeSheet(); }
 
 /* ============================================================
-   LIGHTBOX
+   LIGHTBOX — 完整实现
+   支持：image / video / audio / text / pdf / placeholder
+   长按任意内容区拉起下载弹窗
+   音视频：关闭暂停，localStorage 保存/恢复进度
 ============================================================ */
-const lightbox      = document.getElementById('lightbox');
-const lightboxLabel = document.getElementById('lightboxLabel');
-const lightboxInner = lightbox.querySelector('.lightbox-inner');
+const lightbox        = document.getElementById('lightbox');
+const lightboxFrame   = document.getElementById('lightboxFrame');
+const lightboxInner   = document.getElementById('lightboxInner');
+const lbDownloadModal = document.getElementById('lbDownloadModal');
+const lbDownloadTitle = document.getElementById('lbDownloadTitle');
+const lbDownloadBtn   = document.getElementById('lbDownloadBtn');
+const lbDownloadClose = document.getElementById('lbDownloadClose');
 
-/**
- * openLightbox(arg)
- *   { src, alt }  → 通用：直接显示图片或占位
- *   number        → stack card 点击，从 galleryData[idx] 取图
- *   string        → 纯占位文字（file icon 等）
- */
+/* 当前灯箱持有的文件信息 */
+let lbCurFile = null;   // fileData entry or null
+let lbCurType = '';     // 'image'|'video'|'audio'|'text'|'pdf'|'placeholder'
+let lbMediaEl = null;   // current <video> or <audio>
+
+/* ── localStorage: 保存/恢复媒体进度 ── */
+function lbStorageKey(url, name) {
+  return 'lb-media:' + (url || name || '');
+}
+function lbSaveProgress(url, name, currentTime, paused) {
+  try {
+    const key = lbStorageKey(url, name);
+    if (key !== 'lb-media:') localStorage.setItem(key, JSON.stringify({ currentTime, paused }));
+  } catch(_) {}
+}
+function lbLoadProgress(url, name) {
+  try {
+    const raw = localStorage.getItem(lbStorageKey(url, name));
+    return raw ? JSON.parse(raw) : null;
+  } catch(_) { return null; }
+}
+
+/* ── 扩展名 → 预览类型 ── */
+const LB_IMG = ['jpg','jpeg','png','gif','webp','bmp','svg','avif','heic','ico'];
+const LB_VID = ['mp4','webm','mov','mkv','m4v'];
+const LB_AUD = ['mp3','flac','wav','aac','opus','m4a','ogg'];
+const LB_TXT = ['txt','md','markdown','json','yaml','yml','toml','ini','conf','xml','csv','log','rst'];
+const LB_PDF = ['pdf'];
+
+function lbTypeFromName(name) {
+  const ext = (name || '').split('.').pop().toLowerCase();
+  if (LB_IMG.includes(ext)) return 'image';
+  if (LB_VID.includes(ext)) return 'video';
+  if (LB_AUD.includes(ext)) return 'audio';
+  if (LB_TXT.includes(ext)) return 'text';
+  if (LB_PDF.includes(ext)) return 'pdf';
+  return 'placeholder';
+}
+
+const LB_PLACEHOLDER_LABELS = {
+  image: 'Picture', video: 'Video', audio: 'Music',
+  text: 'Document', pdf: 'Document', placeholder: 'Files'
+};
+
+/* ── 解析相对路径 ── */
+function lbResolveUrl(url) {
+  if (!url) return '';
+  try { return new URL(url, location.href).href; } catch(_) { return url; }
+}
+
+/* ── 播放控制条（video外/audio内共用） ── */
+function buildCtrlBar(mediaEl) {
+  const bar = document.createElement('div');
+  bar.className = 'lb-ctrl';
+
+  const prog = document.createElement('div');
+  prog.className = 'lb-ctrl-progress';
+  bar.appendChild(prog);
+
+  const iconWrap = document.createElement('div');
+  iconWrap.className = 'lb-ctrl-icon';
+  bar.appendChild(iconWrap);
+
+  const svgPlay  = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><polygon points="4,2 14,8 4,14" fill="currentColor"/></svg>`;
+  const svgPause = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="2" width="3.5" height="12" rx="1" fill="currentColor"/><rect x="9.5" y="2" width="3.5" height="12" rx="1" fill="currentColor"/></svg>`;
+
+  function updateIcon() { iconWrap.innerHTML = mediaEl.paused ? svgPlay : svgPause; }
+  function updateProg() {
+    if (!mediaEl.duration) return;
+    prog.style.width = (mediaEl.currentTime / mediaEl.duration * 100) + '%';
+  }
+  mediaEl.addEventListener('play',            updateIcon);
+  mediaEl.addEventListener('pause',           updateIcon);
+  mediaEl.addEventListener('timeupdate',      updateProg);
+  mediaEl.addEventListener('loadedmetadata',  updateProg);
+  updateIcon();
+
+  let dragStartX = null, dragStartTime = null, isDragging = false;
+
+  function onStart(cx) {
+    if (!mediaEl.duration) return;
+    dragStartX = cx; dragStartTime = mediaEl.currentTime; isDragging = false;
+  }
+  function onMove(cx) {
+    if (dragStartX === null) return;
+    const dx = cx - dragStartX;
+    if (Math.abs(dx) > 4) isDragging = true;
+    if (!isDragging) return;
+    const rect = bar.getBoundingClientRect();
+    const t = Math.max(0, Math.min(mediaEl.duration, dragStartTime + (dx / rect.width) * mediaEl.duration));
+    mediaEl.currentTime = t;
+    prog.style.width = (t / mediaEl.duration * 100) + '%';
+  }
+  function onEnd() {
+    if (!isDragging && dragStartX !== null) {
+      mediaEl.paused ? mediaEl.play().catch(()=>{}) : mediaEl.pause();
+    }
+    dragStartX = null; dragStartTime = null; isDragging = false;
+  }
+
+  bar.addEventListener('mousedown',  e => { e.preventDefault(); onStart(e.clientX); });
+  window.addEventListener('mousemove', e => onMove(e.clientX));
+  window.addEventListener('mouseup',   onEnd);
+  bar.addEventListener('touchstart', e => onStart(e.touches[0].clientX), { passive: true });
+  bar.addEventListener('touchmove',  e => { e.preventDefault(); onMove(e.touches[0].clientX); }, { passive: false });
+  bar.addEventListener('touchend',   onEnd);
+
+  return bar;
+}
+
+/* ── 音频动画 ── */
+let lbAudioAnimFrame = null;
+const BAR_HEIGHTS = [0.4,0.7,1,0.6,0.85,0.5,0.75,0.45,0.9,0.55,0.65,0.8];
+function startAudioAnim(barsEl, mediaEl) {
+  let t = 0;
+  function step() {
+    if (!mediaEl || mediaEl.paused) { lbAudioAnimFrame = null; return; }
+    t += 0.07;
+    [...barsEl.children].forEach((b, i) => {
+      b.style.height = Math.max(4, 8 + Math.sin(t + i * 0.6) * BAR_HEIGHTS[i % BAR_HEIGHTS.length] * 20) + 'px';
+    });
+    lbAudioAnimFrame = requestAnimationFrame(step);
+  }
+  lbAudioAnimFrame = requestAnimationFrame(step);
+}
+function stopAudioAnim() {
+  if (lbAudioAnimFrame) { cancelAnimationFrame(lbAudioAnimFrame); lbAudioAnimFrame = null; }
+}
+
+/* ── 复制按钮 ── */
+function buildCopyBtn(text) {
+  const btn = document.createElement('div');
+  btn.className = 'lb-copy-btn';
+  const svgCopy  = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="8" height="9" rx="1.2" stroke="currentColor" stroke-width="1.1"/><path d="M3 11V3h8" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const svgCheck = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><polyline points="3,8 6.5,11.5 13,5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  btn.innerHTML = svgCopy;
+  btn.addEventListener('click', () => {
+    if (btn.classList.contains('copied')) return;
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).catch(() => execCopy(text));
+    } else { execCopy(text); }
+    btn.classList.add('copied');
+    btn.innerHTML = svgCheck;
+    setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = svgCopy; }, 3000);
+  });
+  return btn;
+}
+
+/* ── 长按下载弹窗 ── */
+let lbLongPressTimer = null;
+
+function lbBindLongPress(el) {
+  const cancel = () => { clearTimeout(lbLongPressTimer); lbLongPressTimer = null; };
+  el.addEventListener('mousedown',   () => { lbLongPressTimer = setTimeout(openLbDownloadModal, 600); });
+  el.addEventListener('mouseup',     cancel);
+  el.addEventListener('mouseleave',  cancel);
+  el.addEventListener('touchstart',  () => { lbLongPressTimer = setTimeout(openLbDownloadModal, 600); }, { passive: true });
+  el.addEventListener('touchend',    cancel);
+  el.addEventListener('touchcancel', cancel);
+}
+
+const LB_DL_TITLES = {
+  image: '下载此图片？', video: '下载此视频？', audio: '下载此音频？',
+  text: '下载此文档？',  pdf:  '下载此文档？',  placeholder: '下载此文件？'
+};
+
+function openLbDownloadModal() {
+  lbDownloadTitle.textContent = LB_DL_TITLES[lbCurType] || '下载此文件？';
+  const urlType = getUrlType(lbCurFile?.url || '');
+  if (urlType === 'none') {
+    lbDownloadBtn.textContent = 'No Url'; lbDownloadBtn.disabled = true; lbDownloadBtn.style.opacity = '0.35';
+  } else if (urlType === 'external') {
+    lbDownloadBtn.textContent = 'Open';     lbDownloadBtn.disabled = false; lbDownloadBtn.style.opacity = '';
+  } else {
+    lbDownloadBtn.textContent = 'Download'; lbDownloadBtn.disabled = false; lbDownloadBtn.style.opacity = '';
+  }
+  lbDownloadModal.classList.add('visible');
+  focusPush('lbDownloadModal');
+}
+function closeLbDownloadModal() {
+  lbDownloadModal.classList.remove('visible');
+  focusPop('lbDownloadModal');
+}
+lbDownloadModal.addEventListener('click', e => {
+  if (e.target === lbDownloadModal && focusTop() === 'lbDownloadModal') closeLbDownloadModal();
+});
+lbDownloadClose.addEventListener('click', closeLbDownloadModal);
+lbDownloadBtn.addEventListener('click', () => {
+  const f = lbCurFile; const url = f?.url || '';
+  const urlType = getUrlType(url);
+  if (urlType === 'external') { window.open(url, '_blank'); closeLbDownloadModal(); return; }
+  if (!url) return;
+  showGlobalToast('Try to Downloading...', 'warning');
+  lbDownloadBtn.disabled = true; lbDownloadBtn.style.opacity = '0.35';
+  fetch(url)
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); })
+    .then(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = f.name;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+      closeLbDownloadModal(); showGlobalToast('Successfully', 'success');
+    })
+    .catch(() => {
+      showGlobalToast('Failed to Download', 'error');
+      lbDownloadBtn.disabled = false; lbDownloadBtn.style.opacity = '';
+    });
+});
+
+/* ── 渲染灯箱内容 ── */
+function lbRender(file) {
+  if (lbMediaEl) { lbMediaEl.pause?.(); lbMediaEl = null; }
+  stopAudioAnim();
+  /* 移除上次注入的 ctrl / copy bar */
+  [...lightboxFrame.children].forEach(c => { if (c !== lightboxInner) c.remove(); });
+  lightboxInner.innerHTML = '';
+  lightboxInner.style.cssText = '';
+
+  lbCurFile = file;
+  const resolvedUrl = lbResolveUrl(file?.url || '');
+  const urlType     = getUrlType(file?.url || '');
+  const name        = file?.name || '';
+  const rawType     = lbTypeFromName(name);
+  /* 网盘链接无法在线预览，降级 */
+  lbCurType = (urlType === 'external') ? 'placeholder' : rawType;
+
+  const placeholder = label => {
+    lightboxInner.style.minHeight = '120px';
+    lightboxInner.innerHTML = `<span class="lb-placeholder">${label}</span>`;
+  };
+
+  switch (lbCurType) {
+
+    case 'image': {
+      if (!resolvedUrl) { placeholder(LB_PLACEHOLDER_LABELS.image); break; }
+      const img = document.createElement('img');
+      img.className = 'lb-img'; img.loading = 'lazy'; img.alt = name;
+      img.onerror = () => { lightboxInner.innerHTML = `<span class="lb-placeholder">${LB_PLACEHOLDER_LABELS.image}</span>`; };
+      img.src = resolvedUrl;
+      lightboxInner.appendChild(img);
+      lbBindLongPress(lightboxInner);
+      break;
+    }
+
+    case 'video': {
+      lightboxInner.style.minHeight = '200px';
+      if (!resolvedUrl) { placeholder(LB_PLACEHOLDER_LABELS.video); break; }
+      const vid = document.createElement('video');
+      vid.className = 'lb-video'; vid.controls = false; vid.playsInline = true; vid.preload = 'metadata';
+      vid.onerror = () => { lightboxInner.innerHTML = `<span class="lb-placeholder">${LB_PLACEHOLDER_LABELS.video}</span>`; lightboxFrame.querySelector('.lb-ctrl')?.remove(); };
+      vid.src = resolvedUrl; lbMediaEl = vid;
+      lightboxInner.appendChild(vid);
+      vid.addEventListener('loadedmetadata', () => {
+        const saved = lbLoadProgress(resolvedUrl, name);
+        if (saved) { vid.currentTime = saved.currentTime; if (!saved.paused) vid.play().catch(()=>{}); }
+      }, { once: true });
+      lightboxFrame.appendChild(buildCtrlBar(vid));
+      lbBindLongPress(lightboxInner);
+      break;
+    }
+
+    case 'audio': {
+      lightboxInner.style.cssText = 'flex-direction:column;align-items:stretch;padding:12px;gap:8px;min-height:140px;';
+      if (!resolvedUrl) { placeholder(LB_PLACEHOLDER_LABELS.audio); break; }
+      const aud = document.createElement('audio');
+      aud.preload = 'metadata'; aud.src = resolvedUrl; lbMediaEl = aud;
+      aud.onerror = () => { lightboxInner.innerHTML = `<span class="lb-placeholder">${LB_PLACEHOLDER_LABELS.audio}</span>`; };
+
+      const art = document.createElement('div'); art.className = 'lb-audio-art';
+      const barsEl = document.createElement('div'); barsEl.className = 'lb-audio-bars';
+      for (let i = 0; i < 12; i++) {
+        const b = document.createElement('div'); b.className = 'lb-audio-bar'; b.style.height = '8px';
+        barsEl.appendChild(b);
+      }
+      const titleEl = document.createElement('div'); titleEl.className = 'lb-audio-title'; titleEl.textContent = name;
+      art.appendChild(barsEl); art.appendChild(titleEl);
+      lightboxInner.appendChild(art);
+
+      aud.addEventListener('play',  () => { art.classList.add('lb-audio-playing');    startAudioAnim(barsEl, aud); });
+      aud.addEventListener('pause', () => { art.classList.remove('lb-audio-playing'); stopAudioAnim(); });
+      aud.addEventListener('ended', () => { art.classList.remove('lb-audio-playing'); stopAudioAnim(); });
+      aud.addEventListener('loadedmetadata', () => {
+        const saved = lbLoadProgress(resolvedUrl, name);
+        if (saved) { aud.currentTime = saved.currentTime; if (!saved.paused) aud.play().catch(()=>{}); }
+      }, { once: true });
+
+      lightboxInner.appendChild(buildCtrlBar(aud));
+      lbBindLongPress(art);
+      break;
+    }
+
+    case 'text': {
+      lightboxInner.style.cssText = 'align-items:flex-start;justify-content:flex-start;min-height:180px;';
+      if (!resolvedUrl) { placeholder(LB_PLACEHOLDER_LABELS.text); break; }
+      const pre = document.createElement('div'); pre.className = 'lb-text'; pre.textContent = '加载中...';
+      lightboxInner.appendChild(pre);
+      fetch(resolvedUrl)
+        .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
+        .then(text => {
+          pre.textContent = text;
+          lightboxFrame.appendChild(buildCopyBtn(text));
+          lbBindLongPress(lightboxInner);
+        })
+        .catch(() => { lightboxInner.innerHTML = `<span class="lb-placeholder">${LB_PLACEHOLDER_LABELS.text}</span>`; });
+      break;
+    }
+
+    case 'pdf': {
+      lightboxInner.style.minHeight = '320px';
+      if (!resolvedUrl) { placeholder(LB_PLACEHOLDER_LABELS.pdf); break; }
+      const iframe = document.createElement('iframe');
+      iframe.className = 'lb-pdf'; iframe.src = resolvedUrl;
+      iframe.onerror = () => { lightboxInner.innerHTML = `<span class="lb-placeholder">${LB_PLACEHOLDER_LABELS.pdf}</span>`; };
+      lightboxInner.appendChild(iframe);
+      lbBindLongPress(lightboxInner);
+      break;
+    }
+
+    default:
+      placeholder(LB_PLACEHOLDER_LABELS.placeholder);
+      lbBindLongPress(lightboxInner);
+  }
+}
+
+/* ── openLightbox 统一入口 ── */
 function openLightbox(arg) {
-  let src = '', alt = '';
-
-  if (arg && typeof arg === 'object') {
-    src = arg.src || '';
-    alt = arg.alt || '';
+  let file = null;
+  if (arg && typeof arg === 'object' && 'name' in arg) {
+    file = arg;
   } else if (typeof arg === 'number') {
     const d = galleryData[arg];
-    src = (d && d.image) || '';
-    alt = (d && d.caption) || String(arg + 1).padStart(2, '0');
+    file = { name: (d?.caption || String(arg)) + '.jpg', url: d?.image || '' };
+  } else if (arg && typeof arg === 'object') {
+    file = { name: (arg.alt || 'image') + '.jpg', url: arg.src || '' };
   } else {
-    alt = String(arg || '');
+    file = { name: String(arg || ''), url: '' };
   }
-
-  if (src) {
-    lightboxInner.innerHTML = `<img src="${src}" alt="${alt}"
-      style="width:100%;height:100%;object-fit:contain;display:block;">`;
-  } else {
-    lightboxLabel.textContent = alt || 'Image';
-    lightboxInner.innerHTML = '';
-    lightboxInner.appendChild(lightboxLabel);
-  }
+  lbRender(file);
   lightbox.classList.add('visible');
   focusPush('lightbox');
 }
+
 function closeLightbox() {
+  if (lbMediaEl) {
+    const resolvedUrl = lbResolveUrl(lbCurFile?.url || '');
+    lbSaveProgress(resolvedUrl, lbCurFile?.name || '', lbMediaEl.currentTime, lbMediaEl.paused);
+    lbMediaEl.pause();
+  }
+  stopAudioAnim();
   lightbox.classList.remove('visible');
   focusPop('lightbox');
 }
 lightbox.addEventListener('click', e => { if (e.target === lightbox && focusTop() === 'lightbox') closeLightbox(); });
+
 
 /* ============================================================
    PAGE 2 — PROJECT CAROUSEL
@@ -2830,9 +3274,13 @@ function getFileIcon(name) {
 }
 
 /* ── File list ── */
+const LB_PREVIEWABLE = [...LB_IMG, ...LB_VID, ...LB_AUD, ...LB_TXT, ...LB_PDF];
+
 fileData.forEach((f, i) => {
   const row = document.createElement('div');
-  row.className = 'file-row';
+  const ext = (f.name || '').split('.').pop().toLowerCase();
+  const isPreviewable = LB_PREVIEWABLE.includes(ext);
+  row.className = 'file-row' + (isPreviewable ? ' previewable' : '');
   row.innerHTML = `
     <div class="file-icon">
       ${getFileIcon(f.name)}
@@ -2844,6 +3292,12 @@ fileData.forEach((f, i) => {
     <button class="file-view-btn">View</button>
   `;
   row.querySelector('.file-view-btn').addEventListener('click', e => { e.stopPropagation(); openFileModal(i); });
+  if (isPreviewable) {
+    row.addEventListener('click', e => {
+      if (e.target.closest('.file-view-btn')) return;
+      openLightbox(f);
+    });
+  }
   fileListEl.appendChild(row);
 });
 
@@ -3623,7 +4077,8 @@ function closeTopFocus() {
     case 'lightbox':       closeLightbox();    break;
     case 'linkModal':      closeModal(linkModal);  break;
     case 'emailModal':     closeModal(emailModal); break;
-    case 'fileModal':      closeFileModal();   break;
+    case 'fileModal':        closeFileModal();        break;
+    case 'lbDownloadModal':  closeLbDownloadModal();  break;
     default: return false;
   }
   return true;
