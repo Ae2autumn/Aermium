@@ -457,7 +457,7 @@
 
   /* Page-2 carousel dots (horizontal bar style) */
   .carousel-dots {
-    display: flex; gap: 4px; flex-shrink: 0; pointer-events: none;
+    display: flex; gap: 4px; flex-shrink: 0;
   }
   /* Reuse .dot-bar for the dots inside .carousel-dots */
 
@@ -1900,7 +1900,7 @@ function createCarousel({ trackEl, dotsContainer, dotClass, dragEl, interval = 3
 
   const setDotActive = dotsContainer
     ? idx => dotsContainer.querySelectorAll('.' + dotClass)
-        .forEach((d, i) => d.classList.toggle('active', i === idx))
+        .forEach((d, i) => d && d.classList.toggle('active', i === idx))
     : () => {};
 
   function go(n) {
@@ -2827,7 +2827,6 @@ fileData.forEach((f, i) => {
     <button class="file-view-btn">View</button>
   `;
   row.querySelector('.file-view-btn').addEventListener('click', e => { e.stopPropagation(); openFileModal(i); });
-  row.querySelector('.file-icon').addEventListener('click', () => openLightbox(f.name));
   fileListEl.appendChild(row);
 });
 
