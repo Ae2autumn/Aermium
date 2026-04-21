@@ -1556,6 +1556,90 @@
   }
 
   /* ============================================================
+     LIGHTBOX — HTML / MARKDOWN 渲染
+  ============================================================ */
+
+  /* 内容区切换：预览 / 源码 */
+  .lb-render-wrap {
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    min-height: 0;
+  }
+  /* 预览层 */
+  .lb-render-preview {
+    flex: 1; min-height: 0;
+    width: 100%; height: 100%;
+    border: none; display: block;
+    background: #fff;
+  }
+  /* 源码层 */
+  .lb-render-source {
+    flex: 1; min-height: 0;
+    overflow-y: auto; scrollbar-width: none;
+    padding: 14px 16px;
+    font-family: monospace;
+    font-size: 0.72rem; line-height: 1.8;
+    color: var(--text-secondary);
+    white-space: pre; overflow-x: auto;
+    background: transparent;
+    display: none;
+  }
+  .lb-render-source::-webkit-scrollbar { display: none; }
+  .lb-render-source.active  { display: block; }
+  .lb-render-preview.active { display: block; }
+  .lb-render-preview.hidden,
+  .lb-render-source.hidden  { display: none; }
+
+  /* highlight.js 代码块在源码模式里 */
+  .lb-render-source .hljs {
+    background: transparent !important;
+    padding: 0 !important;
+    font-family: inherit;
+    font-size: inherit;
+  }
+
+  /* ── 预览/源码切换滑块 ── */
+  .lb-view-switcher {
+    flex-shrink: 0;
+    position: relative; display: flex; padding: 4px;
+    border: var(--border-hair) var(--border-mid);
+    border-radius: 10px; background: var(--bg-inner);
+    touch-action: none;
+  }
+  .lb-view-slider {
+    position: absolute; top: 4px; left: 4px;
+    height: 36px; width: calc(50% - 4px);
+    border-radius: 7px;
+    background: var(--bg-card);
+    box-shadow: inset 0 0 0 0.5px var(--border-strong);
+    transition: transform 0.3s cubic-bezier(0.77,0,0.175,1);
+    pointer-events: none;
+  }
+  .lb-view-slider.source { transform: translateX(100%); }
+  .lb-view-btn {
+    flex: 1; height: 36px;
+    border: none; border-radius: 7px;
+    background: transparent; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; z-index: 1;
+    color: var(--text-muted); transition: color 0.2s;
+  }
+  .lb-view-btn.active { color: var(--text-primary); }
+  .lb-view-btn:hover:not(.active) { color: var(--text-secondary); }
+
+  /* 长按复制状态 */
+  .lb-view-switcher.copied {
+    border-color: rgba(92,184,126,0.6);
+    background: rgba(92,184,126,0.06);
+  }
+  .lb-view-switcher.copied .lb-view-slider {
+    background: rgba(92,184,126,0.15);
+    box-shadow: inset 0 0 0 0.5px rgba(92,184,126,0.4);
+    transform: translateX(0) !important;
+  }
+  .lb-view-switcher.copied .lb-view-btn { color: #5cb87e; pointer-events: none; }
+
+  /* ============================================================
      RESPONSIVE
   ============================================================ */
   @media (min-width: 768px) and (hover: hover) {
@@ -1566,6 +1650,33 @@
   }
 
 </style>
+
+<!-- highlight.js: tokyo-night-dark theme -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+<!--
+  ============================================================
+  MARKDOWN RENDERER INTERFACE
+  ============================================================
+  合成脚本接入说明：
+  在此处引入你的 Markdown 解析库（如 marked.js、markdown-it 等），
+  并在下方 <script> 中实现 window.renderMarkdown(text) 函数。
+
+  要求：
+    - 输入：markdown 纯文本字符串
+    - 输出：HTML 字符串
+    - 挂载到 window.renderMarkdown
+
+  示例（marked.js）：
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+      window.renderMarkdown = text => marked.parse(text);
+    </script>
+
+  当前为 fallback 模式：无法解析时直接显示纯文本。
+  ============================================================
+-->
 </head>
 <body>
 
@@ -2397,25 +2508,31 @@ function lbLoadProgress(url, name) {
 }
 
 /* ── 扩展名 → 预览类型 ── */
-const LB_IMG = ['jpg','jpeg','png','gif','webp','bmp','svg','avif','heic','ico'];
-const LB_VID = ['mp4','webm','mov','mkv','m4v'];
-const LB_AUD = ['mp3','flac','wav','aac','opus','m4a','ogg'];
-const LB_TXT = ['txt','md','markdown','json','yaml','yml','toml','ini','conf','xml','csv','log','rst'];
-const LB_PDF = ['pdf'];
+const LB_IMG  = ['jpg','jpeg','png','gif','webp','bmp','svg','avif','heic','ico'];
+const LB_VID  = ['mp4','webm','mov','mkv','m4v'];
+const LB_AUD  = ['mp3','flac','wav','aac','opus','m4a','ogg'];
+const LB_TXT  = ['txt','json','yaml','yml','toml','ini','conf','xml','csv','log','rst'];
+const LB_PDF  = ['pdf'];
+const LB_HTML = ['html','htm'];
+const LB_MD   = ['md','markdown'];
 
 function lbTypeFromName(name) {
   const ext = (name || '').split('.').pop().toLowerCase();
-  if (LB_IMG.includes(ext)) return 'image';
-  if (LB_VID.includes(ext)) return 'video';
-  if (LB_AUD.includes(ext)) return 'audio';
-  if (LB_TXT.includes(ext)) return 'text';
-  if (LB_PDF.includes(ext)) return 'pdf';
+  if (LB_IMG.includes(ext))  return 'image';
+  if (LB_VID.includes(ext))  return 'video';
+  if (LB_AUD.includes(ext))  return 'audio';
+  if (LB_TXT.includes(ext))  return 'text';
+  if (LB_PDF.includes(ext))  return 'pdf';
+  if (LB_HTML.includes(ext)) return 'html';
+  if (LB_MD.includes(ext))   return 'markdown';
   return 'placeholder';
 }
 
 const LB_PLACEHOLDER_LABELS = {
   image: 'Picture', video: 'Video', audio: 'Music',
-  text: 'Document', pdf: 'Document', placeholder: 'Files'
+  text: 'Document', pdf: 'Document',
+  html: 'Document', markdown: 'Document',
+  placeholder: 'Files'
 };
 
 /* ── 解析相对路径 ── */
@@ -2699,6 +2816,146 @@ function lbRender(file) {
       iframe.onerror = () => { lightboxInner.innerHTML = `<span class="lb-placeholder">${LB_PLACEHOLDER_LABELS.pdf}</span>`; };
       lightboxInner.appendChild(iframe);
       lbBindLongPress(lightboxInner);
+      break;
+    }
+
+    case 'html':
+    case 'markdown': {
+      lightboxInner.style.minHeight = '280px';
+      if (!resolvedUrl) { placeholder(LB_PLACEHOLDER_LABELS[lbCurType]); break; }
+
+      /* ── 构建预览/源码切换滑块 ── */
+      function buildViewSwitcher(rawSource, previewEl, sourceEl) {
+        const switcher = document.createElement('div');
+        switcher.className = 'lb-view-switcher';
+
+        const slider = document.createElement('div');
+        slider.className = 'lb-view-slider';
+
+        const svgEye  = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><ellipse cx="8" cy="8" rx="6" ry="3.5" stroke="currentColor" stroke-width="1.1"/><circle cx="8" cy="8" r="1.8" fill="currentColor"/></svg>`;
+        const svgCode = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><polyline points="5,4 1,8 5,12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="11,4 15,8 11,12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        const svgCheck = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><polyline points="3,8 6.5,11.5 13,5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+        const btnPreview = document.createElement('button');
+        btnPreview.className = 'lb-view-btn active';
+        btnPreview.innerHTML = svgEye;
+
+        const btnSource = document.createElement('button');
+        btnSource.className = 'lb-view-btn';
+        btnSource.innerHTML = svgCode;
+
+        switcher.appendChild(slider);
+        switcher.appendChild(btnPreview);
+        switcher.appendChild(btnSource);
+
+        let curView = 'preview';
+        function setView(v) {
+          curView = v;
+          if (v === 'preview') {
+            slider.classList.remove('source');
+            btnPreview.classList.add('active');
+            btnSource.classList.remove('active');
+            previewEl.classList.remove('hidden'); previewEl.classList.add('active');
+            sourceEl.classList.remove('active');  sourceEl.classList.add('hidden');
+          } else {
+            slider.classList.add('source');
+            btnSource.classList.add('active');
+            btnPreview.classList.remove('active');
+            sourceEl.classList.remove('hidden');  sourceEl.classList.add('active');
+            previewEl.classList.remove('active'); previewEl.classList.add('hidden');
+          }
+        }
+        btnPreview.addEventListener('click', () => { if (!switcher.classList.contains('copied')) setView('preview'); });
+        btnSource.addEventListener('click',  () => { if (!switcher.classList.contains('copied')) setView('source'); });
+
+        /* 长按复制源码 */
+        let copyTimer = null;
+        const cancelCopy = () => { clearTimeout(copyTimer); copyTimer = null; };
+        const startCopy  = () => {
+          copyTimer = setTimeout(() => {
+            if (navigator.clipboard?.writeText) {
+              navigator.clipboard.writeText(rawSource).catch(() => execCopy(rawSource));
+            } else { execCopy(rawSource); }
+            /* 整个滑块变绿 */
+            switcher.classList.add('copied');
+            btnPreview.innerHTML = svgCheck;
+            btnSource.innerHTML  = svgCheck;
+            setTimeout(() => {
+              switcher.classList.remove('copied');
+              btnPreview.innerHTML = svgEye;
+              btnSource.innerHTML  = svgCode;
+            }, 3000);
+          }, 600);
+        };
+        switcher.addEventListener('mousedown',   startCopy);
+        switcher.addEventListener('mouseup',     cancelCopy);
+        switcher.addEventListener('mouseleave',  cancelCopy);
+        switcher.addEventListener('touchstart',  startCopy, { passive: true });
+        switcher.addEventListener('touchend',    cancelCopy);
+        switcher.addEventListener('touchcancel', cancelCopy);
+
+        setView('preview');
+        return switcher;
+      }
+
+      /* ── 内容区：预览层 + 源码层并排在 lightboxInner 内 ── */
+      lightboxInner.style.cssText = 'flex-direction:column;align-items:stretch;justify-content:flex-start;overflow:hidden;';
+
+      const previewEl = document.createElement(lbCurType === 'html' ? 'iframe' : 'div');
+      previewEl.className = 'lb-render-preview active';
+      if (lbCurType === 'html') {
+        previewEl.sandbox = 'allow-scripts allow-same-origin';
+      } else {
+        previewEl.style.cssText = 'overflow-y:auto;scrollbar-width:none;padding:14px 16px;flex:1;min-height:0;';
+      }
+
+      const sourceEl = document.createElement('div');
+      sourceEl.className = 'lb-render-source hidden';
+
+      lightboxInner.appendChild(previewEl);
+      lightboxInner.appendChild(sourceEl);
+
+      /* fetch 源码 */
+      lbFetchController = new AbortController();
+      fetch(resolvedUrl, { signal: lbFetchController.signal })
+        .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
+        .then(raw => {
+          lbFetchController = null;
+
+          /* 源码层：highlight.js 高亮 */
+          const lang = lbCurType === 'html' ? 'html' : 'markdown';
+          const highlighted = (typeof hljs !== 'undefined')
+            ? hljs.highlight(raw, { language: lang, ignoreIllegals: true }).value
+            : raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+          sourceEl.innerHTML = `<code class="hljs language-${lang}">${highlighted}</code>`;
+
+          /* 预览层 */
+          if (lbCurType === 'html') {
+            previewEl.srcdoc = raw;
+          } else {
+            /*
+             * ── MARKDOWN RENDERER INTERFACE ──────────────────────────────
+             * window.renderMarkdown(text) → HTML string
+             * 由合成脚本实现并挂载到 window。
+             * 未实现时 fallback：显示纯文本（保留换行）。
+             * ─────────────────────────────────────────────────────────────
+             */
+            if (typeof window.renderMarkdown === 'function') {
+              previewEl.innerHTML = window.renderMarkdown(raw);
+            } else {
+              previewEl.style.cssText += 'white-space:pre-wrap;font-size:0.72rem;color:var(--text-secondary);line-height:1.9;letter-spacing:0.04em;';
+              previewEl.textContent = raw;
+            }
+          }
+
+          lightboxFrame.appendChild(buildViewSwitcher(raw, previewEl, sourceEl));
+          lbBindLongPress(lightboxInner);
+        })
+        .catch(err => {
+          lbFetchController = null;
+          if (err.name === 'AbortError') return;
+          lightboxInner.innerHTML = `<span class="lb-placeholder">${LB_PLACEHOLDER_LABELS[lbCurType]}</span>`;
+        });
       break;
     }
 
@@ -3288,7 +3545,7 @@ function getFileIcon(name) {
 }
 
 /* ── File list ── */
-const LB_PREVIEWABLE = [...LB_IMG, ...LB_VID, ...LB_AUD, ...LB_TXT, ...LB_PDF];
+const LB_PREVIEWABLE = [...LB_IMG, ...LB_VID, ...LB_AUD, ...LB_TXT, ...LB_PDF, ...LB_HTML, ...LB_MD];
 
 fileData.forEach((f, i) => {
   const row = document.createElement('div');
