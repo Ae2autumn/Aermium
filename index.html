@@ -1200,7 +1200,7 @@
   .modal-btn.danger:hover { background: var(--btn-danger-hover); }
 
   /* ============================================================
-     LIGHTBOX
+     LIGHTBOX — full-featured preview
   ============================================================ */
   .lightbox-overlay {
     position: fixed; inset: 0; z-index: 1100;
@@ -1210,136 +1210,263 @@
     opacity: 0; pointer-events: none; transition: var(--transition-fade);
   }
   .lightbox-overlay.visible { opacity: 1; pointer-events: all; }
+
   .lightbox-frame {
     width: 100%; max-width: 420px;
+    max-height: 88vh;
     border: var(--border-hair) var(--border-strong);
     border-radius: var(--radius-lg); background: var(--bg-card);
     padding: var(--space-frame);
-    display: flex; flex-direction: column; gap: 8px;
+    display: flex; flex-direction: column;
     transform: scale(0.95); transition: var(--transition-snap);
-    /* 最大高度让内容自适应，不超出视口 */
-    height: calc(100vh - 64px);
-    max-height: calc(100vh - 64px);
+    overflow: hidden;
   }
   .lightbox-overlay.visible .lightbox-frame { transform: scale(1); }
 
-  /* 内容区 */
-  .lightbox-inner {
+  /* Content area — flex:1, scrollable, no scrollbar indicator */
+  .lightbox-content {
+    flex: 1; min-height: 130px;
     border: var(--border-hair) var(--border-mid);
     border-radius: var(--radius-md); background: var(--bg-inner);
-    overflow: hidden; width: 100%; min-height: 120px;
-    display: flex; align-items: center; justify-content: center;
-    position: relative; flex: 1; min-height: 0;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
+    overflow-y: auto; overflow-x: hidden;
+    position: relative;
+    display: flex; flex-direction: column;
+    scrollbar-width: none;
   }
-  .lightbox-inner span.lb-placeholder {
+  .lightbox-content::-webkit-scrollbar { display: none; }
+
+  /* Placeholder text (centered in content area) */
+  .lb-placeholder {
+    flex: 1; display: flex; align-items: center; justify-content: center;
     font-size: 0.6rem; color: var(--text-faint);
     letter-spacing: 0.25em; text-transform: uppercase;
+    padding: 24px;
   }
 
-  /* 图片 */
-  .lb-img {
-    width: 100%; height: 100%; object-fit: contain; display: block;
-    user-select: none; -webkit-user-drag: none;
-  }
-
-  /* 视频 */
-  .lb-video {
-    width: 100%; height: 100%; object-fit: contain; display: block;
-    background: #000;
-  }
-
-  /* 音频 — 内容区内的波形占位 */
-  .lb-audio-art {
-    width: 100%; height: 100%; min-height: 120px;
+  /* ── Image preview ── */
+  .lb-img-wrap {
     display: flex; align-items: center; justify-content: center;
-    flex-direction: column; gap: 12px;
+    padding: 12px;
   }
-  .lb-audio-art-bars {
-    display: flex; align-items: flex-end; gap: 3px; height: 36px;
-  }
-  .lb-audio-bar {
-    width: 3px; border-radius: 2px;
-    background: var(--text-faint);
-    transition: height 0.15s ease, background 0.2s;
-  }
-  .lb-audio-playing .lb-audio-bar { background: var(--text-secondary); }
-  .lb-audio-title {
-    font-size: 0.6rem; color: var(--text-faint);
-    letter-spacing: 0.22em; text-transform: uppercase;
-    max-width: 80%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  .lb-img-wrap img {
+    max-width: 100%; height: auto; display: block;
+    border-radius: var(--radius-sm);
   }
 
-  /* 文本 */
-  .lb-text {
-    width: 100%; height: 100%;
-    overflow-y: auto; scrollbar-width: none;
-    padding: var(--space-slide-v) var(--space-slide-h);
-    font-size: 0.72rem; color: var(--text-secondary);
-    font-weight: 300; line-height: 1.9; letter-spacing: 0.04em;
-    white-space: pre-wrap; word-break: break-word;
-    box-sizing: border-box;
-  }
-  .lb-text::-webkit-scrollbar { display: none; }
-
-  /* PDF */
-  .lb-pdf {
-    width: 100%; height: 100%; border: none; display: block;
-    min-height: 320px;
-  }
-
-  /* ── 控制条（视频/音频共用） ── */
-  .lb-ctrl {
-    flex-shrink: 0;
-    position: relative; overflow: hidden;
-    height: 44px; border-radius: var(--radius-md);
-    border: var(--border-hair) var(--border-mid);
-    background: var(--bg-inner);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; user-select: none; -webkit-user-select: none;
-    touch-action: none;
-  }
-  /* 进度背景 */
-  .lb-ctrl-progress {
-    position: absolute; inset: 0; right: auto;
-    width: 0%; background: var(--hover-bg);
-    pointer-events: none; transition: width 0.1s linear;
+  /* ── Shimmer loading effect ── */
+  .lb-shimmer {
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 35%,
+      rgba(255,220,0,0.18) 50%,
+      transparent 65%
+    );
+    animation: lbSweep 1.6s cubic-bezier(0.4,0,0.2,1) infinite;
+    pointer-events: none;
     border-radius: var(--radius-md);
   }
-  /* 图标 */
-  .lb-ctrl-icon {
-    position: relative; z-index: 1;
-    color: var(--text-secondary); pointer-events: none;
-    display: flex; align-items: center; justify-content: center;
+  :root.dark .lb-shimmer {
+    background: linear-gradient(
+      105deg,
+      transparent 35%,
+      rgba(255,225,20,0.12) 50%,
+      transparent 65%
+    );
+  }
+  @keyframes lbSweep {
+    0%   { transform: translateX(-120%); }
+    100% { transform: translateX(120%); }
   }
 
-  /* ── 文本复制条 ── */
-  .lb-copy-btn {
-    flex-shrink: 0;
-    height: 44px; border-radius: var(--radius-md);
+  /* ── Audio control ── */
+  .lb-audio-wrap {
+    display: flex; flex-direction: column;
+    align-items: center;
+    padding: 20px 16px 16px;
+    gap: 10px;
+  }
+  .lb-audio-name {
+    font-size: 0.65rem; color: var(--text-secondary);
+    letter-spacing: 0.08em; text-align: center;
+    max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .lb-audio-ctrl {
+    width: 100%;
+    position: relative; overflow: hidden;
     border: var(--border-hair) var(--border-mid);
-    background: var(--bg-inner);
+    border-radius: var(--radius-md);
+    height: 48px;
     display: flex; align-items: center; justify-content: center;
-    cursor: pointer; color: var(--text-secondary);
-    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    cursor: pointer; user-select: none;
+    background: var(--bg-card);
+    touch-action: none;
   }
-  .lb-copy-btn:hover { background: var(--hover-bg); color: var(--text-primary); }
-  .lb-copy-btn.copied {
-    border-color: rgba(92,184,126,0.6);
-    background: rgba(92,184,126,0.06);
-    color: #5cb87e; cursor: default;
+  /* progress fill as background */
+  .lb-audio-progress {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 0%;
+    background: var(--hover-bg);
+    border-radius: var(--radius-md);
+    pointer-events: none;
+    transition: width 0.1s linear;
+  }
+  .lb-audio-icon {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-secondary);
+    gap: 6px; pointer-events: none;
   }
 
-  /* ── 可预览行高亮 ── */
-  .file-row.previewable { cursor: pointer; }
+  /* ── Video (floating control) ── */
+  .lb-video-wrap {
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; border-radius: var(--radius-md);
+    background: #000;
+    flex: 1; min-height: 0;
+  }
+  .lb-video-el {
+    width: 100%; height: 100%;
+    object-fit: contain; display: block;
+  }
+  /* Floating video control — does NOT participate in flex layout */
+  .lb-video-ctrl {
+    position: absolute; left: 10px; right: 10px; bottom: 10px;
+    border: var(--border-hair) var(--border-mid);
+    border-radius: var(--radius-md);
+    height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; user-select: none;
+    overflow: hidden;
+    background: var(--bg-card);
+    touch-action: none;
+    /* animation state: hidden by default */
+    transform: translateY(20px);
+    opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.77,0,0.175,1), opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .lb-video-ctrl.visible {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: all;
+  }
+  .lb-video-progress {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 0%;
+    background: var(--hover-bg);
+    border-radius: var(--radius-md);
+    pointer-events: none;
+    transition: width 0.1s linear;
+  }
+  .lb-video-icon {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-secondary);
+    gap: 6px; pointer-events: none;
+  }
 
-  /* 下载弹窗动态标题 */
-  #lbDownloadTitle {
-    font-size: 0.75rem; letter-spacing: 0.12em;
-    color: var(--modal-title); font-weight: 400;
-    text-align: center; line-height: 1.8;
+  /* ── TXT preview ── */
+  .lb-txt-content {
+    flex: 1; min-height: 0;
+    padding: 14px 16px;
+    font-size: 0.72rem; color: var(--text-secondary);
+    font-family: monospace; line-height: 1.75; letter-spacing: 0.02em;
+    white-space: pre-wrap; word-break: break-word;
+    overflow-y: auto; scrollbar-width: none;
+  }
+  .lb-txt-content::-webkit-scrollbar { display: none; }
+
+  /* ── Copy / Toggle button row (shared by TXT and HTML/MD) ── */
+  .lb-action-row {
+    flex-shrink: 0;
+    border-top: var(--border-hair) var(--border-soft);
+    height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; user-select: none; position: relative; overflow: hidden;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    background: var(--bg-inner);
+    transition: background 0.15s;
+    gap: 7px;
+    font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+  .lb-action-row:hover { background: var(--hover-bg); }
+  .lb-action-row.copied {
+    background: rgba(92,184,126,0.08);
+    border-color: rgba(92,184,126,0.4);
+    color: #5cb87e;
+    cursor: default;
+  }
+  .lb-action-row.copied:hover { background: rgba(92,184,126,0.08); }
+
+  /* ── HTML/MD: slider toggle row ── */
+  .lb-toggle-row {
+    flex-shrink: 0;
+    border-top: var(--border-hair) var(--border-soft);
+    height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    user-select: none; position: relative; overflow: hidden;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    background: var(--bg-inner);
+    gap: 7px;
+    font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .lb-toggle-row:hover { background: var(--hover-bg); }
+  .lb-toggle-row.copied {
+    background: rgba(92,184,126,0.08);
+    border-color: rgba(92,184,126,0.4);
+    color: #5cb87e;
+    cursor: default;
+  }
+  .lb-toggle-knob {
+    width: 28px; height: 16px; border-radius: 8px;
+    background: var(--border-mid);
+    position: relative; transition: background 0.25s;
+    flex-shrink: 0;
+  }
+  .lb-toggle-knob::after {
+    content: '';
+    position: absolute; top: 3px; left: 3px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--text-secondary);
+    transition: transform 0.25s cubic-bezier(0.77,0,0.175,1);
+  }
+  .lb-toggle-knob.on { background: rgba(92,184,126,0.4); }
+  .lb-toggle-knob.on::after { transform: translateX(12px); background: #5cb87e; }
+
+  /* ── HTML/MD render areas ── */
+  .lb-render-wrap {
+    flex: 1; min-height: 0; overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .lb-iframe-wrap {
+    flex: 1; min-height: 0; overflow: hidden;
+  }
+  .lb-iframe-wrap iframe {
+    width: 100%; height: 100%; border: none; display: block;
+  }
+  .lb-source-wrap {
+    flex: 1; min-height: 0; overflow-y: auto; overflow-x: auto;
+    scrollbar-width: none;
+    background: #1a1b26; /* tokyo-night-dark base */
+    border-radius: var(--radius-sm);
+  }
+  .lb-source-wrap::-webkit-scrollbar { display: none; }
+  .lb-source-wrap pre {
+    margin: 0; padding: 14px 16px;
+    font-family: monospace; font-size: 0.72rem;
+    line-height: 1.75; white-space: pre-wrap; word-break: break-word;
+  }
+
+  /* ── Download modal triggered from lightbox ── */
+  #lbDownloadModal .modal-btn.disabled {
+    opacity: 0.35; cursor: not-allowed; pointer-events: none;
   }
 
   /* ============================================================
@@ -1560,94 +1687,6 @@
   }
 
   /* ============================================================
-     LIGHTBOX — HTML / MARKDOWN 渲染
-  ============================================================ */
-
-  /* 内容区切换：预览 / 源码 */
-  .lb-render-wrap {
-    width: 100%; height: 100%;
-    display: flex; flex-direction: column;
-    min-height: 0;
-  }
-  /* 预览层 */
-  .lb-render-preview {
-    flex: 1; min-height: 0;
-    width: 100%; height: 100%;
-    border: none; display: block;
-    background: #fff;
-  }
-  /* 源码层 */
-  .lb-render-source {
-    flex: 1; min-height: 0;
-    overflow-y: auto; scrollbar-width: none;
-    padding: 14px 16px;
-    font-family: monospace;
-    font-size: 0.72rem; line-height: 1.8;
-    color: var(--text-secondary);
-    white-space: pre; overflow-x: auto;
-    background: transparent;
-    display: none;
-  }
-  .lb-render-source::-webkit-scrollbar { display: none; }
-  .lb-render-source.active  { display: block; }
-  .lb-render-preview.active { display: block; }
-  .lb-render-preview.hidden,
-  .lb-render-source.hidden  { display: none; }
-
-  /* highlight.js 代码块在源码模式里 */
-  .lb-render-source .hljs {
-    background: transparent !important;
-    padding: 0 !important;
-    font-family: inherit;
-    font-size: inherit;
-  }
-
-  /* ── 预览/源码切换滑块 ── */
-  .lb-view-switcher {
-    flex-shrink: 0;
-    position: relative; display: flex; padding: 4px;
-    border: var(--border-hair) var(--border-mid);
-    border-radius: 10px; background: var(--bg-inner);
-    touch-action: none;
-  }
-  .lb-view-slider {
-    position: absolute; top: 4px; left: 4px;
-    height: 36px; width: calc(50% - 4px);
-    border-radius: 7px;
-    background: var(--bg-card);
-    box-shadow: inset 0 0 0 0.5px var(--border-strong);
-    transition: transform 0.3s cubic-bezier(0.77,0,0.175,1);
-    pointer-events: none;
-  }
-  .lb-view-slider.source { transform: translateX(100%); }
-  .lb-view-btn {
-    flex: 1; height: 36px;
-    border: none; border-radius: 7px;
-    background: transparent; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    position: relative; z-index: 1;
-    color: var(--text-muted); transition: color 0.2s;
-  }
-  .lb-view-btn.active { color: var(--text-primary); }
-  .lb-view-btn:hover:not(.active) { color: var(--text-secondary); }
-
-  /* 长按复制状态 */
-  .lb-view-switcher.copied {
-    border-color: rgba(92,184,126,0.6);
-    background: rgba(92,184,126,0.10);
-    justify-content: center;
-  }
-  .lb-view-switcher.copied .lb-view-slider { display: none; }
-  .lb-view-switcher.copied .lb-view-btn    { display: none; }
-  .lb-view-switcher-check {
-    display: none;
-    position: absolute; inset: 0;
-    align-items: center; justify-content: center;
-    color: #5cb87e; pointer-events: none;
-  }
-  .lb-view-switcher.copied .lb-view-switcher-check { display: flex; }
-
-  /* ============================================================
      RESPONSIVE
   ============================================================ */
   @media (min-width: 768px) and (hover: hover) {
@@ -1658,33 +1697,6 @@
   }
 
 </style>
-
-<!-- highlight.js: tokyo-night-dark theme -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-
-<!--
-  ============================================================
-  MARKDOWN RENDERER INTERFACE
-  ============================================================
-  合成脚本接入说明：
-  在此处引入你的 Markdown 解析库（如 marked.js、markdown-it 等），
-  并在下方 <script> 中实现 window.renderMarkdown(text) 函数。
-
-  要求：
-    - 输入：markdown 纯文本字符串
-    - 输出：HTML 字符串
-    - 挂载到 window.renderMarkdown
-
-  示例（marked.js）：
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script>
-      window.renderMarkdown = text => marked.parse(text);
-    </script>
-
-  当前为 fallback 模式：无法解析时直接显示纯文本。
-  ============================================================
--->
 </head>
 <body>
 
@@ -1982,21 +1994,24 @@
 </div>
 
 <!-- ============================================================
-     LIGHTBOX
+     LIGHTBOX — full-featured preview
 ============================================================ -->
 <div class="lightbox-overlay" id="lightbox">
-  <div class="lightbox-frame" id="lightboxFrame">
-    <div class="lightbox-inner" id="lightboxInner"></div>
-    <!-- ctrl bar / copy bar injected by JS -->
+  <div class="lightbox-frame">
+    <div class="lightbox-content" id="lbContent">
+      <!-- dynamically filled -->
+    </div>
+    <!-- action row: copy (TXT) or toggle+longpress-copy (HTML/MD), hidden otherwise -->
+    <div class="lb-action-row" id="lbActionRow" style="display:none"></div>
   </div>
 </div>
 
-<!-- 灯箱长按下载弹窗 -->
+<!-- Lightbox download modal -->
 <div class="modal-overlay" id="lbDownloadModal">
   <div class="modal">
-    <div id="lbDownloadTitle">下载此文件？</div>
+    <div class="modal-title" id="lbDownloadTitle">下载此文件</div>
     <div class="modal-buttons">
-      <button class="modal-btn" id="lbDownloadClose">Close</button>
+      <button class="modal-btn" id="lbDownloadCancel">Cancel</button>
       <button class="modal-btn danger" id="lbDownloadBtn">Download</button>
     </div>
   </div>
@@ -2249,18 +2264,12 @@ const contactData = {
 };
 
 const fileData = [
-  { name: 'test.deb',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'http://ftp.debian.org/debian/pool/main/a/apt/apt_2.6.1_amd64.deb' },  // 真实deb包
-  { name: 'test.mp4',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://cropgif.net/videos/1776752686706-9e0da3fb-25e5-4355-887b-961a99d25a92.mp4' },  // 示例MP4
-  { name: 'test.mp3',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },  // 示例MP3
-  { name: 'test.txt',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://www.w3.org/TR/2003/REC-PNG-20031110/iso-8859-1.txt' },  // 文本文件
-  { name: 'test.md',   size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://raw.githubusercontent.com/mdn/content/main/files/en-us/web/html/index.md' },  // Markdown文件
-  { name: 'test.html', size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://www.w3.org/People/Berners-Lee/Overview.html' },  // HTML页面
-  { name: 'test.png',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://www.w3.org/People/Berners-Lee/2000/05/photo-2000-05-05_28-small.png' },  // PNG图片
-  { name: 'test.svg',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://upload.wikimedia.org/wikipedia/commons/8/84/Example.svg' },  // SVG矢量图
-  { name: 'test.pdf',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' },  // PDF文件
-  { name: 'test.iso',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'http://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-12.2.0-amd64-netinst.iso' },  // 真实ISO镜像（较大）
-  { name: 'test.esd',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://example.com/test.esd' },  // ESD无标准公开测试文件，保留占位
-  { name: 'test.mov',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'http://techslides.com/demos/sample-videos/small.mov' }   // MOV示例视频
+  { name: 'brand-guidelines.pdf',  size: '4.2 MB',  date: '2026.03.14', hash: 'a3f8c1d290e4b57f', url: '' },
+  { name: 'logo-pack.zip',         size: '18.7 MB', date: '2026.03.14', hash: 'b9e2a04d3c718f52', url: '' },
+  { name: 'color-palette.ase',     size: '128 KB',  date: '2026.02.28', hash: 'c4d71b8e0af36290', url: '' },
+  { name: 'typeface-specimen.pdf', size: '2.1 MB',  date: '2026.02.20', hash: 'd0c83f2a1e94b756', url: '' },
+  { name: 'motion-reference.mp4',  size: '87.3 MB', date: '2026.01.30', hash: 'e7a12f04b5c9d38e', url: '' },
+  { name: 'icon-set.svg',          size: '340 KB',  date: '2026.01.15', hash: 'f5b09e3c2d841a76', url: '' },
 ];
 
 const docFiles = [
@@ -2484,527 +2493,729 @@ function openBlog(idx)    { openSheet('blog', blogData[idx]); }
 function closeBlog()      { closeSheet(); }
 
 /* ============================================================
-   LIGHTBOX — 完整实现
-   支持：image / video / audio / text / pdf / placeholder
-   长按任意内容区拉起下载弹窗
-   音视频：关闭暂停，localStorage 保存/恢复进度
+   LIGHTBOX — full-featured preview
+   openLightbox(arg):
+     { src, alt }          → image (legacy, from sheet/stack)
+     { url, filename, type } → file preview (audio/video/txt/html/md/image)
+     number                → galleryData[idx] image
+     string                → plain placeholder text
 ============================================================ */
-const lightbox        = document.getElementById('lightbox');
-const lightboxFrame   = document.getElementById('lightboxFrame');
-const lightboxInner   = document.getElementById('lightboxInner');
+const lightbox    = document.getElementById('lightbox');
+const lbContent   = document.getElementById('lbContent');
+const lbActionRow = document.getElementById('lbActionRow');
+
+/* ── State ── */
+let lbCurrentType = null;   // 'image'|'audio'|'video'|'txt'|'html'|'md'|null
+let lbCurrentUrl  = null;
+let lbCurrentFile = null;   // filename
+let lbFetchCtrl   = null;   // AbortController for fetch
+let lbAudioEl     = null;
+let lbVideoEl     = null;
+let lbVideoTimer  = null;   // 5s auto-hide timer
+let lbIsSource    = false;  // HTML/MD: true = source view
+let lbRawContent  = '';     // HTML/MD/TXT raw text
+let lbLongPressTimer = null;
+let lbCopyDone    = false;
+
+/* ── Helpers ── */
+function lbGetTypeFromFilename(name) {
+  if (!name) return 'unknown';
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  const img  = ['jpg','jpeg','png','gif','webp','bmp','svg','avif','heic','ico','tiff','tif','raw'];
+  const aud  = ['mp3','flac','wav','aac','ogg','opus','m4a','wma','aiff','alac'];
+  const vid  = ['mp4','mov','webm','mkv','avi','flv','wmv','m4v','3gp'];
+  const txt  = ['txt','log','csv','ini','conf','yaml','yml','toml','rst'];
+  const md   = ['md','markdown'];
+  const html = ['html','htm'];
+  if (img.includes(ext))  return 'image';
+  if (aud.includes(ext))  return 'audio';
+  if (vid.includes(ext))  return 'video';
+  if (txt.includes(ext))  return 'txt';
+  if (md.includes(ext))   return 'md';
+  if (html.includes(ext)) return 'html';
+  return 'unknown';
+}
+
+function lbPlaceholderText(type) {
+  const map = { image:'Image', audio:'Voice', video:'Video', txt:'Document', html:'Page', md:'Page', unknown:'File' };
+  return map[type] || 'File';
+}
+
+function lbTypeLabel(type) {
+  const map = { image:'图片', audio:'音频', video:'视频', txt:'文档', html:'页面', md:'页面', unknown:'文件' };
+  return map[type] || '文件';
+}
+
+/* ── LocalStorage: save/restore audio+video progress ── */
+function lbProgressKey(url, filename) {
+  // If URL somehow repeats, append filename as discriminator
+  return 'lb_prog_' + url + (filename ? '_' + filename : '');
+}
+function lbSaveProgress(url, filename, currentTime, paused) {
+  try { localStorage.setItem(lbProgressKey(url, filename), JSON.stringify({ t: currentTime, p: paused })); } catch(_){}
+}
+function lbLoadProgress(url, filename) {
+  try { const v = localStorage.getItem(lbProgressKey(url, filename)); return v ? JSON.parse(v) : null; } catch(_){ return null; }
+}
+
+/* ── Shimmer ── */
+function lbShowShimmer() {
+  const s = document.createElement('div');
+  s.className = 'lb-shimmer'; s.id = 'lbShimmer';
+  lbContent.appendChild(s);
+}
+function lbRemoveShimmer() {
+  const s = document.getElementById('lbShimmer');
+  if (s) s.remove();
+}
+
+/* ── Action row: copy (TXT) ── */
+function lbSetupCopyBtn() {
+  lbActionRow.style.display = '';
+  lbActionRow.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect x="5" y="5" width="9" height="9" rx="1.2" stroke="currentColor" stroke-width="1.1"/>
+      <path d="M3 11V3h8" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span>复制</span>`;
+  lbCopyDone = false;
+  lbActionRow.onclick = () => {
+    if (lbCopyDone) return;
+    lbDoCopy(lbRawContent);
+  };
+}
+
+/* ── Action row: toggle + long-press copy (HTML/MD) ── */
+function lbSetupToggleRow() {
+  // Replace action row with toggle row behaviour
+  lbActionRow.style.display = '';
+  lbActionRow.className = 'lb-toggle-row';
+  lbActionRow.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <polyline points="4,5 2,8 4,11" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="12,5 14,8 12,11" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="6" y1="10" x2="10" y2="6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+    </svg>
+    <div class="lb-toggle-knob" id="lbToggleKnob"></div>
+    <span id="lbToggleLabel">源码</span>`;
+  lbCopyDone = false;
+  lbIsSource = false;
+
+  // Click = toggle
+  lbActionRow.addEventListener('click', lbToggleSourceView);
+
+  // Long-press = copy
+  lbActionRow.addEventListener('pointerdown', () => {
+    lbLongPressTimer = setTimeout(() => {
+      lbLongPressTimer = null;
+      const text = lbIsSource ? lbRawContent : (lbContent.querySelector('iframe')
+        ? (lbContent.querySelector('iframe').contentDocument?.body?.innerText || lbRawContent)
+        : lbRawContent);
+      lbDoCopy(text);
+    }, 500);
+  });
+  lbActionRow.addEventListener('pointerup',     () => { clearTimeout(lbLongPressTimer); lbLongPressTimer = null; });
+  lbActionRow.addEventListener('pointercancel', () => { clearTimeout(lbLongPressTimer); lbLongPressTimer = null; });
+}
+
+function lbToggleSourceView() {
+  if (lbCopyDone) return;
+  lbIsSource = !lbIsSource;
+  const knob  = document.getElementById('lbToggleKnob');
+  const label = document.getElementById('lbToggleLabel');
+  if (knob)  knob.classList.toggle('on', lbIsSource);
+  if (label) label.textContent = lbIsSource ? '预览' : '源码';
+  const iframeWrap = lbContent.querySelector('.lb-iframe-wrap');
+  const sourceWrap = lbContent.querySelector('.lb-source-wrap');
+  if (iframeWrap) iframeWrap.style.display = lbIsSource ? 'none' : '';
+  if (sourceWrap) sourceWrap.style.display = lbIsSource ? '' : 'none';
+}
+
+function lbDoCopy(text) {
+  const done = () => {
+    lbCopyDone = true;
+    const row = document.getElementById('lbActionRow') || lbActionRow;
+    row.classList.add('copied');
+    const prev = row.innerHTML;
+    row.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>`;
+    row.onclick = null;
+    setTimeout(() => {
+      row.classList.remove('copied');
+      row.innerHTML = prev;
+      lbCopyDone = false;
+      if (lbCurrentType === 'txt') lbSetupCopyBtn();
+      else if (lbCurrentType === 'html' || lbCurrentType === 'md') lbSetupToggleRow();
+    }, 1500);
+  };
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => { execCopy(text); done(); });
+  } else { execCopy(text); done(); }
+}
+
+/* ── Highlight.js loader (lazy) ── */
+let hlPromise = null;
+function lbLoadHighlight() {
+  if (hlPromise) return hlPromise;
+  hlPromise = new Promise(resolve => {
+    if (window.hljs) { resolve(); return; }
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css';
+    document.head.appendChild(link);
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js';
+    s.onload = resolve; document.head.appendChild(s);
+  });
+  return hlPromise;
+}
+
+/* ── Marked.js loader (lazy) ── */
+let markedPromise = null;
+function lbLoadMarked() {
+  if (markedPromise) return markedPromise;
+  markedPromise = new Promise(resolve => {
+    if (window.marked) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js';
+    s.onload = resolve; document.head.appendChild(s);
+  });
+  return markedPromise;
+}
+
+/* ── Cleanup ── */
+function lbCleanup() {
+  // 1. Abort any ongoing fetch
+  if (lbFetchCtrl) { lbFetchCtrl.abort(); lbFetchCtrl = null; }
+
+  // 2. Save audio/video progress
+  if ((lbCurrentType === 'audio' || lbCurrentType === 'video') && lbCurrentUrl) {
+    const el = lbCurrentType === 'audio' ? lbAudioEl : lbVideoEl;
+    if (el) lbSaveProgress(lbCurrentUrl, lbCurrentFile, el.currentTime, el.paused);
+  }
+
+  // 3. Pause audio/video
+  if (lbAudioEl) { lbAudioEl.pause(); lbAudioEl = null; }
+  if (lbVideoEl) { lbVideoEl.pause(); lbVideoEl = null; }
+
+  // 4. Clear video timer
+  clearTimeout(lbVideoTimer); lbVideoTimer = null;
+
+  // 5. Clear long-press timer
+  clearTimeout(lbLongPressTimer); lbLongPressTimer = null;
+
+  // 6. Clear img src (abort image load)
+  const img = lbContent.querySelector('img');
+  if (img) img.src = '';
+
+  // 7. Clear DOM
+  lbContent.innerHTML = '';
+  lbActionRow.style.display = 'none';
+  lbActionRow.className = 'lb-action-row';
+  lbActionRow.innerHTML = '';
+  lbActionRow.onclick = null;
+
+  // Reset state
+  lbCurrentType = null; lbCurrentUrl = null; lbCurrentFile = null;
+  lbIsSource = false; lbRawContent = ''; lbCopyDone = false;
+}
+
+/* ── Long-press download on content area ── */
+let lbDlPressTimer = null;
+
+function lbBindDownloadLongPress() {
+  lbContent.addEventListener('pointerdown', lbDlPressStart);
+  lbContent.addEventListener('pointerup',     lbDlPressEnd);
+  lbContent.addEventListener('pointercancel', lbDlPressEnd);
+}
+function lbDlPressStart() {
+  lbDlPressTimer = setTimeout(() => { lbDlPressTimer = null; lbOpenDownloadModal(); }, 500);
+}
+function lbDlPressEnd() {
+  clearTimeout(lbDlPressTimer); lbDlPressTimer = null;
+}
+
+/* ── Download modal ── */
 const lbDownloadModal = document.getElementById('lbDownloadModal');
 const lbDownloadTitle = document.getElementById('lbDownloadTitle');
 const lbDownloadBtn   = document.getElementById('lbDownloadBtn');
-const lbDownloadClose = document.getElementById('lbDownloadClose');
+const lbDownloadCancel= document.getElementById('lbDownloadCancel');
 
-/* 当前灯箱持有的文件信息 */
-let lbCurFile = null;         // fileData entry or null
-let lbCurType = '';           // 'image'|'video'|'audio'|'text'|'pdf'|'placeholder'
-let lbMediaEl = null;         // current <video> or <audio>
-let lbImgEl   = null;         // current <img> — 关闭时置空 src 中止加载
-let lbFetchController = null; // AbortController for in-flight text fetch
-
-/* ── localStorage: 保存/恢复媒体进度 ── */
-function lbStorageKey(url, name) {
-  return 'lb-media:' + (url || name || '');
-}
-function lbSaveProgress(url, name, currentTime, paused) {
-  try {
-    const key = lbStorageKey(url, name);
-    if (key !== 'lb-media:') localStorage.setItem(key, JSON.stringify({ currentTime, paused }));
-  } catch(_) {}
-}
-function lbLoadProgress(url, name) {
-  try {
-    const raw = localStorage.getItem(lbStorageKey(url, name));
-    return raw ? JSON.parse(raw) : null;
-  } catch(_) { return null; }
-}
-
-/* ── 扩展名 → 预览类型 ── */
-const LB_IMG  = ['jpg','jpeg','png','gif','webp','bmp','svg','avif','heic','ico'];
-const LB_VID  = ['mp4','webm','mov','mkv','m4v'];
-const LB_AUD  = ['mp3','flac','wav','aac','opus','m4a','ogg'];
-const LB_TXT  = ['txt','json','yaml','yml','toml','ini','conf','xml','csv','log','rst'];
-const LB_PDF  = ['pdf'];
-const LB_HTML = ['html','htm'];
-const LB_MD   = ['md','markdown'];
-
-function lbTypeFromName(name) {
-  const ext = (name || '').split('.').pop().toLowerCase();
-  if (LB_IMG.includes(ext))  return 'image';
-  if (LB_VID.includes(ext))  return 'video';
-  if (LB_AUD.includes(ext))  return 'audio';
-  if (LB_TXT.includes(ext))  return 'text';
-  if (LB_HTML.includes(ext)) return 'html';
-  if (LB_MD.includes(ext))   return 'markdown';
-  return 'placeholder';
-}
-
-const LB_PLACEHOLDER_LABELS = {
-  image: 'Picture', video: 'Video', audio: 'Music',
-  text: 'Document', pdf: 'Document',
-  html: 'Document', markdown: 'Document',
-  placeholder: 'Files'
-};
-
-/* ── 解析相对路径 ── */
-function lbResolveUrl(url) {
-  if (!url) return '';
-  try { return new URL(url, location.href).href; } catch(_) { return url; }
-}
-
-/* ── 播放控制条（video外/audio内共用） ── */
-function buildCtrlBar(mediaEl) {
-  const bar = document.createElement('div');
-  bar.className = 'lb-ctrl';
-
-  const prog = document.createElement('div');
-  prog.className = 'lb-ctrl-progress';
-  bar.appendChild(prog);
-
-  const iconWrap = document.createElement('div');
-  iconWrap.className = 'lb-ctrl-icon';
-  bar.appendChild(iconWrap);
-
-  const svgPlay  = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><polygon points="4,2 14,8 4,14" fill="currentColor"/></svg>`;
-  const svgPause = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="2" width="3.5" height="12" rx="1" fill="currentColor"/><rect x="9.5" y="2" width="3.5" height="12" rx="1" fill="currentColor"/></svg>`;
-
-  function updateIcon() { iconWrap.innerHTML = mediaEl.paused ? svgPlay : svgPause; }
-  function updateProg() {
-    if (!mediaEl.duration) return;
-    prog.style.width = (mediaEl.currentTime / mediaEl.duration * 100) + '%';
-  }
-  mediaEl.addEventListener('play',            updateIcon);
-  mediaEl.addEventListener('pause',           updateIcon);
-  mediaEl.addEventListener('timeupdate',      updateProg);
-  mediaEl.addEventListener('loadedmetadata',  updateProg);
-  updateIcon();
-
-  let dragStartX = null, dragStartTime = null, isDragging = false;
-
-  function onStart(cx) {
-    if (!mediaEl.duration) return;
-    dragStartX = cx; dragStartTime = mediaEl.currentTime; isDragging = false;
-  }
-  function onMove(cx) {
-    if (dragStartX === null) return;
-    const dx = cx - dragStartX;
-    if (Math.abs(dx) > 4) isDragging = true;
-    if (!isDragging) return;
-    const rect = bar.getBoundingClientRect();
-    const t = Math.max(0, Math.min(mediaEl.duration, dragStartTime + (dx / rect.width) * mediaEl.duration));
-    mediaEl.currentTime = t;
-    prog.style.width = (t / mediaEl.duration * 100) + '%';
-  }
-  function onEnd() {
-    if (!isDragging && dragStartX !== null) {
-      mediaEl.paused ? mediaEl.play().catch(()=>{}) : mediaEl.pause();
-    }
-    dragStartX = null; dragStartTime = null; isDragging = false;
-  }
-
-  bar.addEventListener('mousedown',  e => { e.preventDefault(); onStart(e.clientX); });
-  window.addEventListener('mousemove', e => onMove(e.clientX));
-  window.addEventListener('mouseup',   onEnd);
-  bar.addEventListener('touchstart', e => onStart(e.touches[0].clientX), { passive: true });
-  bar.addEventListener('touchmove',  e => { e.preventDefault(); onMove(e.touches[0].clientX); }, { passive: false });
-  bar.addEventListener('touchend',   onEnd);
-
-  return bar;
-}
-
-/* ── 音频动画 ── */
-let lbAudioAnimFrame = null;
-const BAR_HEIGHTS = [0.4,0.7,1,0.6,0.85,0.5,0.75,0.45,0.9,0.55,0.65,0.8];
-function startAudioAnim(barsEl, mediaEl) {
-  let t = 0;
-  function step() {
-    if (!mediaEl || mediaEl.paused) { lbAudioAnimFrame = null; return; }
-    t += 0.07;
-    [...barsEl.children].forEach((b, i) => {
-      b.style.height = Math.max(4, 8 + Math.sin(t + i * 0.6) * BAR_HEIGHTS[i % BAR_HEIGHTS.length] * 20) + 'px';
-    });
-    lbAudioAnimFrame = requestAnimationFrame(step);
-  }
-  lbAudioAnimFrame = requestAnimationFrame(step);
-}
-function stopAudioAnim() {
-  if (lbAudioAnimFrame) { cancelAnimationFrame(lbAudioAnimFrame); lbAudioAnimFrame = null; }
-}
-
-/* ── 复制按钮 ── */
-function buildCopyBtn(text) {
-  const btn = document.createElement('div');
-  btn.className = 'lb-copy-btn';
-  const svgCopy  = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="8" height="9" rx="1.2" stroke="currentColor" stroke-width="1.1"/><path d="M3 11V3h8" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-  const svgCheck = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><polyline points="3,8 6.5,11.5 13,5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-  btn.innerHTML = svgCopy;
-  btn.addEventListener('click', () => {
-    if (btn.classList.contains('copied')) return;
-    if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(text).catch(() => execCopy(text));
-    } else { execCopy(text); }
-    btn.classList.add('copied');
-    btn.innerHTML = svgCheck;
-    setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = svgCopy; }, 3000);
-  });
-  return btn;
-}
-
-/* ── 长按下载弹窗 ── */
-let lbLongPressTimer = null;
-
-function lbBindLongPress(el) {
-  const cancel = () => { clearTimeout(lbLongPressTimer); lbLongPressTimer = null; };
-  el.addEventListener('mousedown',   () => { lbLongPressTimer = setTimeout(openLbDownloadModal, 600); });
-  el.addEventListener('mouseup',     cancel);
-  el.addEventListener('mouseleave',  cancel);
-  el.addEventListener('touchstart',  e => {
-    e.preventDefault();
-    lbLongPressTimer = setTimeout(openLbDownloadModal, 600);
-  }, { passive: false });
-  el.addEventListener('touchend',    cancel);
-  el.addEventListener('touchcancel', cancel);
-  el.addEventListener('touchmove',   cancel);
-}
-
-const LB_DL_TITLES = {
-  image: '下载此图片？', video: '下载此视频？', audio: '下载此音频？',
-  text: '下载此文档？',  pdf:  '下载此文档？',  placeholder: '下载此文件？'
-};
-
-function openLbDownloadModal() {
-  lbDownloadTitle.textContent = LB_DL_TITLES[lbCurType] || '下载此文件？';
-  const urlType = getUrlType(lbCurFile?.url || '');
-  if (urlType === 'none') {
-    lbDownloadBtn.textContent = 'No Url'; lbDownloadBtn.disabled = true; lbDownloadBtn.style.opacity = '0.35';
-  } else if (urlType === 'external') {
-    lbDownloadBtn.textContent = 'Open';     lbDownloadBtn.disabled = false; lbDownloadBtn.style.opacity = '';
-  } else {
-    lbDownloadBtn.textContent = 'Download'; lbDownloadBtn.disabled = false; lbDownloadBtn.style.opacity = '';
-  }
-  lbDownloadModal.classList.add('visible');
+function lbOpenDownloadModal() {
+  const label = lbTypeLabel(lbCurrentType || 'unknown');
+  lbDownloadTitle.textContent = `下载此${label}`;
+  const hasUrl = !!lbCurrentUrl;
+  lbDownloadBtn.textContent = hasUrl ? 'Download' : 'No Url';
+  lbDownloadBtn.classList.toggle('disabled', !hasUrl);
+  openModal(lbDownloadModal);
   focusPush('lbDownloadModal');
 }
-function closeLbDownloadModal() {
-  lbDownloadModal.classList.remove('visible');
-  focusPop('lbDownloadModal');
-}
+lbDownloadCancel.addEventListener('click', () => { closeModal(lbDownloadModal); focusPop('lbDownloadModal'); });
 lbDownloadModal.addEventListener('click', e => {
-  if (e.target === lbDownloadModal && focusTop() === 'lbDownloadModal') closeLbDownloadModal();
+  if (e.target === lbDownloadModal) { closeModal(lbDownloadModal); focusPop('lbDownloadModal'); }
 });
-lbDownloadClose.addEventListener('click', closeLbDownloadModal);
 lbDownloadBtn.addEventListener('click', () => {
-  const f = lbCurFile; const url = f?.url || '';
-  const urlType = getUrlType(url);
-  if (urlType === 'external') { window.open(url, '_blank'); closeLbDownloadModal(); return; }
-  if (!url) return;
+  if (!lbCurrentUrl) return;
   showGlobalToast('Try to Downloading...', 'warning');
-  lbDownloadBtn.disabled = true; lbDownloadBtn.style.opacity = '0.35';
-  fetch(url)
+  lbDownloadBtn.classList.add('disabled');
+  fetch(lbCurrentUrl)
     .then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); })
     .then(blob => {
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob); a.download = f.name;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      URL.revokeObjectURL(a.href);
-      closeLbDownloadModal(); showGlobalToast('Successfully', 'success');
+      a.href = url; a.download = lbCurrentFile || 'download';
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a); URL.revokeObjectURL(url);
+      closeModal(lbDownloadModal); focusPop('lbDownloadModal');
+      showGlobalToast('Successfully', 'success');
     })
     .catch(() => {
       showGlobalToast('Failed to Download', 'error');
-      lbDownloadBtn.disabled = false; lbDownloadBtn.style.opacity = '';
+      lbDownloadBtn.classList.remove('disabled');
     });
 });
 
-/* ── 渲染灯箱内容 ── */
-function lbRender(file) {
-  if (lbMediaEl) { lbMediaEl.pause?.(); lbMediaEl = null; }
-  if (lbImgEl)   { lbImgEl.src = ''; lbImgEl = null; }
-  stopAudioAnim();
-  /* 中止上一个正在进行的 fetch */
-  if (lbFetchController) { lbFetchController.abort(); lbFetchController = null; }
-  /* 移除上次注入的 ctrl / copy bar */
-  [...lightboxFrame.children].forEach(c => { if (c !== lightboxInner) c.remove(); });
-  lightboxInner.innerHTML = '';
-  lightboxInner.style.cssText = '';
+/* ── Render functions per type ── */
 
-  lbCurFile = file;
-  const resolvedUrl = lbResolveUrl(file?.url || '');
-  const urlType     = getUrlType(file?.url || '');
-  const name        = file?.name || '';
-  const rawType     = lbTypeFromName(name);
-  /* 网盘链接无法在线预览，降级 */
-  lbCurType = (urlType === 'external') ? 'placeholder' : rawType;
+function lbRenderPlaceholder(text) {
+  lbContent.innerHTML = `<div class="lb-placeholder">${text}</div>`;
+}
 
-  const placeholder = label => {
-    lightboxInner.style.cssText = 'min-height:120px;display:flex;align-items:center;justify-content:center;';
-    lightboxInner.innerHTML = `<span class="lb-placeholder">${label}</span>`;
-  };
+function lbRenderImage(src, alt) {
+  if (!src) { lbRenderPlaceholder('Image'); return; }
+  lbShowShimmer();
+  const wrap = document.createElement('div');
+  wrap.className = 'lb-img-wrap';
+  const img = document.createElement('img');
+  img.alt = alt || '';
+  img.onload  = () => lbRemoveShimmer();
+  img.onerror = () => { lbRemoveShimmer(); wrap.innerHTML = ''; lbRenderPlaceholder('Image'); };
+  img.src = src;
+  wrap.appendChild(img);
+  lbContent.appendChild(wrap);
+}
 
-  switch (lbCurType) {
+function lbRenderAudio(url, filename) {
+  if (!url) {
+    lbRenderPlaceholder('Voice');
+    return;
+  }
+  // Name label
+  const wrap = document.createElement('div');
+  wrap.className = 'lb-audio-wrap';
+  const nameEl = document.createElement('div');
+  nameEl.className = 'lb-audio-name';
+  nameEl.textContent = filename || 'Audio';
+  wrap.appendChild(nameEl);
 
-    case 'image': {
-      if (!resolvedUrl) { placeholder(LB_PLACEHOLDER_LABELS.image); break; }
-      const img = document.createElement('img');
-      img.className = 'lb-img'; img.loading = 'lazy'; img.alt = name;
-      img.onerror = () => { lightboxInner.innerHTML = `<span class="lb-placeholder">${LB_PLACEHOLDER_LABELS.image}</span>`; };
-      img.src = resolvedUrl;
-      lbImgEl = img;
-      lightboxInner.appendChild(img);
-      lbBindLongPress(lightboxInner);
-      break;
+  // Custom control
+  const ctrl = document.createElement('div');
+  ctrl.className = 'lb-audio-ctrl';
+  ctrl.innerHTML = `
+    <div class="lb-audio-progress" id="lbAudioProg"></div>
+    <div class="lb-audio-icon" id="lbAudioIcon">
+      <!-- play icon -->
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <polygon points="4,2 14,8 4,14" fill="currentColor"/>
+      </svg>
+    </div>`;
+  wrap.appendChild(ctrl);
+  lbContent.appendChild(wrap);
+
+  // Create audio element
+  const audio = new Audio(url);
+  lbAudioEl = audio;
+  audio.preload = 'metadata';
+
+  // Restore progress
+  const saved = lbLoadProgress(url, filename);
+  if (saved) {
+    audio.addEventListener('loadedmetadata', () => {
+      audio.currentTime = saved.t || 0;
+      if (!saved.p) audio.play().catch(() => {});
+    }, { once: true });
+  }
+
+  const progEl = document.getElementById('lbAudioProg');
+  const iconEl = document.getElementById('lbAudioIcon');
+
+  function updateIcon(playing) {
+    iconEl.innerHTML = playing
+      ? `<svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+           <rect x="2" y="1" width="4" height="12" rx="1" fill="currentColor"/>
+           <rect x="8" y="1" width="4" height="12" rx="1" fill="currentColor"/>
+         </svg>`
+      : `<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+           <polygon points="4,2 14,8 4,14" fill="currentColor"/>
+         </svg>`;
+  }
+
+  function updateProgress() {
+    if (!audio.duration) return;
+    const pct = (audio.currentTime / audio.duration) * 100;
+    if (progEl) progEl.style.width = pct + '%';
+  }
+
+  audio.addEventListener('timeupdate', updateProgress);
+  audio.addEventListener('play',  () => updateIcon(true));
+  audio.addEventListener('pause', () => updateIcon(false));
+  audio.addEventListener('ended', () => updateIcon(false));
+
+  // Shimmer while loading
+  lbShowShimmer();
+  audio.addEventListener('canplay', () => lbRemoveShimmer(), { once: true });
+  audio.addEventListener('error',   () => lbRemoveShimmer(), { once: true });
+
+  // Pointer interaction: click vs slide (7px threshold)
+  let audioPointerStartX = null, audioPointerStartTime = null, audioDidDrag = false;
+
+  function audioSeekFromX(clientX) {
+    const rect = ctrl.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    if (audio.duration) audio.currentTime = ratio * audio.duration;
+  }
+
+  ctrl.addEventListener('pointerdown', e => {
+    audioPointerStartX = e.clientX;
+    audioPointerStartTime = Date.now();
+    audioDidDrag = false;
+    document.addEventListener('pointermove', onAudioMove);
+    document.addEventListener('pointerup',   onAudioUp);
+  });
+
+  function onAudioMove(e) {
+    if (audioPointerStartX === null) return;
+    if (!audioDidDrag && Math.abs(e.clientX - audioPointerStartX) > 7) {
+      audioDidDrag = true;
     }
-
-    case 'video': {
-      lightboxInner.style.minHeight = '200px';
-      if (!resolvedUrl) { placeholder(LB_PLACEHOLDER_LABELS.video); break; }
-      const vid = document.createElement('video');
-      vid.className = 'lb-video'; vid.controls = false; vid.playsInline = true; vid.preload = 'metadata';
-      vid.onerror = () => { lightboxInner.innerHTML = `<span class="lb-placeholder">${LB_PLACEHOLDER_LABELS.video}</span>`; lightboxFrame.querySelector('.lb-ctrl')?.remove(); };
-      vid.src = resolvedUrl; lbMediaEl = vid;
-      lightboxInner.appendChild(vid);
-      vid.addEventListener('loadedmetadata', () => {
-        const saved = lbLoadProgress(resolvedUrl, name);
-        if (saved) { vid.currentTime = saved.currentTime; if (!saved.paused) vid.play().catch(()=>{}); }
-      }, { once: true });
-      lightboxFrame.appendChild(buildCtrlBar(vid));
-      lbBindLongPress(lightboxInner);
-      break;
+    if (audioDidDrag) audioSeekFromX(e.clientX);
+  }
+  function onAudioUp(e) {
+    document.removeEventListener('pointermove', onAudioMove);
+    document.removeEventListener('pointerup',   onAudioUp);
+    if (!audioDidDrag) {
+      // It's a click: toggle play/pause
+      if (audio.paused) audio.play().catch(() => {}); else audio.pause();
+    } else {
+      audioSeekFromX(e.clientX);
     }
-
-    case 'audio': {
-      lightboxInner.style.cssText = 'min-height:100px;';
-      if (!resolvedUrl) { placeholder(LB_PLACEHOLDER_LABELS.audio); break; }
-      const aud = document.createElement('audio');
-      aud.preload = 'metadata'; aud.src = resolvedUrl; lbMediaEl = aud;
-      aud.onerror = () => { lightboxInner.innerHTML = `<span class="lb-placeholder">${LB_PLACEHOLDER_LABELS.audio}</span>`; };
-
-      const titleEl = document.createElement('div');
-      titleEl.className = 'lb-audio-title';
-      titleEl.textContent = name;
-      lightboxInner.appendChild(titleEl);
-
-      aud.addEventListener('loadedmetadata', () => {
-        const saved = lbLoadProgress(resolvedUrl, name);
-        if (saved) { aud.currentTime = saved.currentTime; if (!saved.paused) aud.play().catch(()=>{}); }
-      }, { once: true });
-
-      lightboxFrame.appendChild(buildCtrlBar(aud));
-      lbBindLongPress(lightboxInner);
-      break;
-    }
-
-    case 'text': {
-      lightboxInner.style.cssText = 'align-items:flex-start;justify-content:flex-start;min-height:180px;';
-      if (!resolvedUrl) { placeholder(LB_PLACEHOLDER_LABELS.text); break; }
-      const pre = document.createElement('div'); pre.className = 'lb-text';
-      lightboxInner.appendChild(pre);
-      lbFetchController = new AbortController();
-      fetch(resolvedUrl, { signal: lbFetchController.signal })
-        .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
-        .then(text => {
-          lbFetchController = null;
-          pre.textContent = text;
-          lightboxFrame.appendChild(buildCopyBtn(text));
-          lbBindLongPress(lightboxInner);
-        })
-        .catch(err => {
-          lbFetchController = null;
-          if (err.name === 'AbortError') return; // 灯箱已关闭，静默处理
-          lightboxInner.innerHTML = `<span class="lb-placeholder">${LB_PLACEHOLDER_LABELS.text}</span>`;
-        });
-      break;
-    }
-
-    case 'pdf': {
-      placeholder(LB_PLACEHOLDER_LABELS.pdf);
-      lbBindLongPress(lightboxInner);
-      break;
-    }
-
-    case 'html':
-    case 'markdown': {
-      lightboxInner.style.minHeight = '280px';
-      if (!resolvedUrl) { placeholder(LB_PLACEHOLDER_LABELS[lbCurType]); break; }
-
-      /* ── 构建预览/源码切换滑块 ── */
-      function buildViewSwitcher(rawSource, previewEl, sourceEl) {
-        const switcher = document.createElement('div');
-        switcher.className = 'lb-view-switcher';
-
-        const slider = document.createElement('div');
-        slider.className = 'lb-view-slider';
-
-        const svgEye  = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><ellipse cx="8" cy="8" rx="6" ry="3.5" stroke="currentColor" stroke-width="1.1"/><circle cx="8" cy="8" r="1.8" fill="currentColor"/></svg>`;
-        const svgCode = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><polyline points="5,4 1,8 5,12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><polyline points="11,4 15,8 11,12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-        const svgCheck = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><polyline points="3,8 6.5,11.5 13,5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-
-        const btnPreview = document.createElement('button');
-        btnPreview.className = 'lb-view-btn active';
-        btnPreview.innerHTML = svgEye;
-
-        const btnSource = document.createElement('button');
-        btnSource.className = 'lb-view-btn';
-        btnSource.innerHTML = svgCode;
-
-        /* 居中对勾层（复制成功时显示） */
-        const checkEl = document.createElement('div');
-        checkEl.className = 'lb-view-switcher-check';
-        checkEl.innerHTML = svgCheck;
-
-        switcher.appendChild(slider);
-        switcher.appendChild(btnPreview);
-        switcher.appendChild(btnSource);
-        switcher.appendChild(checkEl);
-
-        let curView = 'preview';
-        function setView(v) {
-          curView = v;
-          if (v === 'preview') {
-            slider.classList.remove('source');
-            btnPreview.classList.add('active');
-            btnSource.classList.remove('active');
-            previewEl.classList.remove('hidden'); previewEl.classList.add('active');
-            sourceEl.classList.remove('active');  sourceEl.classList.add('hidden');
-          } else {
-            slider.classList.add('source');
-            btnSource.classList.add('active');
-            btnPreview.classList.remove('active');
-            sourceEl.classList.remove('hidden');  sourceEl.classList.add('active');
-            previewEl.classList.remove('active'); previewEl.classList.add('hidden');
-          }
-        }
-        btnPreview.addEventListener('click', () => { if (!switcher.classList.contains('copied')) setView('preview'); });
-        btnSource.addEventListener('click',  () => { if (!switcher.classList.contains('copied')) setView('source'); });
-
-        /* 长按复制源码 */
-        let copyTimer = null;
-        const cancelCopy = () => { clearTimeout(copyTimer); copyTimer = null; };
-        const startCopy  = () => {
-          copyTimer = setTimeout(() => {
-            if (navigator.clipboard?.writeText) {
-              navigator.clipboard.writeText(rawSource).catch(() => execCopy(rawSource));
-            } else { execCopy(rawSource); }
-            /* 整个条变绿，居中显示单个对勾 */
-            switcher.classList.add('copied');
-            setTimeout(() => {
-              switcher.classList.remove('copied');
-            }, 3000);
-          }, 600);
-        };
-        switcher.addEventListener('mousedown',   startCopy);
-        switcher.addEventListener('mouseup',     cancelCopy);
-        switcher.addEventListener('mouseleave',  cancelCopy);
-        switcher.addEventListener('touchstart',  startCopy, { passive: true });
-        switcher.addEventListener('touchend',    cancelCopy);
-        switcher.addEventListener('touchcancel', cancelCopy);
-
-        setView('preview');
-        return switcher;
-      }
-
-      /* ── 内容区：预览层 + 源码层并排在 lightboxInner 内 ── */
-      lightboxInner.style.cssText = 'flex-direction:column;align-items:stretch;justify-content:flex-start;overflow:hidden;';
-
-      const previewEl = document.createElement(lbCurType === 'html' ? 'iframe' : 'div');
-      previewEl.className = 'lb-render-preview active';
-      if (lbCurType === 'html') {
-        previewEl.sandbox = 'allow-scripts allow-same-origin';
-      } else {
-        previewEl.style.cssText = 'overflow-y:auto;scrollbar-width:none;padding:14px 16px;flex:1;min-height:0;';
-      }
-
-      const sourceEl = document.createElement('div');
-      sourceEl.className = 'lb-render-source hidden';
-
-      lightboxInner.appendChild(previewEl);
-      lightboxInner.appendChild(sourceEl);
-
-      /* fetch 源码 */
-      lbFetchController = new AbortController();
-      fetch(resolvedUrl, { signal: lbFetchController.signal })
-        .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
-        .then(raw => {
-          lbFetchController = null;
-
-          /* 源码层：highlight.js 高亮 */
-          const lang = lbCurType === 'html' ? 'html' : 'markdown';
-          const highlighted = (typeof hljs !== 'undefined')
-            ? hljs.highlight(raw, { language: lang, ignoreIllegals: true }).value
-            : raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-          sourceEl.innerHTML = `<code class="hljs language-${lang}">${highlighted}</code>`;
-
-          /* 预览层 */
-          if (lbCurType === 'html') {
-            previewEl.srcdoc = raw;
-          } else {
-            /*
-             * ── MARKDOWN RENDERER INTERFACE ──────────────────────────────
-             * window.renderMarkdown(text) → HTML string
-             * 由合成脚本实现并挂载到 window。
-             * 未实现时 fallback：显示纯文本（保留换行）。
-             * ─────────────────────────────────────────────────────────────
-             */
-            if (typeof window.renderMarkdown === 'function') {
-              previewEl.innerHTML = window.renderMarkdown(raw);
-            } else {
-              previewEl.style.cssText += 'white-space:pre-wrap;font-size:0.72rem;color:var(--text-secondary);line-height:1.9;letter-spacing:0.04em;';
-              previewEl.textContent = raw;
-            }
-          }
-
-          lightboxFrame.appendChild(buildViewSwitcher(raw, previewEl, sourceEl));
-          lbBindLongPress(lightboxInner);
-        })
-        .catch(err => {
-          lbFetchController = null;
-          if (err.name === 'AbortError') return;
-          lightboxInner.style.cssText = 'display:flex;align-items:center;justify-content:center;';
-          lightboxInner.innerHTML = `<span class="lb-placeholder">${LB_PLACEHOLDER_LABELS[lbCurType]}</span>`;
-        });
-      break;
-    }
-
-    default:
-      placeholder(LB_PLACEHOLDER_LABELS.placeholder);
-      lbBindLongPress(lightboxInner);
+    audioPointerStartX = null; audioDidDrag = false;
   }
 }
 
-/* ── openLightbox 统一入口 ── */
-function openLightbox(arg) {
-  let file = null;
-  if (arg && typeof arg === 'object' && 'name' in arg) {
-    file = arg;
-  } else if (typeof arg === 'number') {
-    const d = galleryData[arg];
-    file = { name: (d?.caption || String(arg)) + '.jpg', url: d?.image || '' };
-  } else if (arg && typeof arg === 'object') {
-    file = { name: (arg.alt || 'image') + '.jpg', url: arg.src || '' };
-  } else {
-    file = { name: String(arg || ''), url: '' };
+function lbRenderVideo(url, filename) {
+  const videoWrap = document.createElement('div');
+  videoWrap.className = 'lb-video-wrap';
+  lbContent.style.minHeight = '180px';
+
+  if (!url) {
+    lbContent.appendChild(videoWrap);
+    lbRenderPlaceholder('Video');
+    return;
   }
-  lbRender(file);
+
+  // Video element
+  const vid = document.createElement('video');
+  vid.className = 'lb-video-el';
+  vid.src = url; vid.playsInline = true;
+  lbVideoEl = vid;
+  videoWrap.appendChild(vid);
+
+  // Floating control
+  const ctrl = document.createElement('div');
+  ctrl.className = 'lb-video-ctrl';
+  ctrl.innerHTML = `
+    <div class="lb-video-progress" id="lbVideoProg"></div>
+    <div class="lb-video-icon" id="lbVideoIcon">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <polygon points="4,2 14,8 4,14" fill="currentColor"/>
+      </svg>
+    </div>`;
+  videoWrap.appendChild(ctrl);
+  lbContent.appendChild(videoWrap);
+
+  const progEl = document.getElementById('lbVideoProg');
+  const iconEl = document.getElementById('lbVideoIcon');
+  let ctrlVisible = false;
+
+  function updateVideoIcon(playing) {
+    iconEl.innerHTML = playing
+      ? `<svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+           <rect x="2" y="1" width="4" height="12" rx="1" fill="currentColor"/>
+           <rect x="8" y="1" width="4" height="12" rx="1" fill="currentColor"/>
+         </svg>`
+      : `<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+           <polygon points="4,2 14,8 4,14" fill="currentColor"/>
+         </svg>`;
+  }
+
+  function updateVideoProgress() {
+    if (!vid.duration) return;
+    const pct = (vid.currentTime / vid.duration) * 100;
+    if (progEl) progEl.style.width = pct + '%';
+  }
+
+  vid.addEventListener('timeupdate', updateVideoProgress);
+  vid.addEventListener('play',  () => updateVideoIcon(true));
+  vid.addEventListener('pause', () => updateVideoIcon(false));
+  vid.addEventListener('ended', () => updateVideoIcon(false));
+
+  // 5s auto-hide
+  function resetVideoTimer() {
+    clearTimeout(lbVideoTimer);
+    lbVideoTimer = setTimeout(() => { ctrlVisible = false; ctrl.classList.remove('visible'); }, 5000);
+  }
+  function showVideoCtrl() {
+    ctrlVisible = true; ctrl.classList.add('visible'); resetVideoTimer();
+  }
+  function hideVideoCtrl() {
+    ctrlVisible = false; ctrl.classList.remove('visible'); clearTimeout(lbVideoTimer);
+  }
+  function toggleVideoCtrl() {
+    if (ctrlVisible) hideVideoCtrl(); else showVideoCtrl();
+  }
+
+  // Restore progress
+  const saved = lbLoadProgress(url, filename);
+  vid.addEventListener('loadedmetadata', () => {
+    if (saved) {
+      vid.currentTime = saved.t || 0;
+      if (!saved.p) vid.play().catch(() => {});
+    }
+    lbRemoveShimmer();
+  }, { once: true });
+  lbShowShimmer();
+  vid.addEventListener('error', () => lbRemoveShimmer(), { once: true });
+
+  // Click on video area (non-ctrl) → toggle ctrl
+  videoWrap.addEventListener('click', e => {
+    if (!ctrl.contains(e.target)) toggleVideoCtrl();
+  });
+
+  // Ctrl: click vs drag
+  let vPointerStartX = null, vDidDrag = false;
+
+  function videoSeekFromX(clientX) {
+    const rect = ctrl.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    if (vid.duration) { vid.currentTime = ratio * vid.duration; resetVideoTimer(); }
+  }
+
+  ctrl.addEventListener('pointerdown', e => {
+    vPointerStartX = e.clientX; vDidDrag = false;
+    document.addEventListener('pointermove', onVideoMove);
+    document.addEventListener('pointerup',   onVideoUp);
+    e.stopPropagation();
+  });
+  function onVideoMove(e) {
+    if (vPointerStartX === null) return;
+    if (!vDidDrag && Math.abs(e.clientX - vPointerStartX) > 7) vDidDrag = true;
+    if (vDidDrag) { videoSeekFromX(e.clientX); resetVideoTimer(); }
+  }
+  function onVideoUp(e) {
+    document.removeEventListener('pointermove', onVideoMove);
+    document.removeEventListener('pointerup',   onVideoUp);
+    if (!vDidDrag) {
+      if (vid.paused) vid.play().catch(() => {}); else vid.pause();
+      resetVideoTimer();
+    } else {
+      videoSeekFromX(e.clientX);
+    }
+    vPointerStartX = null; vDidDrag = false;
+  }
+}
+
+function lbRenderTxt(text) {
+  lbRawContent = text;
+  const el = document.createElement('div');
+  el.className = 'lb-txt-content';
+  el.textContent = text;
+  lbContent.appendChild(el);
+  lbSetupCopyBtn();
+}
+
+function lbRenderHtml(html, isMarkdown) {
+  lbRawContent = html;
+  const wrap = document.createElement('div');
+  wrap.className = 'lb-render-wrap';
+
+  // Preview area (iframe)
+  const iframeWrap = document.createElement('div');
+  iframeWrap.className = 'lb-iframe-wrap';
+  const iframe = document.createElement('iframe');
+  iframe.sandbox = 'allow-scripts';
+
+  let rendered = html;
+  if (isMarkdown && window.marked) {
+    rendered = window.marked.parse(html);
+  }
+  // Inject themed iframe content
+  const isDark = document.documentElement.classList.contains('dark');
+  const iframeDoc = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>
+      body { font-family: serif; font-size: 14px; line-height: 1.8;
+             color: ${isDark ? '#e8e6e0' : '#2a2a28'};
+             background: ${isDark ? '#18171a' : '#f5f4f2'};
+             padding: 14px 16px; margin: 0; word-break: break-word; }
+      a { color: inherit; } img { max-width: 100%; }
+      pre { overflow-x: auto; } code { font-family: monospace; font-size: 0.9em; }
+    </style></head><body>${rendered}</body></html>`;
+  iframe.srcdoc = iframeDoc;
+  iframeWrap.appendChild(iframe);
+  wrap.appendChild(iframeWrap);
+
+  // Source area (hidden by default)
+  const sourceWrap = document.createElement('div');
+  sourceWrap.className = 'lb-source-wrap';
+  sourceWrap.style.display = 'none';
+  const pre = document.createElement('pre');
+  const code = document.createElement('code');
+  code.className = isMarkdown ? 'language-markdown' : 'language-html';
+  code.textContent = html;
+  pre.appendChild(code);
+  sourceWrap.appendChild(pre);
+  wrap.appendChild(sourceWrap);
+
+  lbContent.appendChild(wrap);
+
+  // Highlight source
+  lbLoadHighlight().then(() => {
+    if (window.hljs) window.hljs.highlightElement(code);
+  });
+
+  lbSetupToggleRow();
+}
+
+/* ── Main open function ── */
+function openLightbox(arg) {
+  lbCleanup();
+
+  // Legacy: { src, alt } for image
+  if (arg && typeof arg === 'object' && ('src' in arg) && !('url' in arg)) {
+    lbCurrentType = 'image';
+    lbContent.style.minHeight = '';
+    lbRenderImage(arg.src || '', arg.alt || 'Image');
+    lbBindDownloadLongPress();
+    lightbox.classList.add('visible');
+    focusPush('lightbox');
+    return;
+  }
+
+  // Legacy: number → galleryData
+  if (typeof arg === 'number') {
+    const d = galleryData[arg];
+    const src = (d && d.image) || '';
+    const alt = (d && d.caption) || String(arg + 1).padStart(2, '0');
+    lbCurrentType = 'image';
+    lbCurrentUrl  = src || null;
+    lbCurrentFile = alt;
+    lbContent.style.minHeight = '';
+    lbRenderImage(src, alt);
+    lbBindDownloadLongPress();
+    lightbox.classList.add('visible');
+    focusPush('lightbox');
+    return;
+  }
+
+  // Legacy: plain string placeholder
+  if (typeof arg === 'string') {
+    lbCurrentType = null;
+    lbContent.style.minHeight = '';
+    lbRenderPlaceholder(arg || 'File');
+    lbBindDownloadLongPress();
+    lightbox.classList.add('visible');
+    focusPush('lightbox');
+    return;
+  }
+
+  // New: { url, filename, type? }
+  if (arg && typeof arg === 'object' && ('url' in arg || 'filename' in arg)) {
+    const { url, filename, type: explicitType } = arg;
+    const type = explicitType || lbGetTypeFromFilename(filename);
+    lbCurrentType = type;
+    lbCurrentUrl  = url || null;
+    lbCurrentFile = filename || null;
+    lbContent.style.minHeight = '';
+
+    lightbox.classList.add('visible');
+    focusPush('lightbox');
+    lbBindDownloadLongPress();
+
+    if (!url) {
+      // No URL: show placeholder only, no media controls
+      if (type === 'html' || type === 'md') {
+        lbRenderPlaceholder(lbPlaceholderText(type));
+      } else if (type === 'audio' || type === 'video') {
+        lbRenderPlaceholder(lbPlaceholderText(type));
+      } else if (type === 'image') {
+        lbRenderImage('', filename || 'Image');
+      } else {
+        lbRenderPlaceholder(lbPlaceholderText(type));
+      }
+      return;
+    }
+
+    // Has URL — fetch or use directly
+    if (type === 'image') {
+      lbRenderImage(url, filename);
+      return;
+    }
+
+    if (type === 'audio') {
+      lbRenderAudio(url, filename);
+      return;
+    }
+
+    if (type === 'video') {
+      lbRenderVideo(url, filename);
+      return;
+    }
+
+    // TXT / HTML / MD: fetch content
+    lbShowShimmer();
+    lbFetchCtrl = new AbortController();
+    fetch(url, { signal: lbFetchCtrl.signal })
+      .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(text => {
+        lbFetchCtrl = null;
+        lbRemoveShimmer();
+        if (type === 'txt') {
+          lbRenderTxt(text);
+        } else if (type === 'html') {
+          lbRenderHtml(text, false);
+        } else if (type === 'md') {
+          lbLoadMarked().then(() => lbRenderHtml(text, true));
+        } else {
+          lbRenderTxt(text);
+        }
+      })
+      .catch(err => {
+        if (err.name === 'AbortError') return;
+        lbFetchCtrl = null;
+        lbRemoveShimmer();
+        lbRenderPlaceholder(lbPlaceholderText(type));
+      });
+    return;
+  }
+
+  // Fallback
+  lbRenderPlaceholder('File');
   lightbox.classList.add('visible');
   focusPush('lightbox');
 }
 
 function closeLightbox() {
-  if (lbFetchController) { lbFetchController.abort(); lbFetchController = null; }
-  if (lbImgEl)   { lbImgEl.src = ''; lbImgEl = null; }
-  if (lbMediaEl) {
-    const resolvedUrl = lbResolveUrl(lbCurFile?.url || '');
-    lbSaveProgress(resolvedUrl, lbCurFile?.name || '', lbMediaEl.currentTime, lbMediaEl.paused);
-    lbMediaEl.pause();
-  }
-  stopAudioAnim();
+  lbCleanup();
   lightbox.classList.remove('visible');
   focusPop('lightbox');
 }
-lightbox.addEventListener('pointerdown', e => { if (e.target === lightbox && focusTop() === 'lightbox') closeLightbox(); });
-lightboxFrame.addEventListener('pointerdown', e => e.stopPropagation());
 
+lightbox.addEventListener('click', e => {
+  if (e.target === lightbox && focusTop() === 'lightbox') closeLightbox();
+});
 
 /* ============================================================
    PAGE 2 — PROJECT CAROUSEL
@@ -3553,13 +3764,25 @@ function getFileIcon(name) {
 }
 
 /* ── File list ── */
-const LB_PREVIEWABLE = [...LB_IMG, ...LB_VID, ...LB_AUD, ...LB_TXT, ...LB_HTML, ...LB_MD];
+/* ── File types that support lightbox preview ── */
+const LB_PREVIEWABLE = new Set([
+  'jpg','jpeg','png','gif','webp','bmp','svg','avif','heic','ico','tiff','tif','raw',
+  'mp3','flac','wav','aac','ogg','opus','m4a','wma','aiff','alac',
+  'mp4','mov','webm','mkv','avi','flv','wmv','m4v','3gp',
+  'txt','log','csv','ini','conf','yaml','yml','toml','rst',
+  'md','markdown','html','htm',
+]);
+
+function isFilePreviewable(name) {
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  return LB_PREVIEWABLE.has(ext);
+}
 
 fileData.forEach((f, i) => {
   const row = document.createElement('div');
-  const ext = (f.name || '').split('.').pop().toLowerCase();
-  const isPreviewable = LB_PREVIEWABLE.includes(ext);
-  row.className = 'file-row' + (isPreviewable ? ' previewable' : '');
+  row.className = 'file-row';
+  const previewable = isFilePreviewable(f.name);
+  if (previewable) row.style.cursor = 'pointer';
   row.innerHTML = `
     <div class="file-icon">
       ${getFileIcon(f.name)}
@@ -3571,10 +3794,10 @@ fileData.forEach((f, i) => {
     <button class="file-view-btn">View</button>
   `;
   row.querySelector('.file-view-btn').addEventListener('click', e => { e.stopPropagation(); openFileModal(i); });
-  if (isPreviewable) {
+  if (previewable) {
     row.addEventListener('click', e => {
       if (e.target.closest('.file-view-btn')) return;
-      openLightbox(f);
+      openLightbox({ url: f.url || '', filename: f.name });
     });
   }
   fileListEl.appendChild(row);
@@ -4354,10 +4577,10 @@ function closeTopFocus() {
     case 'blogListOverlay':closeBlogList();    break;
     case 'galleryOverlay': closeGallery();     break;
     case 'lightbox':       closeLightbox();    break;
+    case 'lbDownloadModal': closeModal(lbDownloadModal); focusPop('lbDownloadModal'); break;
     case 'linkModal':      closeModal(linkModal);  break;
     case 'emailModal':     closeModal(emailModal); break;
-    case 'fileModal':        closeFileModal();        break;
-    case 'lbDownloadModal':  closeLbDownloadModal();  break;
+    case 'fileModal':      closeFileModal();   break;
     default: return false;
   }
   return true;
