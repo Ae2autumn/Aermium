@@ -1218,6 +1218,7 @@
     display: flex; flex-direction: column; gap: 8px;
     transform: scale(0.95); transition: var(--transition-snap);
     /* 最大高度让内容自适应，不超出视口 */
+    height: calc(100vh - 64px);
     max-height: calc(100vh - 64px);
   }
   .lightbox-overlay.visible .lightbox-frame { transform: scale(1); }
@@ -1229,6 +1230,9 @@
     overflow: hidden; width: 100%; min-height: 120px;
     display: flex; align-items: center; justify-content: center;
     position: relative; flex: 1; min-height: 0;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
   .lightbox-inner span.lb-placeholder {
     font-size: 0.6rem; color: var(--text-faint);
@@ -1630,14 +1634,18 @@
   /* 长按复制状态 */
   .lb-view-switcher.copied {
     border-color: rgba(92,184,126,0.6);
-    background: rgba(92,184,126,0.06);
+    background: rgba(92,184,126,0.10);
+    justify-content: center;
   }
-  .lb-view-switcher.copied .lb-view-slider {
-    background: rgba(92,184,126,0.15);
-    box-shadow: inset 0 0 0 0.5px rgba(92,184,126,0.4);
-    transform: translateX(0) !important;
+  .lb-view-switcher.copied .lb-view-slider { display: none; }
+  .lb-view-switcher.copied .lb-view-btn    { display: none; }
+  .lb-view-switcher-check {
+    display: none;
+    position: absolute; inset: 0;
+    align-items: center; justify-content: center;
+    color: #5cb87e; pointer-events: none;
   }
-  .lb-view-switcher.copied .lb-view-btn { color: #5cb87e; pointer-events: none; }
+  .lb-view-switcher.copied .lb-view-switcher-check { display: flex; }
 
   /* ============================================================
      RESPONSIVE
@@ -2241,12 +2249,18 @@ const contactData = {
 };
 
 const fileData = [
-  { name: 'brand-guidelines.pdf',  size: '4.2 MB',  date: '2026.03.14', hash: 'a3f8c1d290e4b57f', url: '' },
-  { name: 'logo-pack.zip',         size: '18.7 MB', date: '2026.03.14', hash: 'b9e2a04d3c718f52', url: '' },
-  { name: 'color-palette.ase',     size: '128 KB',  date: '2026.02.28', hash: 'c4d71b8e0af36290', url: '' },
-  { name: 'typeface-specimen.pdf', size: '2.1 MB',  date: '2026.02.20', hash: 'd0c83f2a1e94b756', url: '' },
-  { name: 'motion-reference.mp4',  size: '87.3 MB', date: '2026.01.30', hash: 'e7a12f04b5c9d38e', url: '' },
-  { name: 'icon-set.svg',          size: '340 KB',  date: '2026.01.15', hash: 'f5b09e3c2d841a76', url: '' },
+  { name: 'test.deb',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'http://ftp.debian.org/debian/pool/main/a/apt/apt_2.6.1_amd64.deb' },  // 真实deb包
+  { name: 'test.mp4',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://cropgif.net/videos/1776752686706-9e0da3fb-25e5-4355-887b-961a99d25a92.mp4' },  // 示例MP4
+  { name: 'test.mp3',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },  // 示例MP3
+  { name: 'test.txt',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://www.w3.org/TR/2003/REC-PNG-20031110/iso-8859-1.txt' },  // 文本文件
+  { name: 'test.md',   size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://raw.githubusercontent.com/mdn/content/main/files/en-us/web/html/index.md' },  // Markdown文件
+  { name: 'test.html', size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://www.w3.org/People/Berners-Lee/Overview.html' },  // HTML页面
+  { name: 'test.png',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://www.w3.org/People/Berners-Lee/2000/05/photo-2000-05-05_28-small.png' },  // PNG图片
+  { name: 'test.svg',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://upload.wikimedia.org/wikipedia/commons/8/84/Example.svg' },  // SVG矢量图
+  { name: 'test.pdf',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' },  // PDF文件
+  { name: 'test.iso',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'http://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-12.2.0-amd64-netinst.iso' },  // 真实ISO镜像（较大）
+  { name: 'test.esd',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://example.com/test.esd' },  // ESD无标准公开测试文件，保留占位
+  { name: 'test.mov',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'http://techslides.com/demos/sample-videos/small.mov' }   // MOV示例视频
 ];
 
 const docFiles = [
@@ -2522,7 +2536,6 @@ function lbTypeFromName(name) {
   if (LB_VID.includes(ext))  return 'video';
   if (LB_AUD.includes(ext))  return 'audio';
   if (LB_TXT.includes(ext))  return 'text';
-  if (LB_PDF.includes(ext))  return 'pdf';
   if (LB_HTML.includes(ext)) return 'html';
   if (LB_MD.includes(ext))   return 'markdown';
   return 'placeholder';
@@ -2647,9 +2660,13 @@ function lbBindLongPress(el) {
   el.addEventListener('mousedown',   () => { lbLongPressTimer = setTimeout(openLbDownloadModal, 600); });
   el.addEventListener('mouseup',     cancel);
   el.addEventListener('mouseleave',  cancel);
-  el.addEventListener('touchstart',  () => { lbLongPressTimer = setTimeout(openLbDownloadModal, 600); }, { passive: true });
+  el.addEventListener('touchstart',  e => {
+    e.preventDefault();
+    lbLongPressTimer = setTimeout(openLbDownloadModal, 600);
+  }, { passive: false });
   el.addEventListener('touchend',    cancel);
   el.addEventListener('touchcancel', cancel);
+  el.addEventListener('touchmove',   cancel);
 }
 
 const LB_DL_TITLES = {
@@ -2721,7 +2738,7 @@ function lbRender(file) {
   lbCurType = (urlType === 'external') ? 'placeholder' : rawType;
 
   const placeholder = label => {
-    lightboxInner.style.minHeight = '120px';
+    lightboxInner.style.cssText = 'min-height:120px;display:flex;align-items:center;justify-content:center;';
     lightboxInner.innerHTML = `<span class="lb-placeholder">${label}</span>`;
   };
 
@@ -2757,39 +2774,31 @@ function lbRender(file) {
     }
 
     case 'audio': {
-      lightboxInner.style.cssText = 'flex-direction:column;align-items:stretch;padding:12px;gap:8px;min-height:140px;';
+      lightboxInner.style.cssText = 'min-height:100px;';
       if (!resolvedUrl) { placeholder(LB_PLACEHOLDER_LABELS.audio); break; }
       const aud = document.createElement('audio');
       aud.preload = 'metadata'; aud.src = resolvedUrl; lbMediaEl = aud;
       aud.onerror = () => { lightboxInner.innerHTML = `<span class="lb-placeholder">${LB_PLACEHOLDER_LABELS.audio}</span>`; };
 
-      const art = document.createElement('div'); art.className = 'lb-audio-art';
-      const barsEl = document.createElement('div'); barsEl.className = 'lb-audio-bars';
-      for (let i = 0; i < 12; i++) {
-        const b = document.createElement('div'); b.className = 'lb-audio-bar'; b.style.height = '8px';
-        barsEl.appendChild(b);
-      }
-      const titleEl = document.createElement('div'); titleEl.className = 'lb-audio-title'; titleEl.textContent = name;
-      art.appendChild(barsEl); art.appendChild(titleEl);
-      lightboxInner.appendChild(art);
+      const titleEl = document.createElement('div');
+      titleEl.className = 'lb-audio-title';
+      titleEl.textContent = name;
+      lightboxInner.appendChild(titleEl);
 
-      aud.addEventListener('play',  () => { art.classList.add('lb-audio-playing');    startAudioAnim(barsEl, aud); });
-      aud.addEventListener('pause', () => { art.classList.remove('lb-audio-playing'); stopAudioAnim(); });
-      aud.addEventListener('ended', () => { art.classList.remove('lb-audio-playing'); stopAudioAnim(); });
       aud.addEventListener('loadedmetadata', () => {
         const saved = lbLoadProgress(resolvedUrl, name);
         if (saved) { aud.currentTime = saved.currentTime; if (!saved.paused) aud.play().catch(()=>{}); }
       }, { once: true });
 
-      lightboxInner.appendChild(buildCtrlBar(aud));
-      lbBindLongPress(art);
+      lightboxFrame.appendChild(buildCtrlBar(aud));
+      lbBindLongPress(lightboxInner);
       break;
     }
 
     case 'text': {
       lightboxInner.style.cssText = 'align-items:flex-start;justify-content:flex-start;min-height:180px;';
       if (!resolvedUrl) { placeholder(LB_PLACEHOLDER_LABELS.text); break; }
-      const pre = document.createElement('div'); pre.className = 'lb-text'; pre.textContent = '加载中...';
+      const pre = document.createElement('div'); pre.className = 'lb-text';
       lightboxInner.appendChild(pre);
       lbFetchController = new AbortController();
       fetch(resolvedUrl, { signal: lbFetchController.signal })
@@ -2809,12 +2818,7 @@ function lbRender(file) {
     }
 
     case 'pdf': {
-      lightboxInner.style.minHeight = '320px';
-      if (!resolvedUrl) { placeholder(LB_PLACEHOLDER_LABELS.pdf); break; }
-      const iframe = document.createElement('iframe');
-      iframe.className = 'lb-pdf'; iframe.src = resolvedUrl;
-      iframe.onerror = () => { lightboxInner.innerHTML = `<span class="lb-placeholder">${LB_PLACEHOLDER_LABELS.pdf}</span>`; };
-      lightboxInner.appendChild(iframe);
+      placeholder(LB_PLACEHOLDER_LABELS.pdf);
       lbBindLongPress(lightboxInner);
       break;
     }
@@ -2844,9 +2848,15 @@ function lbRender(file) {
         btnSource.className = 'lb-view-btn';
         btnSource.innerHTML = svgCode;
 
+        /* 居中对勾层（复制成功时显示） */
+        const checkEl = document.createElement('div');
+        checkEl.className = 'lb-view-switcher-check';
+        checkEl.innerHTML = svgCheck;
+
         switcher.appendChild(slider);
         switcher.appendChild(btnPreview);
         switcher.appendChild(btnSource);
+        switcher.appendChild(checkEl);
 
         let curView = 'preview';
         function setView(v) {
@@ -2876,14 +2886,10 @@ function lbRender(file) {
             if (navigator.clipboard?.writeText) {
               navigator.clipboard.writeText(rawSource).catch(() => execCopy(rawSource));
             } else { execCopy(rawSource); }
-            /* 整个滑块变绿 */
+            /* 整个条变绿，居中显示单个对勾 */
             switcher.classList.add('copied');
-            btnPreview.innerHTML = svgCheck;
-            btnSource.innerHTML  = svgCheck;
             setTimeout(() => {
               switcher.classList.remove('copied');
-              btnPreview.innerHTML = svgEye;
-              btnSource.innerHTML  = svgCode;
             }, 3000);
           }, 600);
         };
@@ -2954,6 +2960,7 @@ function lbRender(file) {
         .catch(err => {
           lbFetchController = null;
           if (err.name === 'AbortError') return;
+          lightboxInner.style.cssText = 'display:flex;align-items:center;justify-content:center;';
           lightboxInner.innerHTML = `<span class="lb-placeholder">${LB_PLACEHOLDER_LABELS[lbCurType]}</span>`;
         });
       break;
@@ -2995,7 +3002,8 @@ function closeLightbox() {
   lightbox.classList.remove('visible');
   focusPop('lightbox');
 }
-lightbox.addEventListener('click', e => { if (e.target === lightbox && focusTop() === 'lightbox') closeLightbox(); });
+lightbox.addEventListener('pointerdown', e => { if (e.target === lightbox && focusTop() === 'lightbox') closeLightbox(); });
+lightboxFrame.addEventListener('pointerdown', e => e.stopPropagation());
 
 
 /* ============================================================
@@ -3545,7 +3553,7 @@ function getFileIcon(name) {
 }
 
 /* ── File list ── */
-const LB_PREVIEWABLE = [...LB_IMG, ...LB_VID, ...LB_AUD, ...LB_TXT, ...LB_PDF, ...LB_HTML, ...LB_MD];
+const LB_PREVIEWABLE = [...LB_IMG, ...LB_VID, ...LB_AUD, ...LB_TXT, ...LB_HTML, ...LB_MD];
 
 fileData.forEach((f, i) => {
   const row = document.createElement('div');
