@@ -1265,6 +1265,7 @@
     animation: lbSweep 1.6s cubic-bezier(0.4,0,0.2,1) infinite;
     pointer-events: none;
     border-radius: var(--radius-md);
+    z-index: 100;
   }
   :root.dark .lb-shimmer {
     background: linear-gradient(
@@ -1275,8 +1276,8 @@
     );
   }
   @keyframes lbSweep {
-    0%   { transform: translateX(-120%); }
-    100% { transform: translateX(120%); }
+    0%   { transform: translateX(-200%); }
+    100% { transform: translateX(200%); }
   }
 
   /* ── Audio control ── */
@@ -1402,66 +1403,73 @@
   }
   .lb-action-row.copied:hover { background: rgba(92,184,126,0.08); }
 
-  /* ── HTML/MD: slider toggle row ── */
+  /* ── HTML/MD: tab-switcher style toggle row ── */
   .lb-toggle-row {
     flex-shrink: 0;
-    border-top: var(--border-hair) var(--border-soft);
-    height: 44px;
-    display: flex; align-items: center; justify-content: center;
-    user-select: none; position: relative; overflow: hidden;
-    border-radius: 0 0 var(--radius-md) var(--radius-md);
-    background: var(--bg-inner);
-    gap: 7px;
-    font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: background 0.15s;
+    margin-top: 8px;
+    position: relative;
+    display: flex; padding: 4px;
+    border: var(--border-hair) var(--border-mid);
+    border-radius: 10px; background: var(--bg-inner);
+    user-select: none;
   }
-  .lb-toggle-row:hover { background: var(--hover-bg); }
   .lb-toggle-row.copied {
-    background: rgba(92,184,126,0.08);
     border-color: rgba(92,184,126,0.4);
-    color: #5cb87e;
-    cursor: default;
+    background: rgba(92,184,126,0.06);
   }
-  .lb-toggle-knob {
-    width: 28px; height: 16px; border-radius: 8px;
-    background: var(--border-mid);
-    position: relative; transition: background 0.25s;
-    flex-shrink: 0;
+  /* sliding pill */
+  .lb-toggle-pill {
+    position: absolute; top: 4px; left: 4px;
+    height: 36px; width: calc(50% - 4px);
+    border-radius: 7px;
+    background: var(--bg-card);
+    box-shadow: inset 0 0 0 0.5px var(--border-strong);
+    transition: transform 0.3s cubic-bezier(0.77,0,0.175,1);
+    pointer-events: none;
   }
-  .lb-toggle-knob::after {
-    content: '';
-    position: absolute; top: 3px; left: 3px;
-    width: 10px; height: 10px; border-radius: 50%;
-    background: var(--text-secondary);
-    transition: transform 0.25s cubic-bezier(0.77,0,0.175,1);
+  .lb-toggle-pill.on { transform: translateX(calc(100%)); }
+  /* tab buttons */
+  .lb-toggle-btn {
+    flex: 1; height: 36px;
+    border: none; border-radius: 7px;
+    background: transparent; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    position: relative; z-index: 1;
+    color: var(--text-muted);
+    font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase;
+    font-family: var(--font-serif);
+    transition: color 0.2s;
   }
-  .lb-toggle-knob.on { background: rgba(92,184,126,0.4); }
-  .lb-toggle-knob.on::after { transform: translateX(12px); background: #5cb87e; }
+  .lb-toggle-btn.active { color: var(--text-primary); }
+  .lb-toggle-btn:hover:not(.active) { color: var(--text-secondary); }
+  .lb-toggle-row.copied .lb-toggle-btn { pointer-events: none; }
 
   /* ── HTML/MD render areas ── */
   .lb-render-wrap {
-    flex: 1; min-height: 0; overflow: hidden;
+    overflow: hidden;
     display: flex; flex-direction: column;
   }
   .lb-iframe-wrap {
-    flex: 1; min-height: 0; overflow: hidden;
+    overflow: hidden;
+    /* height set by JS to match content up to max */
   }
   .lb-iframe-wrap iframe {
-    width: 100%; height: 100%; border: none; display: block;
+    width: 100%; border: none; display: block;
+    min-height: 120px;
   }
   .lb-source-wrap {
-    flex: 1; min-height: 0; overflow-y: auto; overflow-x: auto;
+    overflow-y: auto; overflow-x: hidden;
     scrollbar-width: none;
-    background: #1a1b26; /* tokyo-night-dark base */
+    background: var(--bg-inner);
     border-radius: var(--radius-sm);
+    max-height: 60vh;
   }
   .lb-source-wrap::-webkit-scrollbar { display: none; }
   .lb-source-wrap pre {
     margin: 0; padding: 14px 16px;
     font-family: monospace; font-size: 0.72rem;
     line-height: 1.75; white-space: pre-wrap; word-break: break-word;
+    color: var(--text-secondary);
   }
 
   /* ── Download modal triggered from lightbox ── */
@@ -2585,46 +2593,73 @@ function lbSetupCopyBtn() {
   };
 }
 
-/* ── Action row: toggle + long-press copy (HTML/MD) ── */
+/* ── Action row: tab-switcher style toggle + long-press copy (HTML/MD) ── */
 function lbSetupToggleRow() {
-  // Replace action row with toggle row behaviour
   lbActionRow.style.display = '';
   lbActionRow.className = 'lb-toggle-row';
   lbActionRow.innerHTML = `
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <polyline points="4,5 2,8 4,11" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
-      <polyline points="12,5 14,8 12,11" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
-      <line x1="6" y1="10" x2="10" y2="6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
-    </svg>
-    <div class="lb-toggle-knob" id="lbToggleKnob"></div>
-    <span id="lbToggleLabel">源码</span>`;
+    <div class="lb-toggle-pill" id="lbTogglePill"></div>
+    <button class="lb-toggle-btn active" id="lbBtnPreview">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+        <ellipse cx="8" cy="8" rx="7" ry="4.5" stroke="currentColor" stroke-width="1.15"/>
+        <circle cx="8" cy="8" r="2" fill="currentColor"/>
+      </svg>
+      预览
+    </button>
+    <button class="lb-toggle-btn" id="lbBtnSource">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+        <polyline points="5,4 2,8 5,12" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="11,4 14,8 11,12" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="9.5" y1="3" x2="6.5" y2="13" stroke="currentColor" stroke-width="1.15" stroke-linecap="round"/>
+      </svg>
+      源码
+    </button>`;
   lbCopyDone = false;
   lbIsSource = false;
 
-  // Click = toggle
-  lbActionRow.addEventListener('click', lbToggleSourceView);
+  const pill      = document.getElementById('lbTogglePill');
+  const btnPrev   = document.getElementById('lbBtnPreview');
+  const btnSrc    = document.getElementById('lbBtnSource');
 
-  // Long-press = copy
-  lbActionRow.addEventListener('pointerdown', () => {
-    lbLongPressTimer = setTimeout(() => {
-      lbLongPressTimer = null;
+  // Long-press → copy; click → toggle. Must distinguish the two.
+  let togglePressTimer = null, toggleDidLongPress = false;
+
+  function onToggleDown() {
+    toggleDidLongPress = false;
+    togglePressTimer = setTimeout(() => {
+      toggleDidLongPress = true;
+      togglePressTimer = null;
       const text = lbIsSource ? lbRawContent : (lbContent.querySelector('iframe')
         ? (lbContent.querySelector('iframe').contentDocument?.body?.innerText || lbRawContent)
         : lbRawContent);
       lbDoCopy(text);
     }, 500);
+  }
+  function onToggleUp() { clearTimeout(togglePressTimer); togglePressTimer = null; }
+
+  lbActionRow.addEventListener('pointerdown', onToggleDown);
+  lbActionRow.addEventListener('pointerup',     onToggleUp);
+  lbActionRow.addEventListener('pointercancel', onToggleUp);
+
+  btnPrev.addEventListener('click', e => {
+    e.stopPropagation();
+    if (toggleDidLongPress || lbCopyDone) return;
+    if (!lbIsSource) return;
+    lbToggleSourceView(pill, btnPrev, btnSrc);
   });
-  lbActionRow.addEventListener('pointerup',     () => { clearTimeout(lbLongPressTimer); lbLongPressTimer = null; });
-  lbActionRow.addEventListener('pointercancel', () => { clearTimeout(lbLongPressTimer); lbLongPressTimer = null; });
+  btnSrc.addEventListener('click', e => {
+    e.stopPropagation();
+    if (toggleDidLongPress || lbCopyDone) return;
+    if (lbIsSource) return;
+    lbToggleSourceView(pill, btnPrev, btnSrc);
+  });
 }
 
-function lbToggleSourceView() {
-  if (lbCopyDone) return;
+function lbToggleSourceView(pill, btnPrev, btnSrc) {
   lbIsSource = !lbIsSource;
-  const knob  = document.getElementById('lbToggleKnob');
-  const label = document.getElementById('lbToggleLabel');
-  if (knob)  knob.classList.toggle('on', lbIsSource);
-  if (label) label.textContent = lbIsSource ? '预览' : '源码';
+  if (pill)    pill.classList.toggle('on', lbIsSource);
+  if (btnPrev) btnPrev.classList.toggle('active', !lbIsSource);
+  if (btnSrc)  btnSrc.classList.toggle('active',  lbIsSource);
   const iframeWrap = lbContent.querySelector('.lb-iframe-wrap');
   const sourceWrap = lbContent.querySelector('.lb-source-wrap');
   if (iframeWrap) iframeWrap.style.display = lbIsSource ? 'none' : '';
@@ -2725,18 +2760,24 @@ function lbCleanup() {
 
 /* ── Long-press download on content area ── */
 let lbDlPressTimer = null;
+let lbDlDidLongPress = false;   // prevent overlay-close after long-press
 
-function lbBindDownloadLongPress() {
-  lbContent.addEventListener('pointerdown', lbDlPressStart);
-  lbContent.addEventListener('pointerup',     lbDlPressEnd);
-  lbContent.addEventListener('pointercancel', lbDlPressEnd);
-}
-function lbDlPressStart() {
-  lbDlPressTimer = setTimeout(() => { lbDlPressTimer = null; lbOpenDownloadModal(); }, 500);
-}
-function lbDlPressEnd() {
-  clearTimeout(lbDlPressTimer); lbDlPressTimer = null;
-}
+/* Bind once at init — not per openLightbox call */
+(function initLbDownloadLongPress() {
+  lbContent.addEventListener('pointerdown', e => {
+    // Don't start timer if clicking the action row area
+    lbDlDidLongPress = false;
+    lbDlPressTimer = setTimeout(() => {
+      lbDlPressTimer = null;
+      lbDlDidLongPress = true;
+      lbOpenDownloadModal();
+    }, 500);
+  });
+  lbContent.addEventListener('pointerup',     () => { clearTimeout(lbDlPressTimer); lbDlPressTimer = null; });
+  lbContent.addEventListener('pointercancel', () => { clearTimeout(lbDlPressTimer); lbDlPressTimer = null; });
+})();
+
+function lbBindDownloadLongPress() { /* no-op: bound once at init */ }
 
 /* ── Download modal ── */
 const lbDownloadModal = document.getElementById('lbDownloadModal');
@@ -2839,8 +2880,8 @@ function lbRenderAudio(url, filename) {
     }, { once: true });
   }
 
-  const progEl = document.getElementById('lbAudioProg');
-  const iconEl = document.getElementById('lbAudioIcon');
+  const progEl = ctrl.querySelector('.lb-audio-progress');
+  const iconEl = ctrl.querySelector('.lb-audio-icon');
 
   function updateIcon(playing) {
     iconEl.innerHTML = playing
@@ -2882,8 +2923,10 @@ function lbRenderAudio(url, filename) {
     audioPointerStartX = e.clientX;
     audioPointerStartTime = Date.now();
     audioDidDrag = false;
+    ctrl.setPointerCapture(e.pointerId);
     document.addEventListener('pointermove', onAudioMove);
     document.addEventListener('pointerup',   onAudioUp);
+    e.preventDefault();
   });
 
   function onAudioMove(e) {
@@ -2937,8 +2980,8 @@ function lbRenderVideo(url, filename) {
   videoWrap.appendChild(ctrl);
   lbContent.appendChild(videoWrap);
 
-  const progEl = document.getElementById('lbVideoProg');
-  const iconEl = document.getElementById('lbVideoIcon');
+  const progEl = ctrl.querySelector('.lb-video-progress');
+  const iconEl = ctrl.querySelector('.lb-video-icon');
   let ctrlVisible = false;
 
   function updateVideoIcon(playing) {
@@ -3006,9 +3049,10 @@ function lbRenderVideo(url, filename) {
 
   ctrl.addEventListener('pointerdown', e => {
     vPointerStartX = e.clientX; vDidDrag = false;
+    ctrl.setPointerCapture(e.pointerId);
     document.addEventListener('pointermove', onVideoMove);
     document.addEventListener('pointerup',   onVideoUp);
-    e.stopPropagation();
+    e.stopPropagation(); e.preventDefault();
   });
   function onVideoMove(e) {
     if (vPointerStartX === null) return;
@@ -3064,6 +3108,15 @@ function lbRenderHtml(html, isMarkdown) {
       pre { overflow-x: auto; } code { font-family: monospace; font-size: 0.9em; }
     </style></head><body>${rendered}</body></html>`;
   iframe.srcdoc = iframeDoc;
+  // Auto-resize iframe to content height (up to 60vh)
+  iframe.addEventListener('load', () => {
+    try {
+      const h = iframe.contentDocument.documentElement.scrollHeight;
+      const maxH = Math.round(window.innerHeight * 0.55);
+      iframe.style.height = Math.min(h, maxH) + 'px';
+    } catch(_) { iframe.style.height = '200px'; }
+  });
+  iframe.style.height = '200px'; // initial before load
   iframeWrap.appendChild(iframe);
   wrap.appendChild(iframeWrap);
 
@@ -3214,7 +3267,9 @@ function closeLightbox() {
 }
 
 lightbox.addEventListener('click', e => {
-  if (e.target === lightbox && focusTop() === 'lightbox') closeLightbox();
+  if (lbDlDidLongPress) { lbDlDidLongPress = false; return; }
+  const frame = lightbox.querySelector('.lightbox-frame');
+  if (!frame.contains(e.target) && focusTop() === 'lightbox') closeLightbox();
 });
 
 /* ============================================================
