@@ -160,7 +160,7 @@
      MENU OVERLAY
   ============================================================ */
   #menuOverlay {
-    position: fixed; inset: 0; z-index: 1000;
+    position: fixed; inset: 0; z-index: 10;
     background: var(--menu-bg);
     backdrop-filter: var(--backdrop-menu);
     -webkit-backdrop-filter: var(--backdrop-menu);
@@ -201,7 +201,7 @@
     border: none; border-radius: var(--radius-md);
     background: transparent; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    position: relative; z-index: 1;
+    position: relative; z-index: 2;
     color: var(--text-primary);
     transition: background 0.15s;
   }
@@ -521,7 +521,7 @@
     -webkit-backdrop-filter: blur(6px);
     background: var(--stack-overlay-bg);
     display: flex; align-items: center; justify-content: center;
-    z-index: 100; cursor: pointer;
+    z-index: 3; cursor: pointer;
     opacity: 1; transition: opacity 0.7s ease;
   }
   .stack-overlay.hidden { opacity: 0; pointer-events: none; }
@@ -755,7 +755,7 @@
     border: none; border-radius: 7px;
     background: transparent; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    position: relative; z-index: 1;
+    position: relative; z-index: 2;
     color: var(--text-muted); transition: color 0.2s;
   }
   .tab-btn.active { color: var(--text-primary); }
@@ -877,7 +877,7 @@
     position: absolute; top: var(--space-frame); right: var(--space-frame);
     display: flex; flex-direction: column;
     align-items: flex-end; gap: 5px;
-    z-index: 10; pointer-events: none;
+    z-index: 3; pointer-events: none;
   }
   .redeem-toast {
     background: var(--bg-card);
@@ -900,7 +900,7 @@
     position: fixed; top: 20px; right: 20px;
     display: flex; flex-direction: column;
     align-items: flex-end; gap: 6px;
-    z-index: 1050; pointer-events: none;
+    z-index: 11; pointer-events: none;
   }
   .redeem-top {
     min-height: 150px;
@@ -1067,7 +1067,7 @@
      OVERLAYS: PROJECT / BLOG / ABOUT (shared .sheet-overlay)
   ============================================================ */
   .sheet-overlay {
-    position: fixed; inset: 0; z-index: 999;
+    position: fixed; inset: 0; z-index: 7;
     display: flex; align-items: center; justify-content: center;
     padding: var(--space-overlay);
     backdrop-filter: var(--backdrop-overlay);
@@ -1100,7 +1100,7 @@
     overflow: hidden; position: relative;
   }
   .sheet-close {
-    position: absolute; top: 12px; right: 12px; z-index: 10;
+    position: absolute; top: 12px; right: 12px; z-index: 2;
     width: 28px; height: 28px; border-radius: 4px;
     background: var(--close-btn-bg); border: none;
     display: flex; align-items: center; justify-content: center;
@@ -1165,7 +1165,7 @@
      MODALS (shared .modal-overlay)
   ============================================================ */
   .modal-overlay {
-    position: fixed; inset: 0; z-index: 1000;
+    position: fixed; inset: 0; z-index: 9;
     display: flex; align-items: center; justify-content: center; padding: var(--space-overlay);
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     background: var(--overlay-blur-bg);
@@ -1203,7 +1203,7 @@
      LIGHTBOX — full-featured preview
   ============================================================ */
   .lightbox-overlay {
-    position: fixed; inset: 0; z-index: 1100;
+    position: fixed; inset: 0; z-index: 8;
     display: flex; align-items: center; justify-content: center; padding: 32px 24px;
     background: var(--overlay-blur-bg);
     backdrop-filter: var(--backdrop-menu); -webkit-backdrop-filter: var(--backdrop-menu);
@@ -1265,7 +1265,7 @@
     animation: lbSweep 1.6s cubic-bezier(0.4,0,0.2,1) infinite;
     pointer-events: none;
     border-radius: var(--radius-md);
-    z-index: 100;
+    z-index: 3;
   }
   :root.dark .lb-shimmer {
     background: linear-gradient(
@@ -1347,7 +1347,7 @@
     opacity: 0;
     transition: transform 0.3s cubic-bezier(0.77,0,0.175,1), opacity 0.3s ease;
     pointer-events: none;
-    z-index: 10;
+    z-index: 3;
   }
   .lb-video-ctrl.visible {
     transform: translateY(0);
@@ -1481,7 +1481,7 @@
      GALLERY OVERLAY (long-press on page 3 — images masonry)
   ============================================================ */
   #galleryOverlay {
-    position: fixed; inset: 0; z-index: 999;
+    position: fixed; inset: 0; z-index: 7;
     display: flex; align-items: center; justify-content: center;
     padding: var(--space-overlay);
     backdrop-filter: var(--backdrop-overlay);
@@ -1566,7 +1566,7 @@
      BLOG LIST OVERLAY (long-press on page 4 — blog cards)
   ============================================================ */
   #blogListOverlay {
-    position: fixed; inset: 0; z-index: 999;
+    position: fixed; inset: 0; z-index: 7;
     display: flex; align-items: center; justify-content: center;
     padding: var(--space-overlay);
     backdrop-filter: var(--backdrop-overlay);
