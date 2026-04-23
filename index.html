@@ -2964,34 +2964,40 @@ function lbRenderAudio(url, filename) {
     if (audio.duration) audio.currentTime = ratio * audio.duration;
   }
 
-  ctrl.addEventListener('pointerdown', e => {
-    audioPointerStartX = e.clientX;
-    audioPointerStartTime = Date.now();
-    audioDidDrag = false;
-    ctrl.setPointerCapture(e.pointerId);
-    e.preventDefault();
-  });
-
-  ctrl.addEventListener('pointermove', e => {
+  function onAudioMove(e) {
     if (audioPointerStartX === null) return;
-    if (!audioDidDrag && Math.abs(e.clientX - audioPointerStartX) > 7) {
-      audioDidDrag = true;
-    }
+    if (!audioDidDrag && Math.abs(e.clientX - audioPointerStartX) > 7) audioDidDrag = true;
     if (audioDidDrag) audioSeekFromX(e.clientX);
-  });
-
-  ctrl.addEventListener('pointerup', e => {
-    if (audioPointerStartX === null) return;
+  }
+  function onAudioUp(e) {
+    document.removeEventListener('pointermove', onAudioMove);
+    document.removeEventListener('pointerup',   onAudioUp);
+    document.removeEventListener('pointercancel', onAudioCancel);
     if (!audioDidDrag) {
       if (audio.paused) audio.play().catch(() => {}); else audio.pause();
     } else {
       audioSeekFromX(e.clientX);
     }
     audioPointerStartX = null; audioDidDrag = false;
-  });
-
-  ctrl.addEventListener('pointercancel', () => {
+  }
+  function onAudioCancel() {
+    document.removeEventListener('pointermove', onAudioMove);
+    document.removeEventListener('pointerup',   onAudioUp);
+    document.removeEventListener('pointercancel', onAudioCancel);
     audioPointerStartX = null; audioDidDrag = false;
+  }
+
+  ctrl.addEventListener('pointerdown', e => {
+    // Cancel the content-area long-press download timer — ctrl interaction is not a download intent
+    clearTimeout(lbDlPressTimer); lbDlPressTimer = null;
+    audioPointerStartX = e.clientX;
+    audioPointerStartTime = Date.now();
+    audioDidDrag = false;
+    ctrl.setPointerCapture(e.pointerId);
+    document.addEventListener('pointermove', onAudioMove);
+    document.addEventListener('pointerup',   onAudioUp);
+    document.addEventListener('pointercancel', onAudioCancel);
+    e.preventDefault();
   });
 }
 
@@ -3108,20 +3114,23 @@ function lbRenderVideo(url, filename) {
     if (vid.duration) { vid.currentTime = ratio * vid.duration; resetVideoTimer(); }
   }
 
-  ctrl.addEventListener('pointerdown', e => {
-    vPointerStartX = e.clientX; vDidDrag = false;
-    ctrl.setPointerCapture(e.pointerId);
-    e.stopPropagation(); e.preventDefault();
-  });
+  let vPointerStartX = null, vDidDrag = false;
 
-  ctrl.addEventListener('pointermove', e => {
+  function videoSeekFromX(clientX) {
+    const rect = ctrl.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    if (vid.duration) { vid.currentTime = ratio * vid.duration; resetVideoTimer(); }
+  }
+
+  function onVideoMove(e) {
     if (vPointerStartX === null) return;
     if (!vDidDrag && Math.abs(e.clientX - vPointerStartX) > 7) vDidDrag = true;
     if (vDidDrag) { videoSeekFromX(e.clientX); resetVideoTimer(); }
-  });
-
-  ctrl.addEventListener('pointerup', e => {
-    if (vPointerStartX === null) return;
+  }
+  function onVideoUp(e) {
+    document.removeEventListener('pointermove', onVideoMove);
+    document.removeEventListener('pointerup',   onVideoUp);
+    document.removeEventListener('pointercancel', onVideoCancel);
     if (!vDidDrag) {
       if (vid.paused) vid.play().catch(() => {}); else vid.pause();
       resetVideoTimer();
@@ -3129,10 +3138,23 @@ function lbRenderVideo(url, filename) {
       videoSeekFromX(e.clientX);
     }
     vPointerStartX = null; vDidDrag = false;
-  });
-
-  ctrl.addEventListener('pointercancel', () => {
+  }
+  function onVideoCancel() {
+    document.removeEventListener('pointermove', onVideoMove);
+    document.removeEventListener('pointerup',   onVideoUp);
+    document.removeEventListener('pointercancel', onVideoCancel);
     vPointerStartX = null; vDidDrag = false;
+  }
+
+  ctrl.addEventListener('pointerdown', e => {
+    // Cancel the content-area long-press download timer
+    clearTimeout(lbDlPressTimer); lbDlPressTimer = null;
+    vPointerStartX = e.clientX; vDidDrag = false;
+    ctrl.setPointerCapture(e.pointerId);
+    document.addEventListener('pointermove', onVideoMove);
+    document.addEventListener('pointerup',   onVideoUp);
+    document.addEventListener('pointercancel', onVideoCancel);
+    e.stopPropagation(); e.preventDefault();
   });
 }
 
