@@ -1686,6 +1686,139 @@
     color: var(--text-faint); font-size: 0.7rem; letter-spacing: 0.1em;
   }
 
+  /* ============================================================
+     SEARCH OVERLAY
+  ============================================================ */
+  #searchOverlay {
+    position: fixed; inset: 0; z-index: 4;
+    display: flex; align-items: center; justify-content: center;
+    padding: var(--space-overlay);
+    backdrop-filter: var(--backdrop-overlay);
+    -webkit-backdrop-filter: var(--backdrop-overlay);
+    background: var(--overlay-bg);
+    opacity: 0; pointer-events: none;
+    transition: var(--transition-fade);
+  }
+  #searchOverlay.visible { opacity: 1; pointer-events: all; }
+
+  .search-frame {
+    width: 100%; max-width: 420px;
+    max-height: 80vh;
+    border: var(--border-hair) var(--border-strong);
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+    padding: var(--space-frame);
+    display: flex; flex-direction: column;
+    gap: 10px;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.35s cubic-bezier(0.77,0,0.175,1);
+    overflow: hidden;
+  }
+  #searchOverlay.visible .search-frame { transform: translateY(0) scale(1); }
+
+  /* ── Search input ── */
+  .search-input-wrap {
+    flex-shrink: 0;
+    border: var(--border-hair) var(--border-mid);
+    border-radius: var(--radius-md);
+    background: var(--bg-inner);
+    display: flex; align-items: center;
+    padding: 0 12px;
+    height: 44px;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative; overflow: hidden;
+  }
+  .search-input-wrap.error {
+    border-color: rgba(192,57,43,0.55);
+    background: rgba(192,57,43,0.06);
+    animation: searchShake 0.38s cubic-bezier(0.36,0.07,0.19,0.97);
+  }
+  @keyframes searchShake {
+    0%,100% { transform: translateX(0); }
+    15%     { transform: translateX(-6px); }
+    35%     { transform: translateX(6px); }
+    55%     { transform: translateX(-4px); }
+    75%     { transform: translateX(4px); }
+    90%     { transform: translateX(-2px); }
+  }
+  .search-input {
+    flex: 1; border: none; background: transparent;
+    font-family: var(--font-serif); font-size: 0.82rem;
+    color: var(--text-primary); letter-spacing: 0.05em;
+    outline: none; text-align: center;
+    caret-color: var(--text-primary);
+  }
+  .search-input::placeholder { color: var(--text-muted); }
+  .search-input-wrap.error .search-input::placeholder { color: rgba(192,57,43,0.7); }
+
+  /* ── Search tabs ── */
+  .search-tabs-wrap {
+    flex-shrink: 0;
+    overflow: hidden;
+    transition: height 0.35s cubic-bezier(0.77,0,0.175,1);
+  }
+  .search-tabs {
+    position: relative;
+    display: flex; padding: 4px; gap: 0;
+    border: var(--border-hair) var(--border-mid);
+    border-radius: 10px; background: var(--bg-inner);
+    user-select: none;
+  }
+  .search-tab-slider {
+    position: absolute; top: 4px; left: 4px;
+    height: 36px;
+    border-radius: 7px;
+    background: var(--bg-card);
+    box-shadow: inset 0 0 0 0.5px var(--border-strong);
+    pointer-events: none;
+    transition: transform 0.3s cubic-bezier(0.77,0,0.175,1),
+                width 0.3s cubic-bezier(0.77,0,0.175,1);
+  }
+  .search-tab-btn {
+    flex: 1; height: 36px;
+    border: none; border-radius: 7px;
+    background: transparent; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; z-index: 1;
+    color: var(--text-faint);
+    transition: color 0.25s ease;
+    font-family: var(--font-serif);
+    font-size: 0.58rem; letter-spacing: 0.15em;
+  }
+  .search-tab-btn.active { color: var(--text-primary); }
+  .search-tab-btn:hover:not(.active) { color: var(--text-secondary); }
+  /* dot mode */
+  .search-dots-row {
+    display: flex; gap: 4px;
+    width: 100%; height: 10px; align-items: center;
+    padding: 0 2px;
+  }
+  .search-dot-bar {
+    flex: 1; height: 2px;
+    background: var(--dot-inactive);
+    border-radius: 2px; cursor: pointer;
+    transition: background 0.3s;
+  }
+  .search-dot-bar.active { background: var(--dot-active); }
+
+  /* ── Search results ── */
+  .search-results {
+    flex: 1; min-height: 0;
+    border: var(--border-hair) var(--border-mid);
+    border-radius: var(--radius-md);
+    background: var(--bg-inner);
+    overflow-y: auto;
+    scrollbar-width: none;
+    display: flex; flex-direction: column;
+    gap: 8px;
+    padding: var(--space-inner);
+    transition: opacity 0.2s ease;
+  }
+  .search-results::-webkit-scrollbar { display: none; }
+  .search-results.hidden {
+    display: none;
+  }
+
   /* Long-press ripple hint */
   .longpress-hint {
     position: absolute; border-radius: 50%;
@@ -1988,6 +2121,30 @@
   </div>
 
 </div><!-- /#page-container -->
+
+<!-- ============================================================
+     SEARCH OVERLAY (long-press on blogListOverlay / fileList)
+============================================================ -->
+<div id="searchOverlay">
+  <div class="search-frame">
+    <!-- Input -->
+    <div class="search-input-wrap" id="searchInputWrap">
+      <input class="search-input" id="searchInput" type="text"
+        autocomplete="off" spellcheck="false" enterkeyhint="search"/>
+    </div>
+    <!-- Tabs -->
+    <div class="search-tabs-wrap" id="searchTabsWrap">
+      <div class="search-tabs" id="searchTabs">
+        <div class="search-tab-slider" id="searchTabSlider"></div>
+        <button class="search-tab-btn active" id="searchTab0" data-tab="0"></button>
+        <button class="search-tab-btn"        id="searchTab1" data-tab="1"></button>
+        <button class="search-tab-btn"        id="searchTab2" data-tab="2"></button>
+      </div>
+    </div>
+    <!-- Results -->
+    <div class="search-results no-scrollbar" id="searchResults"></div>
+  </div>
+</div>
 
 <!-- ============================================================
      GALLERY OVERLAY (long-press on page 3)
@@ -4644,6 +4801,461 @@ blogListOverlay.addEventListener('click', e => { if (e.target === blogListOverla
   target.addEventListener('click', e => { if (didLongPress) { e.stopPropagation(); didLongPress = false; } }, true);
 })();
 
+/* ============================================================
+   SEARCH OVERLAY
+   source: 'blog' | 'file'
+============================================================ */
+(function() {
+  const overlay    = document.getElementById('searchOverlay');
+  const inputWrap  = document.getElementById('searchInputWrap');
+  const input      = document.getElementById('searchInput');
+  const tabsWrap   = document.getElementById('searchTabsWrap');
+  const tabBtnEls  = [0,1,2].map(i => document.getElementById('searchTab' + i));
+  const resultsEl  = document.getElementById('searchResults');
+
+  let searchSource = 'blog';
+  let searchTabCur = 0;
+  let dotModeTimer = null;
+  let errorTimer   = null;
+  let dotMode      = false;
+  let lastQuery    = '';   // last confirmed query
+
+  /* ── SVG icons ── */
+  const ICONS = {
+    blog: [
+      `<svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <text x="1" y="13" font-family="monospace" font-size="8" fill="currentColor" letter-spacing="-0.5">Tex_</text>
+      </svg>`,
+      `<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <rect x="1.5" y="3" width="13" height="11.5" rx="1.5" stroke="currentColor" stroke-width="1.1"/>
+        <line x1="1.5" y1="6.5" x2="14.5" y2="6.5" stroke="currentColor" stroke-width="1.1"/>
+        <line x1="5" y1="1.5" x2="5" y2="4.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+        <line x1="11" y1="1.5" x2="11" y2="4.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+        <rect x="4" y="9" width="2.2" height="2.2" rx="0.4" fill="currentColor" opacity="0.6"/>
+        <rect x="8.9" y="9" width="2.2" height="2.2" rx="0.4" fill="currentColor" opacity="0.6"/>
+      </svg>`,
+      `<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M2 2h6l6 6-6 6-6-6V2z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/>
+        <circle cx="5.5" cy="5.5" r="1.2" fill="currentColor" opacity="0.7"/>
+      </svg>`,
+    ],
+    file: [
+      `<svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M4 2h7l3 3v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" stroke="currentColor" stroke-width="1.05" stroke-linejoin="round"/>
+        <path d="M11 2v4h3" stroke="currentColor" stroke-width="1.05" stroke-linejoin="round"/>
+        <text x="9.5" y="14.5" font-family="sans-serif" font-size="6" font-weight="700" fill="currentColor" text-anchor="middle" opacity="0.85">*</text>
+      </svg>`,
+      `<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="6.2" stroke="currentColor" stroke-width="1.1"/>
+        <line x1="8" y1="4.5" x2="8" y2="8.2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        <line x1="8" y1="8.2" x2="10.5" y2="10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>`,
+      `<svg width="28" height="16" viewBox="0 0 28 16" fill="none">
+        <text x="0" y="12" font-family="serif" font-size="10" fill="currentColor" letter-spacing="0.5" opacity="0.85">Value</text>
+      </svg>`,
+    ],
+  };
+
+  /* ── Tab setup ── */
+  function getSlider() { return document.getElementById('searchTabSlider'); }
+
+  function updateSlider(idx, instant) {
+    const slider = getSlider();
+    if (!slider) return;
+    const btn = tabBtnEls[idx];
+    const tabs = document.getElementById('searchTabs');
+    if (!btn || !tabs) return;
+    const bRect   = tabs.getBoundingClientRect();
+    const btnRect = btn.getBoundingClientRect();
+    const x = btnRect.left - bRect.left - 4;
+    const w = btnRect.width;
+    if (instant) {
+      slider.style.transition = 'none';
+      slider.style.width     = w + 'px';
+      slider.style.transform = `translateX(${x}px)`;
+      requestAnimationFrame(() => { slider.style.transition = ''; });
+    } else {
+      slider.style.width     = w + 'px';
+      slider.style.transform = `translateX(${x}px)`;
+    }
+  }
+
+  function setupTabs(source) {
+    const icons = ICONS[source];
+    tabBtnEls.forEach((btn, i) => {
+      btn.innerHTML = icons[i];
+      btn.classList.toggle('active', i === 0);
+    });
+    searchTabCur = 0;
+  }
+
+  function setSearchTab(idx) {
+    searchTabCur = idx;
+    tabBtnEls.forEach((b, i) => b.classList.toggle('active', i === idx));
+    updateSlider(idx, false);
+    if (dotMode) updateDotBars();
+    if (lastQuery) runSearch(lastQuery);
+  }
+
+  tabBtnEls.forEach((btn, i) => {
+    btn.addEventListener('mousedown', e => {
+      /* prevent input from losing focus */
+      e.preventDefault();
+    });
+    btn.addEventListener('click', () => {
+      setSearchTab(i);
+      if (dotMode) expandTabs();
+      resetDotTimer();
+    });
+  });
+
+  /* ── Dot mode (条状 dot-bar) ── */
+  function updateDotBars() {
+    const bars = tabsWrap.querySelectorAll('.search-dot-bar');
+    bars.forEach((b, i) => b.classList.toggle('active', i === searchTabCur));
+  }
+
+  function expandTabs() {
+    dotMode = false;
+    /* 1. 换内容（wrap 仍是 10px + overflow:hidden，内容不可见） */
+    tabsWrap.innerHTML = '';
+    const tabsEl = document.createElement('div');
+    tabsEl.className = 'search-tabs'; tabsEl.id = 'searchTabs';
+    const sliderEl = document.createElement('div');
+    sliderEl.className = 'search-tab-slider'; sliderEl.id = 'searchTabSlider';
+    tabsEl.appendChild(sliderEl);
+    tabBtnEls.forEach((btn, i) => {
+      btn.classList.toggle('active', i === searchTabCur);
+      btn.onmousedown = e => e.preventDefault();
+      btn.onclick = () => { setSearchTab(i); resetDotTimer(); };
+      tabsEl.appendChild(btn);
+    });
+    tabsWrap.appendChild(tabsEl);
+    /* 2. 测量自然高度（overflow:hidden 遮住，测量不影响视觉） */
+    const fullH = tabsEl.scrollHeight + 8;
+    /* 3. 下一帧动画展开 */
+    requestAnimationFrame(() => {
+      tabsWrap.style.height = fullH + 'px';
+      updateSlider(searchTabCur, true);
+      setTimeout(() => { tabsWrap.style.height = ''; }, 380);
+    });
+  }
+
+  function collapseToDot() {
+    dotMode = true;
+    /* 1. 锁住当前高度作为动画起点，强制 reflow */
+    tabsWrap.style.height = tabsWrap.scrollHeight + 'px';
+    tabsWrap.getBoundingClientRect(); // force reflow
+    /* 2. 下一帧动画收缩到 10px */
+    requestAnimationFrame(() => {
+      tabsWrap.style.height = '10px';
+      /* 3. 动画结束后替换内容 */
+      setTimeout(() => {
+        tabsWrap.innerHTML = '';
+        const row = document.createElement('div');
+        row.className = 'search-dots-row';
+        for (let i = 0; i < 3; i++) {
+          const bar = document.createElement('div');
+          bar.className = 'search-dot-bar' + (i === searchTabCur ? ' active' : '');
+          const idx = i;
+          bar.addEventListener('mousedown', e => e.preventDefault());
+          bar.addEventListener('click', () => {
+            setSearchTab(idx);
+            expandTabs();
+            resetDotTimer();
+          });
+          row.appendChild(bar);
+        }
+        tabsWrap.appendChild(row);
+        tabsWrap.style.height = '10px';
+      }, 360);
+    });
+  }
+
+  function resetDotTimer() {
+    clearTimeout(dotModeTimer);
+    if (!input.matches(':focus')) {
+      dotModeTimer = setTimeout(() => {
+        if (!input.matches(':focus')) collapseToDot();
+      }, 3000);
+    }
+  }
+
+  /* ── Input focus / blur ── */
+  input.addEventListener('focus', () => {
+    clearTimeout(dotModeTimer);
+    if (dotMode) expandTabs();
+  });
+
+  input.addEventListener('blur', () => {
+    /* blur = confirm search */
+    confirmSearch();
+    resetDotTimer();
+  });
+
+  /* ── Enter key ── */
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      input.blur(); // triggers confirmSearch via blur
+    }
+  });
+
+  /* ── Soft keyboard detection ── */
+  let lastVH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => {
+      const newVH = window.visualViewport.height;
+      if (newVH > lastVH + 80 && input.matches(':focus')) input.blur();
+      lastVH = newVH;
+    });
+  }
+
+  /* ── Typing: clear error only, no search ── */
+  input.addEventListener('input', () => {
+    clearTimeout(errorTimer);
+    inputWrap.classList.remove('error');
+    input.placeholder = '';
+  });
+
+  /* ── Error state ── */
+  function showError(msg) {
+    clearTimeout(errorTimer);
+    const prev = input.value;
+    inputWrap.classList.add('error');
+    input.value = '';
+    input.placeholder = msg;
+    errorTimer = setTimeout(() => {
+      inputWrap.classList.remove('error');
+      input.placeholder = '';
+      /* 恢复原来的输入值 */
+      if (prev) input.value = prev;
+    }, 3000);
+  }
+
+  /* ── Confirm: called on blur/enter ── */
+  function confirmSearch() {
+    const q = input.value.trim();
+    if (!q) {
+      showError('未输入');
+      lastQuery = '';
+      renderResults([]);
+      return;
+    }
+    lastQuery = q;
+    runSearch(q);
+  }
+
+  /* ── Core search ── */
+  function runSearch(q) {
+    const ql = q.toLowerCase();
+    let results = [];
+
+    if (searchSource === 'blog') {
+      results = blogData.filter(d => {
+        if (searchTabCur === 0) return d.title.toLowerCase().includes(ql);
+        if (searchTabCur === 1) return d.date.toLowerCase().includes(ql);
+        if (searchTabCur === 2) return d.category.toLowerCase().includes(ql);
+        return false;
+      });
+    } else {
+      results = fileData.filter(f => {
+        if (searchTabCur === 0) return f.name.toLowerCase().includes(ql);
+        if (searchTabCur === 1) return f.date.toLowerCase().includes(ql);
+        if (searchTabCur === 2) return (f.name.split('.').pop() || '').toLowerCase().includes(ql);
+        return false;
+      });
+    }
+
+    if (results.length === 0) {
+      showError(`没有与"${q}"相符的内容`);
+      renderResults([]);
+      return;
+    }
+
+    renderResults(results);
+  }
+
+  /* ── Render results ── */
+  function renderResults(items) {
+    resultsEl.innerHTML = '';
+    if (!items.length) {
+      resultsEl.classList.add('hidden');
+      return;
+    }
+    resultsEl.classList.remove('hidden');
+
+    if (searchSource === 'blog') {
+      items.forEach(d => {
+        const idx = blogData.indexOf(d);
+        const card = document.createElement('div');
+        card.className = 'blog-list-card';
+        card.innerHTML = `
+          <div class="blog-list-card-meta">
+            <span class="blog-list-card-date">${d.date}</span>
+            <div class="blog-list-card-sep"></div>
+            <span class="blog-list-card-cat">${d.category}</span>
+          </div>
+          <div class="blog-list-card-title">${d.title}</div>
+          <div class="blog-list-card-excerpt">${d.excerpt.replace(/<br>/g, ' ')}</div>
+          <div class="blog-list-card-footer">
+            <span class="blog-list-card-time">${d.readTime}</span>
+            <span class="blog-list-card-arrow">→</span>
+          </div>`;
+        card.addEventListener('click', () => { closeSearch(); openBlog(idx); });
+        resultsEl.appendChild(card);
+      });
+    } else {
+      items.forEach(f => {
+        const fidx = fileData.indexOf(f);
+        const row = document.createElement('div');
+        row.className = 'file-row';
+        const previewable = isFilePreviewable(f.name);
+        if (previewable) row.style.cursor = 'pointer';
+        row.innerHTML = `
+          <div class="file-icon">${getFileIcon(f.name)}</div>
+          <div class="file-meta">
+            <div class="file-name">${f.name}</div>
+            <div class="file-size">${f.size}</div>
+          </div>
+          <button class="file-view-btn">View</button>`;
+        row.querySelector('.file-view-btn').addEventListener('click', e => {
+          e.stopPropagation(); openFileModal(fidx);
+        });
+        if (previewable) {
+          row.addEventListener('click', e => {
+            if (e.target.closest('.file-view-btn')) return;
+            openLightbox({ url: f.url || '', filename: f.name });
+          });
+        }
+        resultsEl.appendChild(row);
+      });
+    }
+  }
+
+  /* ── Open / Close ── */
+  window.openSearch = function(source) {
+    searchSource = source;
+    lastQuery    = '';
+    input.value  = '';
+    inputWrap.classList.remove('error');
+    input.placeholder = '';
+    clearTimeout(errorTimer);
+    clearTimeout(dotModeTimer);
+    dotMode = false;
+    tabsWrap.classList.remove('dot-mode');
+    tabsWrap.innerHTML = '';
+    const tabsEl = document.createElement('div');
+    tabsEl.className = 'search-tabs'; tabsEl.id = 'searchTabs';
+    const sliderEl = document.createElement('div');
+    sliderEl.className = 'search-tab-slider'; sliderEl.id = 'searchTabSlider';
+    tabsEl.appendChild(sliderEl);
+    tabBtnEls.forEach((btn, i) => {
+      btn.onmousedown = e => e.preventDefault();
+      btn.onclick = () => { setSearchTab(i); resetDotTimer(); };
+      tabsEl.appendChild(btn);
+    });
+    tabsWrap.appendChild(tabsEl);
+    setupTabs(source);
+    resultsEl.classList.add('hidden');
+    resultsEl.innerHTML = '';
+    overlay.classList.add('visible');
+    focusPush('searchOverlay');
+    setTimeout(() => {
+      updateSlider(0, true);
+      input.focus();
+    }, 80);
+  };
+
+  window.closeSearch = function() {
+    input.blur();
+    overlay.classList.remove('visible');
+    focusPop('searchOverlay');
+    clearTimeout(dotModeTimer);
+    clearTimeout(errorTimer);
+  };
+
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay && focusTop() === 'searchOverlay') closeSearch();
+  });
+})();
+
+
+(function() {
+  const target = document.getElementById('blogListGrid');
+  let pressTimer = null, ripple = null, didLongPress = false;
+
+  function startRipple(x, y) {
+    ripple = document.createElement('div');
+    ripple.className = 'longpress-hint';
+    ripple.style.left = x + 'px'; ripple.style.top = y + 'px';
+    target.appendChild(ripple);
+    requestAnimationFrame(() => ripple.classList.add('pressing'));
+  }
+  function removeRipple() { if (ripple) { ripple.remove(); ripple = null; } }
+
+  function onStart(x, y) {
+    /* ignore multi-touch */
+    didLongPress = false;
+    startRipple(x, y);
+    pressTimer = setTimeout(() => {
+      didLongPress = true; removeRipple();
+      openSearch('blog');
+    }, 500);
+  }
+  function onEnd() { clearTimeout(pressTimer); pressTimer = null; removeRipple(); }
+
+  target.addEventListener('mousedown',  e => { if (e.button !== 0) return; onStart(e.offsetX, e.offsetY); });
+  target.addEventListener('mouseup',    () => onEnd());
+  target.addEventListener('mouseleave', () => onEnd());
+  target.addEventListener('touchstart', e => {
+    if (e.touches.length > 1) { onEnd(); return; }
+    const r = target.getBoundingClientRect();
+    onStart(e.touches[0].clientX - r.left, e.touches[0].clientY - r.top);
+  }, { passive: true });
+  target.addEventListener('touchend',    () => onEnd(), { passive: true });
+  target.addEventListener('touchcancel', () => onEnd(), { passive: true });
+  target.addEventListener('click', e => { if (didLongPress) { e.stopPropagation(); didLongPress = false; } }, true);
+})();
+
+/* ── Long-press on fileList → open search ── */
+(function() {
+  const target = document.getElementById('fileList');
+  let pressTimer = null, ripple = null, didLongPress = false;
+
+  function startRipple(x, y) {
+    ripple = document.createElement('div');
+    ripple.className = 'longpress-hint';
+    ripple.style.left = x + 'px'; ripple.style.top = y + 'px';
+    target.appendChild(ripple);
+    requestAnimationFrame(() => ripple.classList.add('pressing'));
+  }
+  function removeRipple() { if (ripple) { ripple.remove(); ripple = null; } }
+
+  function onStart(x, y) {
+    if (didLongPress) return;
+    didLongPress = false;
+    startRipple(x, y);
+    pressTimer = setTimeout(() => {
+      didLongPress = true; removeRipple();
+      openSearch('file');
+    }, 500);
+  }
+  function onEnd() { clearTimeout(pressTimer); pressTimer = null; removeRipple(); }
+
+  target.addEventListener('mousedown',  e => { if (e.button !== 0) return; onStart(e.offsetX, e.offsetY); });
+  target.addEventListener('mouseup',    () => onEnd());
+  target.addEventListener('mouseleave', () => onEnd());
+  target.addEventListener('touchstart', e => {
+    if (e.touches.length > 1) { onEnd(); return; }
+    const r = target.getBoundingClientRect();
+    onStart(e.touches[0].clientX - r.left, e.touches[0].clientY - r.top);
+  }, { passive: true });
+  target.addEventListener('touchend',    () => onEnd(), { passive: true });
+  target.addEventListener('touchcancel', () => onEnd(), { passive: true });
+  target.addEventListener('click', e => { if (didLongPress) { e.stopPropagation(); didLongPress = false; } }, true);
+})();
+
 function anyOverlayOpen() {
   return focusStack.length > 0;
 }
@@ -4662,6 +5274,7 @@ function closeTopFocus() {
     case 'linkModal':      closeModal(linkModal);  break;
     case 'emailModal':     closeModal(emailModal); break;
     case 'fileModal':      closeFileModal();   break;
+    case 'searchOverlay':  closeSearch();      break;
     default: return false;
   }
   return true;
@@ -4783,6 +5396,12 @@ document.addEventListener('keydown', e => {
     if (key === 'Enter')                 { e.preventDefault(); setSound(!isPlaying); return; }
     if (key === 'Escape' || key === ' ') { e.preventDefault(); closeMenu(); return; }
     return; /* 菜单开着时屏蔽其他所有按键 */
+  }
+
+  /* searchOverlay 在栈顶时，Enter 由 input 自己处理，不关闭弹窗 */
+  if (focusTop() === 'searchOverlay') {
+    if (key === 'Escape') { e.preventDefault(); closeSearch(); }
+    return;
   }
 
   /* linkModal 在栈顶时，Enter 确认、其他关闭键取消 */
