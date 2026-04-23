@@ -1225,7 +1225,7 @@
 
   /* Content area — flex:1, scrollable, no scrollbar indicator */
   .lightbox-content {
-    flex: 1; min-height: 130px;
+    flex: 1; min-height: 80px;
     border: var(--border-hair) var(--border-mid);
     border-radius: var(--radius-md); background: var(--bg-inner);
     overflow-y: auto; overflow-x: hidden;
@@ -1234,6 +1234,11 @@
     scrollbar-width: none;
   }
   .lightbox-content::-webkit-scrollbar { display: none; }
+  /* HTML/MD: don't force-expand, let content size the box */
+  .lightbox-content.lb-static {
+    flex: none;
+    overflow-y: visible;
+  }
 
   /* Placeholder text (centered in content area) */
   .lb-placeholder {
@@ -1383,11 +1388,12 @@
   /* ── Copy / Toggle button row (shared by TXT and HTML/MD) ── */
   .lb-action-row {
     flex-shrink: 0;
-    border-top: var(--border-hair) var(--border-soft);
+    margin-top: 8px;          /* gap between content and copy btn (Fix 2) */
+    border: var(--border-hair) var(--border-soft);
     height: 44px;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; user-select: none; position: relative; overflow: hidden;
-    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    border-radius: var(--radius-md);
     background: var(--bg-inner);
     transition: background 0.15s;
     gap: 7px;
@@ -1451,11 +1457,13 @@
   }
   .lb-iframe-wrap {
     overflow: hidden;
+    background: var(--bg-inner);
+    border-radius: var(--radius-md);
     /* height set by JS to match content up to max */
   }
   .lb-iframe-wrap iframe {
     width: 100%; border: none; display: block;
-    min-height: 120px;
+    min-height: 80px;
   }
   .lb-source-wrap {
     overflow-y: auto; overflow-x: hidden;
@@ -2017,7 +2025,7 @@
 <!-- Lightbox download modal -->
 <div class="modal-overlay" id="lbDownloadModal">
   <div class="modal">
-    <div class="modal-title" id="lbDownloadTitle">下载此文件</div>
+    <div class="modal-title" id="lbDownloadTitle"></div>
     <div class="modal-buttons">
       <button class="modal-btn" id="lbDownloadCancel">Cancel</button>
       <button class="modal-btn danger" id="lbDownloadBtn">Download</button>
@@ -2274,10 +2282,10 @@ const contactData = {
 const fileData = [
   { name: 'test.mp4',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://cropgif.net/videos/1776752686706-9e0da3fb-25e5-4355-887b-961a99d25a92.mp4' },  // 示例MP4
   { name: 'test.mp3',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },  // 示例MP3
-  { name: 'test.txt',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://www.w3.org/TR/2003/REC-PNG-20031110/iso-8859-1.txt' },  // 文本文件
+  { name: 'test.txt',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://raw.githubusercontent.com/Ae2autumn/Aermium/refs/heads/main/REDEME.TXT' },  // 文本文件
   { name: 'test.md',   size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://raw.githubusercontent.com/mdn/content/main/files/en-us/web/html/index.md' },  // Markdown文件
   { name: 'test.html', size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://www.w3.org/People/Berners-Lee/Overview.html' },  // HTML页面
-  { name: 'test.png',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://www.w3.org/People/Berners-Lee/2000/05/photo-2000-05-05_28-small.png' },  // PNG图片
+  { name: 'test.jpg',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://raw.githubusercontent.com/Ae2autumn/Aermium/refs/heads/main/IMG20260423075129.jpg' },  // PNG图片
   { name: 'test.svg',  size: '0.1 MiB',  date: '', hash: '', url: 'https://upload.wikimedia.org/wikipedia/commons/8/84/Example.svg' },  // SVG矢量图
 ];
 
@@ -2585,8 +2593,7 @@ function lbSetupCopyBtn() {
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
       <rect x="5" y="5" width="9" height="9" rx="1.2" stroke="currentColor" stroke-width="1.1"/>
       <path d="M3 11V3h8" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    <span>复制</span>`;
+    </svg>`;
   lbCopyDone = false;
   lbActionRow.onclick = () => {
     if (lbCopyDone) return;
@@ -2605,7 +2612,6 @@ function lbSetupToggleRow() {
         <ellipse cx="8" cy="8" rx="7" ry="4.5" stroke="currentColor" stroke-width="1.15"/>
         <circle cx="8" cy="8" r="2" fill="currentColor"/>
       </svg>
-      预览
     </button>
     <button class="lb-toggle-btn" id="lbBtnSource">
       <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
@@ -2613,7 +2619,6 @@ function lbSetupToggleRow() {
         <polyline points="11,4 14,8 11,12" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/>
         <line x1="9.5" y1="3" x2="6.5" y2="13" stroke="currentColor" stroke-width="1.15" stroke-linecap="round"/>
       </svg>
-      源码
     </button>`;
   lbCopyDone = false;
   lbIsSource = false;
@@ -2624,9 +2629,13 @@ function lbSetupToggleRow() {
 
   // Long-press → copy; click → toggle. Must distinguish the two.
   let togglePressTimer = null, toggleDidLongPress = false;
+  let togglePressStartX = null, togglePressStartY = null;
 
-  function onToggleDown() {
+  function onToggleDown(e) {
+    if (!e.isPrimary) { clearTimeout(togglePressTimer); togglePressTimer = null; return; }
     toggleDidLongPress = false;
+    togglePressStartX = e.clientX;
+    togglePressStartY = e.clientY;
     togglePressTimer = setTimeout(() => {
       toggleDidLongPress = true;
       togglePressTimer = null;
@@ -2636,9 +2645,22 @@ function lbSetupToggleRow() {
       lbDoCopy(text);
     }, 500);
   }
-  function onToggleUp() { clearTimeout(togglePressTimer); togglePressTimer = null; }
+  function onToggleMove(e) {
+    if (!togglePressTimer) return;
+    if (togglePressStartX === null) return;
+    const dx = e.clientX - togglePressStartX;
+    const dy = e.clientY - togglePressStartY;
+    if (Math.sqrt(dx * dx + dy * dy) > 8) {
+      clearTimeout(togglePressTimer); togglePressTimer = null;
+    }
+  }
+  function onToggleUp() {
+    clearTimeout(togglePressTimer); togglePressTimer = null;
+    togglePressStartX = null; togglePressStartY = null;
+  }
 
-  lbActionRow.addEventListener('pointerdown', onToggleDown);
+  lbActionRow.addEventListener('pointerdown',   onToggleDown);
+  lbActionRow.addEventListener('pointermove',   onToggleMove);
   lbActionRow.addEventListener('pointerup',     onToggleUp);
   lbActionRow.addEventListener('pointercancel', onToggleUp);
 
@@ -2670,18 +2692,26 @@ function lbToggleSourceView(pill, btnPrev, btnSrc) {
 function lbDoCopy(text) {
   const done = () => {
     lbCopyDone = true;
-    const row = document.getElementById('lbActionRow') || lbActionRow;
-    row.classList.add('copied');
-    const prev = row.innerHTML;
+    const row = lbActionRow;
+
+    // Save state to restore after 1.5s
+    const prevClass = row.className;
+    const prevHTML  = row.innerHTML;
+
+    // Both TXT and HTML/MD show the same centered checkmark in lb-action-row style
+    row.className = 'lb-action-row copied';
+    row.style.marginTop = '8px';   // preserve gap regardless of previous class
     row.innerHTML = `
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="20 6 9 17 4 12"/>
       </svg>`;
     row.onclick = null;
+
     setTimeout(() => {
-      row.classList.remove('copied');
-      row.innerHTML = prev;
+      row.style.marginTop = '';
+      row.className = prevClass;
+      row.innerHTML = prevHTML;
       lbCopyDone = false;
       if (lbCurrentType === 'txt') lbSetupCopyBtn();
       else if (lbCurrentType === 'html' || lbCurrentType === 'md') lbSetupToggleRow();
@@ -2749,6 +2779,7 @@ function lbCleanup() {
 
   // 7. Clear DOM
   lbContent.innerHTML = '';
+  lbContent.classList.remove('lb-static');
   lbActionRow.style.display = 'none';
   lbActionRow.className = 'lb-action-row';
   lbActionRow.innerHTML = '';
@@ -2762,20 +2793,33 @@ function lbCleanup() {
 /* ── Long-press download on content area ── */
 let lbDlPressTimer = null;
 let lbDlDidLongPress = false;   // prevent overlay-close after long-press
+let lbDlPressStartX = null, lbDlPressStartY = null;
 
 /* Bind once at init — not per openLightbox call */
 (function initLbDownloadLongPress() {
   lbContent.addEventListener('pointerdown', e => {
-    // Don't start timer if clicking the action row area
+    // Only single primary pointer (ignore multi-touch / pinch)
+    if (!e.isPrimary) { clearTimeout(lbDlPressTimer); lbDlPressTimer = null; return; }
     lbDlDidLongPress = false;
+    lbDlPressStartX = e.clientX;
+    lbDlPressStartY = e.clientY;
     lbDlPressTimer = setTimeout(() => {
       lbDlPressTimer = null;
       lbDlDidLongPress = true;
       lbOpenDownloadModal();
     }, 500);
   });
-  lbContent.addEventListener('pointerup',     () => { clearTimeout(lbDlPressTimer); lbDlPressTimer = null; });
-  lbContent.addEventListener('pointercancel', () => { clearTimeout(lbDlPressTimer); lbDlPressTimer = null; });
+  lbContent.addEventListener('pointermove', e => {
+    if (!lbDlPressTimer) return;
+    if (lbDlPressStartX === null) return;
+    const dx = e.clientX - lbDlPressStartX;
+    const dy = e.clientY - lbDlPressStartY;
+    if (Math.sqrt(dx * dx + dy * dy) > 8) {
+      clearTimeout(lbDlPressTimer); lbDlPressTimer = null;
+    }
+  });
+  lbContent.addEventListener('pointerup',     () => { clearTimeout(lbDlPressTimer); lbDlPressTimer = null; lbDlPressStartX = null; lbDlPressStartY = null; });
+  lbContent.addEventListener('pointercancel', () => { clearTimeout(lbDlPressTimer); lbDlPressTimer = null; lbDlPressStartX = null; lbDlPressStartY = null; });
 })();
 
 function lbBindDownloadLongPress() { /* no-op: bound once at init */ }
@@ -2788,7 +2832,7 @@ const lbDownloadCancel= document.getElementById('lbDownloadCancel');
 
 function lbOpenDownloadModal() {
   const label = lbTypeLabel(lbCurrentType || 'unknown');
-  lbDownloadTitle.textContent = `下载此${label}`;
+  lbDownloadTitle.textContent = `下载此${label}?`;
   const hasUrl = !!lbCurrentUrl;
   lbDownloadBtn.textContent = hasUrl ? 'Download' : 'No Url';
   lbDownloadBtn.classList.toggle('disabled', !hasUrl);
@@ -2925,29 +2969,30 @@ function lbRenderAudio(url, filename) {
     audioPointerStartTime = Date.now();
     audioDidDrag = false;
     ctrl.setPointerCapture(e.pointerId);
-    document.addEventListener('pointermove', onAudioMove);
-    document.addEventListener('pointerup',   onAudioUp);
     e.preventDefault();
   });
 
-  function onAudioMove(e) {
+  ctrl.addEventListener('pointermove', e => {
     if (audioPointerStartX === null) return;
     if (!audioDidDrag && Math.abs(e.clientX - audioPointerStartX) > 7) {
       audioDidDrag = true;
     }
     if (audioDidDrag) audioSeekFromX(e.clientX);
-  }
-  function onAudioUp(e) {
-    document.removeEventListener('pointermove', onAudioMove);
-    document.removeEventListener('pointerup',   onAudioUp);
+  });
+
+  ctrl.addEventListener('pointerup', e => {
+    if (audioPointerStartX === null) return;
     if (!audioDidDrag) {
-      // It's a click: toggle play/pause
       if (audio.paused) audio.play().catch(() => {}); else audio.pause();
     } else {
       audioSeekFromX(e.clientX);
     }
     audioPointerStartX = null; audioDidDrag = false;
-  }
+  });
+
+  ctrl.addEventListener('pointercancel', () => {
+    audioPointerStartX = null; audioDidDrag = false;
+  });
 }
 
 function lbRenderVideo(url, filename) {
@@ -2961,12 +3006,28 @@ function lbRenderVideo(url, filename) {
     return;
   }
 
-  // Video element
+  // Video element — wrapped in a shimmer host
+  const vidHost = document.createElement('div');
+  vidHost.style.cssText = 'position:relative;width:100%;height:100%;flex:1;min-height:0;';
   const vid = document.createElement('video');
   vid.className = 'lb-video-el';
   vid.src = url; vid.playsInline = true;
   lbVideoEl = vid;
-  videoWrap.appendChild(vid);
+  vidHost.appendChild(vid);
+  videoWrap.appendChild(vidHost);
+
+  // Shimmer sits inside vidHost, not lbContent
+  function showVidShimmer() {
+    if (vidHost.querySelector('.lb-shimmer')) return;
+    const s = document.createElement('div');
+    s.className = 'lb-shimmer';
+    vidHost.appendChild(s);
+  }
+  function removeVidShimmer() {
+    const s = vidHost.querySelector('.lb-shimmer');
+    if (s) s.remove();
+  }
+  showVidShimmer();
 
   // Floating control
   const ctrl = document.createElement('div');
@@ -3029,10 +3090,9 @@ function lbRenderVideo(url, filename) {
       vid.currentTime = saved.t || 0;
       if (!saved.p) vid.play().catch(() => {});
     }
-    lbRemoveShimmer();
+    removeVidShimmer();
   }, { once: true });
-  lbShowShimmer();
-  vid.addEventListener('error', () => lbRemoveShimmer(), { once: true });
+  vid.addEventListener('error', () => removeVidShimmer(), { once: true });
 
   // Click on video area (non-ctrl) → toggle ctrl
   videoWrap.addEventListener('click', e => {
@@ -3051,18 +3111,17 @@ function lbRenderVideo(url, filename) {
   ctrl.addEventListener('pointerdown', e => {
     vPointerStartX = e.clientX; vDidDrag = false;
     ctrl.setPointerCapture(e.pointerId);
-    document.addEventListener('pointermove', onVideoMove);
-    document.addEventListener('pointerup',   onVideoUp);
     e.stopPropagation(); e.preventDefault();
   });
-  function onVideoMove(e) {
+
+  ctrl.addEventListener('pointermove', e => {
     if (vPointerStartX === null) return;
     if (!vDidDrag && Math.abs(e.clientX - vPointerStartX) > 7) vDidDrag = true;
     if (vDidDrag) { videoSeekFromX(e.clientX); resetVideoTimer(); }
-  }
-  function onVideoUp(e) {
-    document.removeEventListener('pointermove', onVideoMove);
-    document.removeEventListener('pointerup',   onVideoUp);
+  });
+
+  ctrl.addEventListener('pointerup', e => {
+    if (vPointerStartX === null) return;
     if (!vDidDrag) {
       if (vid.paused) vid.play().catch(() => {}); else vid.pause();
       resetVideoTimer();
@@ -3070,7 +3129,11 @@ function lbRenderVideo(url, filename) {
       videoSeekFromX(e.clientX);
     }
     vPointerStartX = null; vDidDrag = false;
-  }
+  });
+
+  ctrl.addEventListener('pointercancel', () => {
+    vPointerStartX = null; vDidDrag = false;
+  });
 }
 
 function lbRenderTxt(text) {
@@ -3084,6 +3147,9 @@ function lbRenderTxt(text) {
 
 function lbRenderHtml(html, isMarkdown) {
   lbRawContent = html;
+  // HTML/MD: height driven by content, not flex:1
+  lbContent.classList.add('lb-static');
+
   const wrap = document.createElement('div');
   wrap.className = 'lb-render-wrap';
 
@@ -3099,25 +3165,28 @@ function lbRenderHtml(html, isMarkdown) {
   }
   // Inject themed iframe content
   const isDark = document.documentElement.classList.contains('dark');
+  const bgColor = isDark ? '#18171a' : '#f5f4f2';
+  const fgColor = isDark ? '#e8e6e0' : '#2a2a28';
   const iframeDoc = `<!DOCTYPE html><html><head><meta charset="UTF-8">
     <style>
       body { font-family: serif; font-size: 14px; line-height: 1.8;
-             color: ${isDark ? '#e8e6e0' : '#2a2a28'};
-             background: ${isDark ? '#18171a' : '#f5f4f2'};
+             color: ${fgColor};
+             background: ${bgColor};
              padding: 14px 16px; margin: 0; word-break: break-word; }
       a { color: inherit; } img { max-width: 100%; }
       pre { overflow-x: auto; } code { font-family: monospace; font-size: 0.9em; }
     </style></head><body>${rendered}</body></html>`;
   iframe.srcdoc = iframeDoc;
-  // Auto-resize iframe to content height (up to 60vh)
+  // Auto-resize iframe to content height (up to 55vh), no fixed initial height
   iframe.addEventListener('load', () => {
     try {
       const h = iframe.contentDocument.documentElement.scrollHeight;
       const maxH = Math.round(window.innerHeight * 0.55);
-      iframe.style.height = Math.min(h, maxH) + 'px';
-    } catch(_) { iframe.style.height = '200px'; }
+      const finalH = Math.max(80, Math.min(h, maxH));
+      iframe.style.height = finalH + 'px';
+      iframeWrap.style.height = finalH + 'px';
+    } catch(_) { iframe.style.height = '200px'; iframeWrap.style.height = '200px'; }
   });
-  iframe.style.height = '200px'; // initial before load
   iframeWrap.appendChild(iframe);
   wrap.appendChild(iframeWrap);
 
@@ -3272,6 +3341,11 @@ lightbox.addEventListener('click', e => {
   const frame = lightbox.querySelector('.lightbox-frame');
   if (!frame.contains(e.target) && focusTop() === 'lightbox') closeLightbox();
 });
+// Also reset flag on pointerup at document level (catches drag-release outside frame)
+document.addEventListener('pointerup', () => {
+  // Defer so the lightbox click handler fires first if it's a tap
+  setTimeout(() => { lbDlDidLongPress = false; }, 50);
+}, { passive: true });
 
 /* ============================================================
    PAGE 2 — PROJECT CAROUSEL
