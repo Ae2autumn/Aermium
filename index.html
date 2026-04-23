@@ -2494,13 +2494,13 @@ document.getElementById('sheetClose').addEventListener('click', closeSheet);
 /* 点击 sheet 封面图 → 灯箱 */
 document.querySelector('.sheet-image-bg').addEventListener('click', () => {
   const el = document.querySelector('.sheet-image-bg');
-  openLightbox({ src: el.dataset.lbSrc || '', alt: el.dataset.lbAlt || 'Image' });
+  openLightbox({ url: el.dataset.lbSrc || '', filename: el.dataset.lbAlt || 'Image', type: 'image' });
 });
 
 /* 点击 member avatar → 灯箱 */
 document.querySelector('.member-avatar-box').addEventListener('click', () => {
   const d = memberData[memberCur];
-  if (d) openLightbox({ src: d.avatar || '', alt: d.name || 'Avatar' });
+  if (d) openLightbox({ url: d.avatar || '', filename: d.name || 'Image', type: 'image' });
 });
 
 /* 对外保持原有调用接口不变 */
@@ -2511,11 +2511,10 @@ function closeBlog()      { closeSheet(); }
 
 /* ============================================================
    LIGHTBOX — full-featured preview
-   openLightbox(arg):
-     { src, alt }          → image (legacy, from sheet/stack)
-     { url, filename, type } → file preview (audio/video/txt/html/md/image)
-     number                → galleryData[idx] image
-     string                → plain placeholder text
+   openLightbox({ url, filename, type? })
+     url      → 资源地址（空字符串时显示占位）
+     filename → 显示名称，用于 type 推断（若未传 type）
+     type     → 'image' | 'audio' | 'video' | 'txt' | 'html' | 'md'
 ============================================================ */
 const lightbox    = document.getElementById('lightbox');
 const lbContent   = document.getElementById('lbContent');
@@ -2964,40 +2963,34 @@ function lbRenderAudio(url, filename) {
     if (audio.duration) audio.currentTime = ratio * audio.duration;
   }
 
-  function onAudioMove(e) {
+  ctrl.addEventListener('pointerdown', e => {
+    audioPointerStartX = e.clientX;
+    audioPointerStartTime = Date.now();
+    audioDidDrag = false;
+    ctrl.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+
+  ctrl.addEventListener('pointermove', e => {
     if (audioPointerStartX === null) return;
-    if (!audioDidDrag && Math.abs(e.clientX - audioPointerStartX) > 7) audioDidDrag = true;
+    if (!audioDidDrag && Math.abs(e.clientX - audioPointerStartX) > 7) {
+      audioDidDrag = true;
+    }
     if (audioDidDrag) audioSeekFromX(e.clientX);
-  }
-  function onAudioUp(e) {
-    document.removeEventListener('pointermove', onAudioMove);
-    document.removeEventListener('pointerup',   onAudioUp);
-    document.removeEventListener('pointercancel', onAudioCancel);
+  });
+
+  ctrl.addEventListener('pointerup', e => {
+    if (audioPointerStartX === null) return;
     if (!audioDidDrag) {
       if (audio.paused) audio.play().catch(() => {}); else audio.pause();
     } else {
       audioSeekFromX(e.clientX);
     }
     audioPointerStartX = null; audioDidDrag = false;
-  }
-  function onAudioCancel() {
-    document.removeEventListener('pointermove', onAudioMove);
-    document.removeEventListener('pointerup',   onAudioUp);
-    document.removeEventListener('pointercancel', onAudioCancel);
-    audioPointerStartX = null; audioDidDrag = false;
-  }
+  });
 
-  ctrl.addEventListener('pointerdown', e => {
-    // Cancel the content-area long-press download timer — ctrl interaction is not a download intent
-    clearTimeout(lbDlPressTimer); lbDlPressTimer = null;
-    audioPointerStartX = e.clientX;
-    audioPointerStartTime = Date.now();
-    audioDidDrag = false;
-    ctrl.setPointerCapture(e.pointerId);
-    document.addEventListener('pointermove', onAudioMove);
-    document.addEventListener('pointerup',   onAudioUp);
-    document.addEventListener('pointercancel', onAudioCancel);
-    e.preventDefault();
+  ctrl.addEventListener('pointercancel', () => {
+    audioPointerStartX = null; audioDidDrag = false;
   });
 }
 
@@ -3114,23 +3107,20 @@ function lbRenderVideo(url, filename) {
     if (vid.duration) { vid.currentTime = ratio * vid.duration; resetVideoTimer(); }
   }
 
-  let vPointerStartX = null, vDidDrag = false;
+  ctrl.addEventListener('pointerdown', e => {
+    vPointerStartX = e.clientX; vDidDrag = false;
+    ctrl.setPointerCapture(e.pointerId);
+    e.stopPropagation(); e.preventDefault();
+  });
 
-  function videoSeekFromX(clientX) {
-    const rect = ctrl.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    if (vid.duration) { vid.currentTime = ratio * vid.duration; resetVideoTimer(); }
-  }
-
-  function onVideoMove(e) {
+  ctrl.addEventListener('pointermove', e => {
     if (vPointerStartX === null) return;
     if (!vDidDrag && Math.abs(e.clientX - vPointerStartX) > 7) vDidDrag = true;
     if (vDidDrag) { videoSeekFromX(e.clientX); resetVideoTimer(); }
-  }
-  function onVideoUp(e) {
-    document.removeEventListener('pointermove', onVideoMove);
-    document.removeEventListener('pointerup',   onVideoUp);
-    document.removeEventListener('pointercancel', onVideoCancel);
+  });
+
+  ctrl.addEventListener('pointerup', e => {
+    if (vPointerStartX === null) return;
     if (!vDidDrag) {
       if (vid.paused) vid.play().catch(() => {}); else vid.pause();
       resetVideoTimer();
@@ -3138,23 +3128,10 @@ function lbRenderVideo(url, filename) {
       videoSeekFromX(e.clientX);
     }
     vPointerStartX = null; vDidDrag = false;
-  }
-  function onVideoCancel() {
-    document.removeEventListener('pointermove', onVideoMove);
-    document.removeEventListener('pointerup',   onVideoUp);
-    document.removeEventListener('pointercancel', onVideoCancel);
-    vPointerStartX = null; vDidDrag = false;
-  }
+  });
 
-  ctrl.addEventListener('pointerdown', e => {
-    // Cancel the content-area long-press download timer
-    clearTimeout(lbDlPressTimer); lbDlPressTimer = null;
-    vPointerStartX = e.clientX; vDidDrag = false;
-    ctrl.setPointerCapture(e.pointerId);
-    document.addEventListener('pointermove', onVideoMove);
-    document.addEventListener('pointerup',   onVideoUp);
-    document.addEventListener('pointercancel', onVideoCancel);
-    e.stopPropagation(); e.preventDefault();
+  ctrl.addEventListener('pointercancel', () => {
+    vPointerStartX = null; vDidDrag = false;
   });
 }
 
@@ -3238,45 +3215,7 @@ function lbRenderHtml(html, isMarkdown) {
 function openLightbox(arg) {
   lbCleanup();
 
-  // Legacy: { src, alt } for image
-  if (arg && typeof arg === 'object' && ('src' in arg) && !('url' in arg)) {
-    lbCurrentType = 'image';
-    lbContent.style.minHeight = '';
-    lbRenderImage(arg.src || '', arg.alt || 'Image');
-    lbBindDownloadLongPress();
-    lightbox.classList.add('visible');
-    focusPush('lightbox');
-    return;
-  }
-
-  // Legacy: number → galleryData
-  if (typeof arg === 'number') {
-    const d = galleryData[arg];
-    const src = (d && d.image) || '';
-    const alt = (d && d.caption) || String(arg + 1).padStart(2, '0');
-    lbCurrentType = 'image';
-    lbCurrentUrl  = src || null;
-    lbCurrentFile = alt;
-    lbContent.style.minHeight = '';
-    lbRenderImage(src, alt);
-    lbBindDownloadLongPress();
-    lightbox.classList.add('visible');
-    focusPush('lightbox');
-    return;
-  }
-
-  // Legacy: plain string placeholder
-  if (typeof arg === 'string') {
-    lbCurrentType = null;
-    lbContent.style.minHeight = '';
-    lbRenderPlaceholder(arg || 'File');
-    lbBindDownloadLongPress();
-    lightbox.classList.add('visible');
-    focusPush('lightbox');
-    return;
-  }
-
-  // New: { url, filename, type? }
+  // { url, filename, type? }
   if (arg && typeof arg === 'object' && ('url' in arg || 'filename' in arg)) {
     const { url, filename, type: explicitType } = arg;
     const type = explicitType || lbGetTypeFromFilename(filename);
@@ -3411,11 +3350,6 @@ const galleryData = [
   { image: '', caption: '08' },
 ];
 const STACK_COUNT  = Math.min(7, galleryData.length);
-const stackLightColors = ['#ddd8d0','#e0dbd2','#d8d3ca','#e4dfd7','#dbd5cc','#e2ddd5'];
-const stackDarkColors  = ['#3a3535','#383330','#352f2a','#3c3830','#332e2a','#3a3630'];
-function getStackColor(i) {
-  return document.documentElement.classList.contains('dark') ? stackDarkColors[i] : stackLightColors[i];
-}
 
 let stackOrder = [], stackTimer = null, stackUserStopped = false;
 let isListMode = false, listCur = 0;
@@ -3428,26 +3362,24 @@ function createStackCards() {
     card.className = 'stack-card';
     card.dataset.idx = i;
     if (d.image) {
-      // 有图：背景透明，img 铺满
       const img = document.createElement('img');
       img.src = d.image;
-      img.alt = d.caption;
+      img.alt = d.caption || 'Image';
       img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit;';
       card.appendChild(img);
     } else {
-      // 无图：色块 + caption 占位
-      card.style.background = getStackColor(i);
       const lbl = document.createElement('span');
-      lbl.textContent = d.caption;
+      lbl.textContent = 'Image';
       card.appendChild(lbl);
     }
     card.addEventListener('click', () => {
+      const arg = { url: d.image || '', filename: d.caption || 'Image', type: 'image' };
       if (!isListMode) {
         const isTop = stackOrder.indexOf(card) === stackOrder.length - 1;
-        if (isTop) { openLightbox(i); }
+        if (isTop) { openLightbox(arg); }
         else { stopStackByUser(); bringToTop(card); }
       } else {
-        openLightbox(i);
+        openLightbox(arg);
       }
     });
     stackCards.appendChild(card);
@@ -4547,25 +4479,22 @@ function buildMasonry() {
     const el = document.createElement('div');
     el.className = 'masonry-item';
     if (item.image) {
-      // 有图：img 自然撑开高度
       el.style.padding = '0';
       const img = document.createElement('img');
       img.src = item.image;
-      img.alt = item.caption || String(i + 1).padStart(2, '0');
+      img.alt = 'Image';
       img.style.cssText = 'width:100%;display:block;border-radius:inherit;';
       el.appendChild(img);
     } else {
-      // 无图：占位色块，交替高度模拟瀑布流
       el.style.paddingTop    = i % 3 !== 1 ? '80px' : '48px';
       el.style.paddingBottom = i % 3 !== 1 ? '80px' : '48px';
       const lbl = document.createElement('span');
       lbl.className = 'masonry-label';
-      lbl.textContent = item.caption || String(i + 1).padStart(2, '0');
+      lbl.textContent = 'Image';
       el.appendChild(lbl);
     }
-    // 点击时用统一灯箱预览
     el.addEventListener('click', () => {
-      openLightbox({ src: item.image || '', alt: item.caption || String(i + 1).padStart(2, '0') });
+      openLightbox({ url: item.image || '', filename: 'Image', type: 'image' });
     });
     masonryGrid.appendChild(el);
   });
