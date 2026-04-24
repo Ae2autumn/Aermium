@@ -600,12 +600,13 @@
     font-size: 0.75rem; color: var(--text-secondary);
     font-weight: 300; line-height: 1.9; letter-spacing: 0.04em;
   }
-  .doc-text h1 {
+  /* Legacy plain-HTML doc content (non-markdown) */
+  .doc-text:not(.md-rendered) h1 {
     font-family: var(--font-serif); font-weight: 300; font-size: 1.4rem;
     color: var(--text-primary); letter-spacing: 0.06em; margin-bottom: 14px;
   }
-  .doc-text p { margin-bottom: 10px; }
-  .doc-text p:last-child { margin-bottom: 0; }
+  .doc-text:not(.md-rendered) p { margin-bottom: 10px; }
+  .doc-text:not(.md-rendered) p:last-child { margin-bottom: 0; }
   .doc-tabs {
     flex-shrink: 0; height: 52px;
     border: var(--border-hair) var(--border-mid);
@@ -1160,6 +1161,176 @@
   }
   .sheet-content p { margin-bottom: 12px; }
   .sheet-content p:last-child { margin-bottom: 0; }
+
+  /* ============================================================
+     MARKDOWN RENDERING — shared by .sheet-content and .doc-text
+     (code blocks intentionally left unstyled here)
+  ============================================================ */
+  .md-rendered h1 {
+    font-family: var(--font-serif); font-weight: 300;
+    font-size: clamp(1.15rem, 3.5vw, 1.55rem);
+    color: var(--text-primary); letter-spacing: 0.06em;
+    line-height: 1.35; margin: 0 0 18px;
+    padding-bottom: 8px;
+    border-bottom: var(--border-hair) var(--border-mid);
+  }
+  .md-rendered h2 {
+    font-family: var(--font-serif); font-weight: 300;
+    font-size: clamp(0.95rem, 2.5vw, 1.18rem);
+    color: var(--text-primary); letter-spacing: 0.05em;
+    line-height: 1.4; margin: 22px 0 10px;
+  }
+  .md-rendered h3 {
+    font-family: var(--font-serif); font-weight: 400;
+    font-size: 0.85rem; color: var(--text-secondary);
+    letter-spacing: 0.12em; text-transform: uppercase;
+    line-height: 1.5; margin: 18px 0 8px;
+  }
+  .md-rendered h4, .md-rendered h5, .md-rendered h6 {
+    font-size: 0.78rem; color: var(--text-muted);
+    letter-spacing: 0.08em; margin: 14px 0 6px;
+    font-weight: 400;
+  }
+  .md-rendered p { margin-bottom: 12px; }
+  .md-rendered p:last-child { margin-bottom: 0; }
+
+  .md-rendered ul, .md-rendered ol {
+    margin: 8px 0 12px 1.4em;
+    padding: 0;
+  }
+  .md-rendered li {
+    margin-bottom: 5px;
+    line-height: 1.85;
+  }
+  .md-rendered ul { list-style: none; }
+  .md-rendered ul li::before {
+    content: '—';
+    color: var(--text-faint);
+    display: inline-block;
+    width: 1.4em;
+    margin-left: -1.4em;
+    font-weight: 300;
+  }
+  .md-rendered ol { list-style: decimal; }
+  .md-rendered ol li::marker {
+    color: var(--text-faint);
+    font-size: 0.72rem;
+  }
+
+  .md-rendered blockquote {
+    margin: 14px 0;
+    padding: 10px 16px;
+    border-left: 2px solid var(--border-strong);
+    background: var(--hover-bg);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+  .md-rendered blockquote p { margin-bottom: 0; }
+
+  .md-rendered a {
+    color: var(--text-secondary);
+    text-decoration: underline;
+    text-decoration-color: var(--border-strong);
+    text-underline-offset: 2px;
+    transition: color 0.15s;
+  }
+  .md-rendered a:hover { color: var(--text-primary); }
+
+  .md-rendered strong {
+    font-weight: 600; color: var(--text-primary);
+  }
+  .md-rendered em {
+    font-style: italic; color: var(--text-secondary);
+  }
+
+  .md-rendered hr {
+    border: none;
+    border-top: var(--border-hair) var(--border-mid);
+    margin: 18px 0;
+  }
+
+  .md-rendered table {
+    width: 100%; border-collapse: collapse;
+    margin: 12px 0; font-size: 0.72rem;
+  }
+  .md-rendered th, .md-rendered td {
+    text-align: left;
+    padding: 6px 10px;
+    border-bottom: var(--border-hair) var(--border-soft);
+  }
+  .md-rendered th {
+    color: var(--text-muted);
+    letter-spacing: 0.12em; text-transform: uppercase;
+    font-size: 0.6rem; font-weight: 400;
+    border-bottom-color: var(--border-mid);
+  }
+  .md-rendered td { color: var(--text-secondary); }
+
+  .md-rendered img {
+    max-width: 100%; border-radius: var(--radius-sm);
+    margin: 8px 0; display: block;
+  }
+
+  /* ── Inline code ── */
+  .md-rendered code:not(pre code) {
+    font-family: monospace; font-size: 0.88em;
+    background: var(--hover-bg);
+    padding: 1px 5px; border-radius: 3px;
+    color: var(--text-secondary);
+  }
+
+  /* ── Code block (pre > code) ── */
+  .md-rendered pre {
+    position: relative;
+    margin: 14px 0;
+    border-radius: var(--radius-md);
+    border: var(--border-hair) var(--border-mid);
+    background: var(--bg-avatar);
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: pre;
+    cursor: pointer;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    transition: border-color 0.25s, background 0.25s;
+  }
+  .md-rendered pre::-webkit-scrollbar { display: none; }
+
+  .md-rendered pre code {
+    display: block;
+    padding: 13px 16px;
+    font-family: monospace; font-size: 0.72rem;
+    line-height: 1.75; letter-spacing: 0.02em;
+    color: var(--text-secondary);
+    background: transparent;
+    white-space: pre;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* copied state — whole block turns green */
+  .md-rendered pre.code-copied {
+    border-color: rgba(92,184,126,0.55);
+    background: rgba(92,184,126,0.07);
+    cursor: default;
+  }
+  .md-rendered pre.code-copied code {
+    opacity: 0;
+  }
+  /* checkmark overlay */
+  .md-rendered pre .code-check {
+    display: none;
+    position: absolute; inset: 0;
+    align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .md-rendered pre.code-copied .code-check {
+    display: flex;
+  }
+  .md-rendered pre .code-check svg {
+    color: #5cb87e;
+  }
 
   /* ============================================================
      MODALS (shared .modal-overlay)
@@ -2447,11 +2618,75 @@ const fileData = [
 ];
 
 const docFiles = [
-  { name: 'Brief.md',       content: `<h1>Project Brief</h1><p>This document outlines the scope and objectives for the Aermium studio identity project. The goal is to establish a cohesive visual language that reflects the studio's values of restraint, precision, and depth.</p><p>The project encompasses brand identity, digital presence, and a set of guidelines for future creative work. All deliverables are expected by the end of Q2.</p><p>Key stakeholders include the founding team and two external advisors. Weekly check-ins are scheduled every Thursday at 10:00 AM.</p><p>Budget is confirmed. Timeline is fixed. Scope may be adjusted with prior notice.</p>` },
+  { name: 'Brief.md',       content: `# Project Brief
+
+This document outlines the scope and objectives for the Aermium studio identity project. The goal is to establish a cohesive visual language that reflects the studio's values of restraint, precision, and depth.
+
+## Scope
+
+The project encompasses brand identity, digital presence, and a set of guidelines for future creative work. All deliverables are expected by the end of Q2.
+
+## Stakeholders & Schedule
+
+Key stakeholders include the founding team and two external advisors. Weekly check-ins are scheduled every **Thursday at 10:00 AM**.
+
+## Notes
+
+- Budget is confirmed
+- Timeline is fixed
+- Scope may be adjusted with prior notice
+
+## Color Tokens
+
+\`\`\`css
+--bg:             #f5f4f2;
+--bg-card:        #faf9f7;
+--text-primary:   #2a2a28;
+--text-secondary: #6a6a64;
+--border-mid:     rgba(42,42,40,0.14);
+\`\`\`
+
+## Typeface Stack
+
+\`\`\`
+Display : Cormorant Garamond, Times New Roman, serif
+Body    : Inter Light, system-ui, sans-serif
+Mono    : JetBrains Mono, Menlo, monospace
+\`\`\`` },
   { name: 'Notes.txt',      content: `<h1>Working Notes</h1><p>— Typeface decision: Cormorant Garamond for display, Inter Light for body. Both feel right together.</p><p>— Color palette: warm off-white base, very dark warm brown for text. No pure black, no pure white.</p><p>— Motion: slow, intentional. Nothing should feel snappy or eager.</p><p>— The ink blob idea came from a conversation about impermanence. Keep it.</p>` },
-  { name: 'Proposal.md',    content: `<h1>Design Proposal</h1><p>We propose a three-phase approach. Phase one focuses on foundational identity elements. Phase two applies these to digital surfaces. Phase three covers print and environmental applications.</p><p>Each phase has a two-week review cycle. Revisions are included within reason.</p><p>Deliverables per phase are documented in the attached appendix. Final handoff includes all source files and a usage guide.</p>` },
+  { name: 'Proposal.md',    content: `# Design Proposal
+
+We propose a three-phase approach.
+
+## Phase 1 — Foundation
+
+Phase one focuses on foundational identity elements. Two-week review cycle. Revisions included within reason.
+
+## Phase 2 — Digital
+
+Phase two applies the identity system to digital surfaces. Includes interaction guidelines and component specs.
+
+## Phase 3 — Print & Environment
+
+Phase three covers print and environmental applications.
+
+---
+
+Deliverables per phase are documented in the attached appendix. Final handoff includes all source files and a **usage guide**.` },
   { name: 'References.txt', content: `<h1>References</h1><p>— Muji brand guidelines, 2019 edition</p><p>— Hara Kenya, "White"</p><p>— Otl Aicher, "Typographie"</p><p>— Jony Ive interviews, various</p><p>— Dieter Rams, ten principles for good design</p><p>— Neri Oxman, material ecology</p>` },
-  { name: 'Feedback.md',    content: `<h1>Client Feedback</h1><p>Round 1: Overall direction approved. The team requested slightly more warmth in the color palette. The motion feels appropriate. Logo mark needs one more iteration.</p><p>Round 2: Logo approved. Palette updated and confirmed. Digital mockups well received. Requested addition of a dark mode variant.</p><p>Round 3: Dark mode approved with minor tweaks. Print specs under review. Final sign-off expected next week.</p>` }
+  { name: 'Feedback.md',    content: `# Client Feedback
+
+## Round 1
+
+Overall direction approved. The team requested slightly more warmth in the color palette. The motion feels appropriate. Logo mark needs one more iteration.
+
+## Round 2
+
+Logo approved. Palette updated and confirmed. Digital mockups well received. Requested addition of a **dark mode** variant.
+
+## Round 3
+
+Dark mode approved with minor tweaks. Print specs under review. Final sign-off expected next week.` }
 ];
 
 const eventData = [
@@ -2588,32 +2823,54 @@ const SHEET_REGISTRY = {
   project: {
     imageLabel: 'Image',
     render: d => ({
-      image:   d.image || '',
-      date:    d.date,
-      title:   d.title,
-      tags:    d.tags.map(t => `<span class="sheet-tag">${t}</span>`).join(''),
-      content: d.content,
+      image:    d.image || '',
+      date:     d.date,
+      title:    d.title,
+      tags:     d.tags.map(t => `<span class="sheet-tag">${t}</span>`).join(''),
+      content:  d.markdown ? d.content : d.content,
+      markdown: !!d.markdown,
     }),
   },
   blog: {
     imageLabel: 'Essay',
     render: d => ({
-      image:   d.image || '',
-      date:    d.date,
-      title:   d.title,
-      tags:    `<span class="sheet-tag">${d.category}</span><span class="sheet-tag">${d.readTime}</span>`,
-      content: d.content,
+      image:    d.image || '',
+      date:     d.date,
+      title:    d.title,
+      tags:     `<span class="sheet-tag">${d.category}</span><span class="sheet-tag">${d.readTime}</span>`,
+      content:  d.markdown ? d.content : d.content,
+      markdown: !!d.markdown,
     }),
   },
   about: {
     imageLabel: 'Image',
-    image: '',  // e.g. 'images/about/studio.jpg'
+    image: '',
     render: () => ({
-      image:   '',  // same as above, or override here
+      image:   '',
       date:  'Est. 2021 · Shanghai',
       title: 'Aermium Studio',
       tags:  ['Design','Identity','Editorial'].map(t => `<span class="sheet-tag">${t}</span>`).join(''),
-      content: `<p>Aermium is an independent design studio founded in Shanghai in 2021. We work at the intersection of brand identity, editorial design, and spatial experience — always with an emphasis on restraint, precision, and long-term thinking.</p><p>Our practice is built around the belief that good design is quiet. It does not announce itself. It serves, it endures, and it earns attention through clarity rather than spectacle.</p><p>We work with cultural institutions, independent brands, and founders who share this sensibility. Each project is treated as a long-term collaboration, not a transaction.</p><p>The studio is small by intention. We maintain a tight core team and bring in trusted collaborators when a project demands it. This keeps our work considered and our relationships direct.</p><p>Current areas of focus include visual identity systems, publication design, digital experience, and environmental graphics. We are always open to conversations about new work.</p>`,
+      markdown: true,
+      content: `Aermium is an independent design studio founded in Shanghai in 2021. We work at the intersection of brand identity, editorial design, and spatial experience — always with an emphasis on restraint, precision, and long-term thinking.
+
+Our practice is built around the belief that good design is quiet. It does not announce itself. It serves, it endures, and it earns attention through clarity rather than spectacle.
+
+## What We Do
+
+We work with cultural institutions, independent brands, and founders who share this sensibility. Each project is treated as a long-term collaboration, not a transaction.
+
+Current areas of focus:
+
+- Visual identity systems
+- Publication design
+- Digital experience
+- Environmental graphics
+
+## How We Work
+
+The studio is small by intention. We maintain a tight core team and bring in trusted collaborators when a project demands it. This keeps our work considered and our relationships direct.
+
+We are always open to conversations about new work.`,
     }),
   },
 };
@@ -2626,7 +2883,6 @@ function openSheet(type, data) {
   sheetDateEl.textContent        = cfg.date;
   sheetTitleEl.textContent       = cfg.title;
   sheetTagsEl.innerHTML          = cfg.tags;
-  sheetContentEl.innerHTML       = cfg.content;
   sheetBodyEl.scrollTop          = 0;
   // 应用封面图（有图显示图，无图显示占位文字，永不裂图）
   const sheetImageBgEl = document.querySelector('.sheet-image-bg');
@@ -2634,6 +2890,22 @@ function openSheet(type, data) {
   // 存储当前图片信息供灯箱使用
   sheetImageBgEl.dataset.lbSrc = cfg.image || '';
   sheetImageBgEl.dataset.lbAlt = cfg.title  || reg.imageLabel;
+
+  // Render content: if cfg.markdown === true, render via marked.js
+  if (cfg.markdown) {
+    sheetContentEl.innerHTML = '';
+    sheetContentEl.classList.remove('md-rendered');
+    lbLoadMarked().then(() => {
+      const html = window.marked ? window.marked.parse(cfg.content) : cfg.content;
+      sheetContentEl.innerHTML = html;
+      sheetContentEl.classList.add('md-rendered');
+      bindCodeBlockCopy(sheetContentEl);
+    });
+  } else {
+    sheetContentEl.classList.remove('md-rendered');
+    sheetContentEl.innerHTML = cfg.content;
+  }
+
   sheetOverlay.classList.add('visible');
   focusPush('sheetOverlay');
 }
@@ -2893,6 +3165,64 @@ function lbLoadHighlight() {
     s.onload = resolve; document.head.appendChild(s);
   });
   return hlPromise;
+}
+
+/* ── Code block click-to-copy (click = copy, drag = scroll) ── */
+function bindCodeBlockCopy(container) {
+  container.querySelectorAll('pre').forEach(pre => {
+    /* inject checkmark overlay once */
+    if (!pre.querySelector('.code-check')) {
+      const chk = document.createElement('div');
+      chk.className = 'code-check';
+      chk.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2.5"
+        stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>`;
+      pre.appendChild(chk);
+    }
+
+    let startX = null, startY = null, didDrag = false;
+
+    pre.addEventListener('pointerdown', e => {
+      if (!e.isPrimary) return;
+      startX = e.clientX; startY = e.clientY; didDrag = false;
+      pre.setPointerCapture(e.pointerId);
+    });
+
+    pre.addEventListener('pointermove', e => {
+      if (startX === null) return;
+      const dx = e.clientX - startX, dy = e.clientY - startY;
+      if (!didDrag && Math.sqrt(dx * dx + dy * dy) > 6) didDrag = true;
+      if (didDrag) {
+        /* manual horizontal scroll on drag */
+        pre.scrollLeft -= e.movementX;
+      }
+    });
+
+    pre.addEventListener('pointerup', e => {
+      if (startX === null) return;
+      const wasDrag = didDrag;
+      startX = null; startY = null; didDrag = false;
+      if (wasDrag) return;              /* drag → scroll only, no copy */
+      if (pre.classList.contains('code-copied')) return;
+
+      const code = pre.querySelector('code');
+      const text = code ? code.textContent : pre.textContent;
+
+      const done = () => {
+        pre.classList.add('code-copied');
+        setTimeout(() => { pre.classList.remove('code-copied'); }, 1500);
+      };
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(() => { execCopy(text); done(); });
+      } else { execCopy(text); done(); }
+    });
+
+    pre.addEventListener('pointercancel', () => {
+      startX = null; startY = null; didDrag = false;
+    });
+  });
 }
 
 /* ── Marked.js loader (lazy) ── */
@@ -3750,9 +4080,25 @@ const docTabEls = [...docTabsEl.querySelectorAll('.doc-tab')];
 
 function loadDoc(idx) {
   docCurIdx = idx;
-  docTextEl.innerHTML = docFiles[idx].content;
   docContent.scrollTop = 0;
   docTabEls.forEach((t, i) => t.classList.toggle('active', i === idx));
+
+  const f = docFiles[idx];
+  const isMd = f.name.toLowerCase().endsWith('.md');
+
+  if (isMd) {
+    docTextEl.classList.remove('md-rendered');
+    docTextEl.innerHTML = '';
+    lbLoadMarked().then(() => {
+      const html = window.marked ? window.marked.parse(f.content) : f.content;
+      docTextEl.innerHTML = html;
+      docTextEl.classList.add('md-rendered');
+      bindCodeBlockCopy(docTextEl);
+    });
+  } else {
+    docTextEl.classList.remove('md-rendered');
+    docTextEl.innerHTML = f.content;
+  }
 }
 function scrollTabToCenter(idx) {
   const half = docTabsEl.offsetWidth / 2;
