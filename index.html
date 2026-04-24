@@ -1287,16 +1287,13 @@
     border-radius: var(--radius-md);
     border: var(--border-hair) var(--border-mid);
     background: var(--bg-avatar);
-    overflow-x: auto;
-    overflow-y: hidden;
+    overflow: hidden;          /* pre 本身不滚动，只裁剪 */
     white-space: pre;
     cursor: pointer;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
     transition: border-color 0.25s, background 0.25s;
   }
-  .md-rendered pre::-webkit-scrollbar { display: none; }
 
+  /* 滚动容器移到 code 上 */
   .md-rendered pre code {
     display: block;
     padding: 13px 16px;
@@ -1307,7 +1304,12 @@
     white-space: pre;
     pointer-events: none;
     user-select: none;
+    overflow-x: auto;          /* 横向滚动在 code 层发生 */
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
+  .md-rendered pre code::-webkit-scrollbar { display: none; }
 
   /* copied state — whole block turns green */
   .md-rendered pre.code-copied {
@@ -3182,34 +3184,34 @@ function bindCodeBlockCopy(container) {
       pre.appendChild(chk);
     }
 
-    let startX = null, startY = null, didDrag = false;
+    let startX = null, startY = null, startScrollLeft = null, didDrag = false;
 
+    /* ── 鼠标：pointer 事件 ── */
     pre.addEventListener('pointerdown', e => {
-      if (!e.isPrimary) return;
-      startX = e.clientX; startY = e.clientY; didDrag = false;
+      if (e.pointerType !== 'mouse') return;
+      const codeEl = pre.querySelector('code');
+      startX = e.clientX; startY = e.clientY;
+      startScrollLeft = codeEl ? codeEl.scrollLeft : 0;
+      didDrag = false;
       pre.setPointerCapture(e.pointerId);
     });
-
     pre.addEventListener('pointermove', e => {
-      if (startX === null) return;
+      if (e.pointerType !== 'mouse' || startX === null) return;
       const dx = e.clientX - startX, dy = e.clientY - startY;
       if (!didDrag && Math.sqrt(dx * dx + dy * dy) > 6) didDrag = true;
       if (didDrag) {
-        /* manual horizontal scroll on drag */
-        pre.scrollLeft -= e.movementX;
+        const codeEl = pre.querySelector('code');
+        if (codeEl) codeEl.scrollLeft = startScrollLeft - dx;
       }
     });
-
     pre.addEventListener('pointerup', e => {
-      if (startX === null) return;
+      if (e.pointerType !== 'mouse' || startX === null) return;
       const wasDrag = didDrag;
       startX = null; startY = null; didDrag = false;
-      if (wasDrag) return;              /* drag → scroll only, no copy */
+      if (wasDrag) return;
       if (pre.classList.contains('code-copied')) return;
-
       const code = pre.querySelector('code');
       const text = code ? code.textContent : pre.textContent;
-
       const done = () => {
         pre.classList.add('code-copied');
         setTimeout(() => { pre.classList.remove('code-copied'); }, 1500);
@@ -3218,10 +3220,48 @@ function bindCodeBlockCopy(container) {
         navigator.clipboard.writeText(text).then(done).catch(() => { execCopy(text); done(); });
       } else { execCopy(text); done(); }
     });
-
-    pre.addEventListener('pointercancel', () => {
+    pre.addEventListener('pointercancel', e => {
+      if (e.pointerType !== 'mouse') return;
       startX = null; startY = null; didDrag = false;
     });
+
+    /* ── 触摸屏：touch 事件，passive:false 阻止页面滚动干扰 ── */
+    let touchStartX = null, touchStartScrollLeft = null, touchDidDrag = false;
+    pre.addEventListener('touchstart', e => {
+      if (e.touches.length !== 1) return;
+      const codeEl = pre.querySelector('code');
+      touchStartX = e.touches[0].clientX;
+      touchStartScrollLeft = codeEl ? codeEl.scrollLeft : 0;
+      touchDidDrag = false;
+    }, { passive: true });
+    pre.addEventListener('touchmove', e => {
+      if (touchStartX === null) return;
+      const dx = e.touches[0].clientX - touchStartX;
+      if (!touchDidDrag && Math.abs(dx) > 6) touchDidDrag = true;
+      if (touchDidDrag) {
+        const codeEl = pre.querySelector('code');
+        if (codeEl) codeEl.scrollLeft = touchStartScrollLeft - dx;
+        e.stopPropagation(); /* 阻止冒泡，不触发页面滚动 */
+      }
+    }, { passive: true });
+    pre.addEventListener('touchend', e => {
+      const wasDrag = touchDidDrag;
+      touchStartX = null; touchStartScrollLeft = null; touchDidDrag = false;
+      if (wasDrag) return;
+      if (pre.classList.contains('code-copied')) return;
+      const code = pre.querySelector('code');
+      const text = code ? code.textContent : pre.textContent;
+      const done = () => {
+        pre.classList.add('code-copied');
+        setTimeout(() => { pre.classList.remove('code-copied'); }, 1500);
+      };
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(() => { execCopy(text); done(); });
+      } else { execCopy(text); done(); }
+    }, { passive: true });
+    pre.addEventListener('touchcancel', () => {
+      touchStartX = null; touchStartScrollLeft = null; touchDidDrag = false;
+    }, { passive: true });
   });
 }
 
@@ -3827,14 +3867,14 @@ const stackProgress = document.getElementById('stackProgress');
 
 /* galleryData — Page 3 唯一数据来源：轮播取前7条，长按画廊显示全部 */
 const galleryData = [
-  { image: '', caption: '01' },  // e.g. { image: 'images/gallery/01.jpg', caption: 'Forma — Event' }
-  { image: '', caption: '02' },
-  { image: '', caption: '03' },
-  { image: '', caption: '04' },
-  { image: '', caption: '05' },
-  { image: '', caption: '06' },
-  { image: '', caption: '07' },
-  { image: '', caption: '08' },
+  { image: '' },  // e.g. { image: 'images/gallery/01.jpg' }
+  { image: '' },
+  { image: '' },
+  { image: '' },
+  { image: '' },
+  { image: '' },
+  { image: '' },
+  { image: '' },
 ];
 const STACK_COUNT  = Math.min(7, galleryData.length);
 
@@ -3851,7 +3891,7 @@ function createStackCards() {
     if (d.image) {
       const img = document.createElement('img');
       img.src = d.image;
-      img.alt = d.caption || 'Image';
+      img.alt = 'Image';
       img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit;';
       card.appendChild(img);
     } else {
@@ -3860,7 +3900,7 @@ function createStackCards() {
       card.appendChild(lbl);
     }
     card.addEventListener('click', () => {
-      const arg = { url: d.image || '', filename: d.caption || 'Image', type: 'image' };
+      const arg = { url: d.image || '', filename: 'Image', type: 'image' };
       if (!isListMode) {
         const isTop = stackOrder.indexOf(card) === stackOrder.length - 1;
         if (isTop) { openLightbox(arg); }
