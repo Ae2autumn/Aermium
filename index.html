@@ -1481,22 +1481,42 @@
     background: var(--bg-card);
     touch-action: none;
   }
-  /* progress fill as background */
+  /* buffer layer via ::after — sits below play-progress */
+  .lb-audio-ctrl::after {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: var(--lb-buf, 0%);
+    background: var(--border-soft);
+    border-radius: var(--radius-md);
+    pointer-events: none;
+    z-index: 0;
+    transition: width 0.3s ease;
+  }
+  /* play-progress fill */
   .lb-audio-progress {
     position: absolute; left: 0; top: 0; bottom: 0;
     width: 0%;
     background: var(--hover-bg);
     border-radius: var(--radius-md);
     pointer-events: none;
+    z-index: 1;
     transition: width 0.1s linear;
   }
+  /* icon / label area */
   .lb-audio-icon {
-    position: relative; z-index: 1;
+    position: relative; z-index: 2;
     display: flex; align-items: center; justify-content: center;
     color: var(--text-secondary);
     gap: 6px; pointer-events: none;
+    /* fixed height so label swap never collapses the ctrl */
+    height: 22px;
   }
-
+  /* label inside icon area — status / time / speed share this slot */
+  .lb-audio-label {
+    font-size: 0.6rem; letter-spacing: 0.12em;
+    line-height: 1; white-space: nowrap;
+    color: var(--text-secondary);
+  }
   /* ── Video (floating control) ── */
   .lb-video-wrap {
     position: relative;
@@ -1538,13 +1558,20 @@
     background: var(--hover-bg);
     border-radius: var(--radius-md);
     pointer-events: none;
+    z-index: 1;
     transition: width 0.1s linear;
   }
   .lb-video-icon {
-    position: relative; z-index: 1;
+    position: relative; z-index: 2;
     display: flex; align-items: center; justify-content: center;
     color: var(--text-secondary);
     gap: 6px; pointer-events: none;
+    height: 22px;
+  }
+  .lb-video-label {
+    font-size: 0.6rem; letter-spacing: 0.12em;
+    line-height: 1; white-space: nowrap;
+    color: var(--text-secondary);
   }
 
   /* ── TXT preview ── */
@@ -3415,7 +3442,8 @@ function lbRenderAudio(url, filename) {
     lbRenderPlaceholder('Voice');
     return;
   }
-  // Name label
+
+  /* ── DOM ── */
   const wrap = document.createElement('div');
   wrap.className = 'lb-audio-wrap';
   const nameEl = document.createElement('div');
@@ -3423,13 +3451,11 @@ function lbRenderAudio(url, filename) {
   nameEl.textContent = filename || 'Audio';
   wrap.appendChild(nameEl);
 
-  // Custom control
   const ctrl = document.createElement('div');
   ctrl.className = 'lb-audio-ctrl';
   ctrl.innerHTML = `
     <div class="lb-audio-progress" id="lbAudioProg"></div>
     <div class="lb-audio-icon" id="lbAudioIcon">
-      <!-- play icon -->
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
         <polygon points="4,2 14,8 4,14" fill="currentColor"/>
       </svg>
@@ -3437,24 +3463,47 @@ function lbRenderAudio(url, filename) {
   wrap.appendChild(ctrl);
   lbContent.appendChild(wrap);
 
-  // Create audio element
+  /* ── Audio element ── */
   const audio = new Audio(url);
   lbAudioEl = audio;
   audio.preload = 'metadata';
 
-  // Restore progress
-  const saved = lbLoadProgress(url, filename);
-  if (saved) {
-    audio.addEventListener('loadedmetadata', () => {
-      audio.currentTime = saved.t || 0;
-      if (!saved.p) audio.play().catch(() => {});
-    }, { once: true });
+  const progEl  = ctrl.querySelector('.lb-audio-progress');
+  const iconEl  = ctrl.querySelector('.lb-audio-icon');
+
+  /* ── Speed steps ── */
+  const SPEEDS = [1, 1.25, 1.5, 1.75, 2, 0.25, 0.5, 0.75];
+  let speedIdx = 0;  // index into SPEEDS
+
+  /* ── Display mode: 'status' | 'time' | 'speed' ── */
+  // priority: speed (long-press active) > hover > status
+  let isHover     = false;
+  let isSpeedShow = false;  // true while long-press speed menu is shown
+
+  /* ── Format time mm:ss ── */
+  function fmt(s) {
+    if (!isFinite(s) || s < 0) s = 0;
+    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+    return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
   }
 
-  const progEl = ctrl.querySelector('.lb-audio-progress');
-  const iconEl = ctrl.querySelector('.lb-audio-icon');
-
-  function updateIcon(playing) {
+  /* ── Render icon area ── */
+  // mode: 'status' | 'time' | 'speed'
+  function renderIconArea(mode) {
+    const playing = !audio.paused;
+    if (mode === 'speed') {
+      const sp = SPEEDS[speedIdx];
+      iconEl.innerHTML = `<span class="lb-audio-label"><span class="lb-pop" id="lbAudioPop">${sp === 1 ? '1.00' : sp}</span>x</span>`;
+      return;
+    }
+    if (mode === 'time') {
+      const cur = audio.currentTime || 0;
+      const dur = audio.duration;
+      const total = isFinite(dur) ? fmt(dur) : '--:--';
+      iconEl.innerHTML = `<span class="lb-audio-label"><span class="lb-pop" id="lbAudioPop">${fmt(cur)}</span> – ${total}</span>`;
+      return;
+    }
+    // status
     iconEl.innerHTML = playing
       ? `<svg width="14" height="14" viewBox="0 0 14 14" fill="none">
            <rect x="2" y="1" width="4" height="12" rx="1" fill="currentColor"/>
@@ -3465,60 +3514,222 @@ function lbRenderAudio(url, filename) {
          </svg>`;
   }
 
+  function currentMode() {
+    if (isSpeedShow) return 'speed';
+    if (isHover)     return 'time';
+    return 'status';
+  }
+
+  function refreshDisplay() {
+    renderIconArea(currentMode());
+  }
+
+  /* ── Buffer progress via CSS var on ::after ── */
+  function updateBuffer() {
+    let pct = 0;
+    if (audio.duration && audio.buffered.length) {
+      for (let i = 0; i < audio.buffered.length; i++) {
+        const end = (audio.buffered.end(i) / audio.duration) * 100;
+        if (end > pct) pct = end;
+      }
+    }
+    ctrl.style.setProperty('--lb-buf', pct + '%');
+  }
+
+  /* ── Play progress ── */
   function updateProgress() {
     if (!audio.duration) return;
     const pct = (audio.currentTime / audio.duration) * 100;
     if (progEl) progEl.style.width = pct + '%';
+    updateBuffer();
+    // 时间模式下只更新文字，不重建DOM（保留pop active状态）
+    if (currentMode() === 'time') {
+      const popEl = iconEl.querySelector('#lbAudioPop');
+      if (popEl) popEl.textContent = fmt(audio.currentTime || 0);
+    }
   }
 
   audio.addEventListener('timeupdate', updateProgress);
-  audio.addEventListener('play',  () => updateIcon(true));
-  audio.addEventListener('pause', () => updateIcon(false));
-  audio.addEventListener('ended', () => updateIcon(false));
+  audio.addEventListener('progress',   updateBuffer);
 
-  // Shimmer while loading
-  lbShowShimmer();
+  audio.addEventListener('play',    () => refreshDisplay());
+  audio.addEventListener('pause',   () => refreshDisplay());
+  audio.addEventListener('ended',   () => refreshDisplay());
+
   audio.addEventListener('canplay', () => lbRemoveShimmer(), { once: true });
   audio.addEventListener('error',   () => lbRemoveShimmer(), { once: true });
 
-  // Pointer interaction: click vs slide (7px threshold)
-  let audioPointerStartX = null, audioPointerStartTime = null, audioDidDrag = false;
+  /* ── Shimmer while loading ── */
+  lbShowShimmer();
 
+  /* ── Restore progress ── */
+  const saved = lbLoadProgress(url, filename);
+  if (saved) {
+    audio.addEventListener('loadedmetadata', () => {
+      audio.currentTime = saved.t || 0;
+      if (!saved.p) audio.play().catch(() => {});
+    }, { once: true });
+  }
+
+  /* ── Block browser long-press context menu on the ctrl ── */
+  ctrl.addEventListener('contextmenu', e => e.preventDefault());
+
+  /* ── Hover (fine pointer only) ── */
+  const audioFinePtr = window.matchMedia('(pointer: fine)').matches;
+  ctrl.addEventListener('mouseenter', () => { if (audioFinePtr) { isHover = true;  refreshDisplay(); } });
+  ctrl.addEventListener('mouseleave', () => { if (audioFinePtr) { isHover = false; refreshDisplay(); } });
+
+  /* ── Long-press speed cycle ── */
+  let speedLongTimer = null;
+  let speedPopTimer  = null;  // 1s 后收起倍速pop
+
+  function activateSpeed() {
+    speedIdx = (speedIdx + 1) % SPEEDS.length;
+    audio.playbackRate = SPEEDS[speedIdx];
+    isSpeedShow = true;
+    renderIconArea('speed');
+    // 重置1s收起计时器
+    clearTimeout(speedPopTimer);
+    speedPopTimer = setTimeout(() => {
+      isSpeedShow = false;
+      refreshDisplay();
+    }, 1000);
+  }
+
+  function clearSpeedTimer() {
+    clearTimeout(speedLongTimer);
+    speedLongTimer = null;
+  }
+
+  function endSpeedShow() {
+    clearTimeout(speedPopTimer);
+    isSpeedShow = false;
+    refreshDisplay();
+  }
+
+  /* ── Unified seek logic ── */
   function audioSeekFromX(clientX) {
     const rect = ctrl.getBoundingClientRect();
     const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     if (audio.duration) audio.currentTime = ratio * audio.duration;
   }
 
+  /* ── Pointer events (primary input) ── */
+  let pStartX = null, pDidDrag = false, pLongFired = false;
+
   ctrl.addEventListener('pointerdown', e => {
-    audioPointerStartX = e.clientX;
-    audioPointerStartTime = Date.now();
-    audioDidDrag = false;
+    if (!e.isPrimary) return;
+    pStartX   = e.clientX;
+    pDidDrag  = false;
+    pLongFired = false;
+    isHover   = false;   // 按下时立即清除 hover 态，避免时间显示残留
     ctrl.setPointerCapture(e.pointerId);
     e.preventDefault();
+    e.stopPropagation(); // 阻止冒泡到 lightbox 长按下载逻辑
+
+    speedLongTimer = setTimeout(() => {
+      pLongFired = true;
+      activateSpeed();
+    }, 500);
   });
 
   ctrl.addEventListener('pointermove', e => {
-    if (audioPointerStartX === null) return;
-    if (!audioDidDrag && Math.abs(e.clientX - audioPointerStartX) > 7) {
-      audioDidDrag = true;
+    if (!e.isPrimary || pStartX === null) return;
+    if (!pDidDrag && Math.abs(e.clientX - pStartX) > 7) {
+      pDidDrag = true;
+      clearSpeedTimer();          // drag cancels long-press
+      isSpeedShow = true;         // show time while dragging
     }
-    if (audioDidDrag) audioSeekFromX(e.clientX);
+    if (pDidDrag) {
+      audioSeekFromX(e.clientX);
+      isSpeedShow = false;
+      isHover = true;             // force time display during drag
+      renderIconArea('time');
+    }
   });
 
   ctrl.addEventListener('pointerup', e => {
-    if (audioPointerStartX === null) return;
-    if (!audioDidDrag) {
+    if (!e.isPrimary || pStartX === null) return;
+    clearSpeedTimer();
+    if (!pDidDrag && !pLongFired) {
+      // plain tap → play/pause；重置 hover 防止时间显示卡住
+      isHover = false;
       if (audio.paused) audio.play().catch(() => {}); else audio.pause();
-    } else {
+    } else if (pDidDrag) {
       audioSeekFromX(e.clientX);
+      isHover = false;
+      endSpeedShow();
+    } else {
+      // long-press released
+      isHover = false;
+      endSpeedShow();
     }
-    audioPointerStartX = null; audioDidDrag = false;
+    pStartX = null; pDidDrag = false;
   });
 
-  ctrl.addEventListener('pointercancel', () => {
-    audioPointerStartX = null; audioDidDrag = false;
+  ctrl.addEventListener('pointercancel', e => {
+    if (!e.isPrimary) return;
+    clearSpeedTimer();
+    pStartX = null; pDidDrag = false;
+    isHover = false; endSpeedShow();
   });
+
+  /* ── Touch fallback (for browsers that swallow pointer on scroll containers) ── */
+  let tStartX = null, tDidDrag = false, tLongFired = false, tLongTimer = null;
+
+  ctrl.addEventListener('touchstart', e => {
+    if (pStartX !== null) return;
+    tStartX   = e.touches[0].clientX;
+    tDidDrag  = false;
+    tLongFired = false;
+    isHover   = false;   // 按下时立即清除 hover 态
+    e.preventDefault();
+    e.stopPropagation(); // 阻止冒泡到 lightbox 长按下载逻辑
+
+    tLongTimer = setTimeout(() => {
+      tLongFired = true;
+      activateSpeed();
+    }, 500);
+  }, { passive: false });
+
+  ctrl.addEventListener('touchmove', e => {
+    if (tStartX === null) return;
+    const cx = e.touches[0].clientX;
+    if (!tDidDrag && Math.abs(cx - tStartX) > 7) {
+      tDidDrag = true;
+      clearTimeout(tLongTimer);
+      isSpeedShow = false;
+      isHover = true;
+    }
+    if (tDidDrag) {
+      audioSeekFromX(cx);
+      renderIconArea('time');
+    }
+    e.preventDefault();
+  }, { passive: false });
+
+  ctrl.addEventListener('touchend', e => {
+    clearTimeout(tLongTimer);
+    if (tStartX === null) return;
+    if (!tDidDrag && !tLongFired) {
+      isHover = false;
+      if (audio.paused) audio.play().catch(() => {}); else audio.pause();
+    } else if (tDidDrag) {
+      audioSeekFromX(e.changedTouches[0].clientX);
+      isHover = false;
+      endSpeedShow();
+    } else {
+      isHover = false;
+      endSpeedShow();
+    }
+    tStartX = null; tDidDrag = false;
+  }, { passive: false });
+
+  ctrl.addEventListener('touchcancel', () => {
+    clearTimeout(tLongTimer);
+    tStartX = null; tDidDrag = false;
+    isHover = false; endSpeedShow();
+  }, { passive: false });
 }
 
 function lbRenderVideo(url, filename) {
@@ -3532,7 +3743,7 @@ function lbRenderVideo(url, filename) {
     return;
   }
 
-  // Video element — wrapped in a shimmer host
+  /* ── Video element in shimmer host ── */
   const vidHost = document.createElement('div');
   vidHost.style.cssText = 'position:relative;width:100%;height:100%;flex:1;min-height:0;';
   const vid = document.createElement('video');
@@ -3542,25 +3753,22 @@ function lbRenderVideo(url, filename) {
   vidHost.appendChild(vid);
   videoWrap.appendChild(vidHost);
 
-  // Shimmer sits inside vidHost, not lbContent
   function showVidShimmer() {
     if (vidHost.querySelector('.lb-shimmer')) return;
-    const s = document.createElement('div');
-    s.className = 'lb-shimmer';
+    const s = document.createElement('div'); s.className = 'lb-shimmer';
     vidHost.appendChild(s);
   }
   function removeVidShimmer() {
-    const s = vidHost.querySelector('.lb-shimmer');
-    if (s) s.remove();
+    const s = vidHost.querySelector('.lb-shimmer'); if (s) s.remove();
   }
   showVidShimmer();
 
-  // Floating control
+  /* ── Floating control ── */
   const ctrl = document.createElement('div');
   ctrl.className = 'lb-video-ctrl';
   ctrl.innerHTML = `
-    <div class="lb-video-progress" id="lbVideoProg"></div>
-    <div class="lb-video-icon" id="lbVideoIcon">
+    <div class="lb-video-progress"></div>
+    <div class="lb-video-icon">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
         <polygon points="4,2 14,8 4,14" fill="currentColor"/>
       </svg>
@@ -3572,7 +3780,36 @@ function lbRenderVideo(url, filename) {
   const iconEl = ctrl.querySelector('.lb-video-icon');
   let ctrlVisible = false;
 
-  function updateVideoIcon(playing) {
+  /* ── Speed steps ── */
+  const SPEEDS = [1, 1.25, 1.5, 1.75, 2, 0.25, 0.5, 0.75];
+  let speedIdx = 0;
+
+  /* ── Display mode ── */
+  let isHover     = false;
+  let isSpeedShow = false;
+
+  /* ── Format time ── */
+  function fmt(s) {
+    if (!isFinite(s) || s < 0) s = 0;
+    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+    return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+  }
+
+  /* ── Render icon area ── */
+  function renderIconArea(mode) {
+    const playing = !vid.paused;
+    if (mode === 'speed') {
+      const sp = SPEEDS[speedIdx];
+      iconEl.innerHTML = `<span class="lb-video-label"><span class="lb-pop" id="lbVideoPop">${sp === 1 ? '1.00' : sp}</span>x</span>`;
+      return;
+    }
+    if (mode === 'time') {
+      const cur = vid.currentTime || 0;
+      const dur = vid.duration;
+      const total = isFinite(dur) ? fmt(dur) : '--:--';
+      iconEl.innerHTML = `<span class="lb-video-label"><span class="lb-pop" id="lbVideoPop">${fmt(cur)}</span> – ${total}</span>`;
+      return;
+    }
     iconEl.innerHTML = playing
       ? `<svg width="14" height="14" viewBox="0 0 14 14" fill="none">
            <rect x="2" y="1" width="4" height="12" rx="1" fill="currentColor"/>
@@ -3583,82 +3820,180 @@ function lbRenderVideo(url, filename) {
          </svg>`;
   }
 
+  function currentMode() {
+    if (isSpeedShow) return 'speed';
+    if (isHover)     return 'time';
+    return 'status';
+  }
+  function refreshDisplay() { renderIconArea(currentMode()); }
+
+  /* ── Progress ── */
   function updateVideoProgress() {
     if (!vid.duration) return;
     const pct = (vid.currentTime / vid.duration) * 100;
     if (progEl) progEl.style.width = pct + '%';
+    if (currentMode() === 'time') {
+      const popEl = iconEl.querySelector('#lbVideoPop');
+      if (popEl) popEl.textContent = fmt(vid.currentTime || 0);
+    }
   }
 
   vid.addEventListener('timeupdate', updateVideoProgress);
-  vid.addEventListener('play',  () => updateVideoIcon(true));
-  vid.addEventListener('pause', () => updateVideoIcon(false));
-  vid.addEventListener('ended', () => updateVideoIcon(false));
+  vid.addEventListener('play',    () => { refreshDisplay(); resetVideoTimer(); });
+  vid.addEventListener('pause',   () => refreshDisplay());
+  vid.addEventListener('ended',   () => refreshDisplay());
 
-  // 5s auto-hide
+  /* ── 5s auto-hide ── */
   function resetVideoTimer() {
     clearTimeout(lbVideoTimer);
     lbVideoTimer = setTimeout(() => { ctrlVisible = false; ctrl.classList.remove('visible'); }, 5000);
   }
-  function showVideoCtrl() {
-    ctrlVisible = true; ctrl.classList.add('visible'); resetVideoTimer();
-  }
-  function hideVideoCtrl() {
-    ctrlVisible = false; ctrl.classList.remove('visible'); clearTimeout(lbVideoTimer);
-  }
-  function toggleVideoCtrl() {
-    if (ctrlVisible) hideVideoCtrl(); else showVideoCtrl();
-  }
+  function showVideoCtrl() { ctrlVisible = true; ctrl.classList.add('visible'); resetVideoTimer(); }
+  function hideVideoCtrl() { ctrlVisible = false; ctrl.classList.remove('visible'); clearTimeout(lbVideoTimer); }
+  function toggleVideoCtrl() { if (ctrlVisible) hideVideoCtrl(); else showVideoCtrl(); }
 
-  // Restore progress
+  /* ── Restore progress ── */
   const saved = lbLoadProgress(url, filename);
   vid.addEventListener('loadedmetadata', () => {
-    if (saved) {
-      vid.currentTime = saved.t || 0;
-      if (!saved.p) vid.play().catch(() => {});
-    }
+    if (saved) { vid.currentTime = saved.t || 0; if (!saved.p) vid.play().catch(() => {}); }
     removeVidShimmer();
   }, { once: true });
   vid.addEventListener('error', () => removeVidShimmer(), { once: true });
 
-  // Click on video area (non-ctrl) → toggle ctrl
-  videoWrap.addEventListener('click', e => {
-    if (!ctrl.contains(e.target)) toggleVideoCtrl();
-  });
+  /* ── Block browser long-press context menu ── */
+  ctrl.addEventListener('contextmenu',      e => e.preventDefault());
+  videoWrap.addEventListener('contextmenu', e => e.preventDefault());
+  vid.style.webkitTouchCallout = 'none';
 
-  // Ctrl: click vs drag
-  let vPointerStartX = null, vDidDrag = false;
+  /* ── Hover (fine pointer only) ── */
+  const vidFinePtr = window.matchMedia('(pointer: fine)').matches;
+  ctrl.addEventListener('mouseenter', () => { if (vidFinePtr) { isHover = true;  refreshDisplay(); } });
+  ctrl.addEventListener('mouseleave', () => { if (vidFinePtr) { isHover = false; refreshDisplay(); } });
 
+  /* ── Speed long-press ── */
+  let speedLongTimer = null;
+  let speedPopTimer  = null;
+
+  function activateSpeed() {
+    speedIdx = (speedIdx + 1) % SPEEDS.length;
+    vid.playbackRate = SPEEDS[speedIdx];
+    isSpeedShow = true;
+    renderIconArea('speed');
+    clearTimeout(speedPopTimer);
+    speedPopTimer = setTimeout(() => {
+      isSpeedShow = false;
+      refreshDisplay();
+    }, 1000);
+  }
+  function clearSpeedTimer() { clearTimeout(speedLongTimer); speedLongTimer = null; }
+  function endSpeedShow() {
+    clearTimeout(speedPopTimer);
+    isSpeedShow = false;
+    refreshDisplay();
+  }
+
+  /* ── Seek ── */
   function videoSeekFromX(clientX) {
     const rect = ctrl.getBoundingClientRect();
     const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     if (vid.duration) { vid.currentTime = ratio * vid.duration; resetVideoTimer(); }
   }
 
+  /* ── Pointer events ── */
+  let vStartX = null, vDidDrag = false, vLongFired = false;
+
   ctrl.addEventListener('pointerdown', e => {
-    vPointerStartX = e.clientX; vDidDrag = false;
+    if (!e.isPrimary) return;
+    vStartX = e.clientX; vDidDrag = false; vLongFired = false;
+    isHover = false;  // 按下时立即清除 hover 态
     ctrl.setPointerCapture(e.pointerId);
     e.stopPropagation(); e.preventDefault();
+    speedLongTimer = setTimeout(() => { vLongFired = true; activateSpeed(); }, 500);
   });
 
   ctrl.addEventListener('pointermove', e => {
-    if (vPointerStartX === null) return;
-    if (!vDidDrag && Math.abs(e.clientX - vPointerStartX) > 7) vDidDrag = true;
-    if (vDidDrag) { videoSeekFromX(e.clientX); resetVideoTimer(); }
+    if (!e.isPrimary || vStartX === null) return;
+    if (!vDidDrag && Math.abs(e.clientX - vStartX) > 7) {
+      vDidDrag = true;
+      clearSpeedTimer();
+    }
+    if (vDidDrag) {
+      isSpeedShow = false; isHover = true;
+      videoSeekFromX(e.clientX);
+      renderIconArea('time');
+    }
   });
 
   ctrl.addEventListener('pointerup', e => {
-    if (vPointerStartX === null) return;
-    if (!vDidDrag) {
+    if (!e.isPrimary || vStartX === null) return;
+    clearSpeedTimer();
+    if (!vDidDrag && !vLongFired) {
+      isHover = false;
       if (vid.paused) vid.play().catch(() => {}); else vid.pause();
       resetVideoTimer();
-    } else {
+    } else if (vDidDrag) {
       videoSeekFromX(e.clientX);
+      isHover = false; endSpeedShow();
+    } else {
+      isHover = false; endSpeedShow();
     }
-    vPointerStartX = null; vDidDrag = false;
+    vStartX = null; vDidDrag = false;
   });
 
-  ctrl.addEventListener('pointercancel', () => {
-    vPointerStartX = null; vDidDrag = false;
+  ctrl.addEventListener('pointercancel', e => {
+    if (!e.isPrimary) return;
+    clearSpeedTimer();
+    vStartX = null; vDidDrag = false;
+    isHover = false; endSpeedShow();
+  });
+
+  /* ── Touch fallback ── */
+  let vtStartX = null, vtDidDrag = false, vtLongFired = false, vtLongTimer = null;
+
+  ctrl.addEventListener('touchstart', e => {
+    if (vStartX !== null) return;
+    vtStartX = e.touches[0].clientX; vtDidDrag = false; vtLongFired = false;
+    isHover = false;  // 按下时立即清除 hover 态
+    e.preventDefault(); e.stopPropagation();
+    vtLongTimer = setTimeout(() => { vtLongFired = true; activateSpeed(); }, 500);
+  }, { passive: false });
+
+  ctrl.addEventListener('touchmove', e => {
+    if (vtStartX === null) return;
+    const cx = e.touches[0].clientX;
+    if (!vtDidDrag && Math.abs(cx - vtStartX) > 7) {
+      vtDidDrag = true; clearTimeout(vtLongTimer);
+      isSpeedShow = false; isHover = true;
+    }
+    if (vtDidDrag) { videoSeekFromX(cx); renderIconArea('time'); }
+    e.preventDefault();
+  }, { passive: false });
+
+  ctrl.addEventListener('touchend', e => {
+    clearTimeout(vtLongTimer);
+    if (vtStartX === null) return;
+    if (!vtDidDrag && !vtLongFired) {
+      isHover = false;
+      if (vid.paused) vid.play().catch(() => {}); else vid.pause();
+      resetVideoTimer();
+    } else if (vtDidDrag) {
+      videoSeekFromX(e.changedTouches[0].clientX);
+      isHover = false; endSpeedShow();
+    } else {
+      isHover = false; endSpeedShow();
+    }
+    vtStartX = null; vtDidDrag = false;
+  }, { passive: false });
+
+  ctrl.addEventListener('touchcancel', () => {
+    clearTimeout(vtLongTimer);
+    vtStartX = null; vtDidDrag = false;
+    isHover = false; endSpeedShow();
+  }, { passive: false });
+
+  /* ── Click on video area (non-ctrl) → toggle ctrl ── */
+  videoWrap.addEventListener('pointerup', e => {
+    if (!ctrl.contains(e.target)) toggleVideoCtrl();
   });
 }
 
