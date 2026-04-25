@@ -312,6 +312,15 @@
   }
   .dot-bar.active { background: var(--dot-active); }
 
+  /* 当 dots 容器为空时（仅1项），自动折叠不占空间 */
+  .dots-row:empty,
+  .carousel-dots:empty {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
   /* ── Collapsible progress row (page 3 stack) ── */
   .stack-progress-row {
     flex-shrink: 0;
@@ -2481,6 +2490,13 @@ function rand(a, b) { return a + Math.random() * (b - a); }
  * 创建进度点，追加到 container，返回 setActive(idx) 函数。
  */
 function createDots(container, count, dotClass, onClick) {
+  if (count <= 1) {
+    container.style.display = 'none';
+    container.style.height  = '0';
+    container.style.margin  = '0';
+    container.style.padding = '0';
+    return () => {};
+  }
   for (let i = 0; i < count; i++) {
     const d = document.createElement('div');
     d.className = dotClass + (i === 0 ? ' active' : '');
@@ -2502,11 +2518,18 @@ function createCarousel({ trackEl, dotsContainer, dotClass, dragEl, interval = 3
   // 自动生成 dots，数量与 total 严格同步
   if (dotsContainer && total) {
     dotsContainer.innerHTML = '';
-    for (let i = 0; i < total; i++) {
-      const d = document.createElement('div');
-      d.className = dotClass + (i === 0 ? ' active' : '');
-      d.addEventListener('click', () => { stopByUser(); go(i); });
-      dotsContainer.appendChild(d);
+    if (total <= 1) {
+      dotsContainer.style.display  = 'none';
+      dotsContainer.style.height   = '0';
+      dotsContainer.style.margin   = '0';
+      dotsContainer.style.padding  = '0';
+    } else {
+      for (let i = 0; i < total; i++) {
+        const d = document.createElement('div');
+        d.className = dotClass + (i === 0 ? ' active' : '');
+        d.addEventListener('click', () => { stopByUser(); go(i); });
+        dotsContainer.appendChild(d);
+      }
     }
   }
 
@@ -4563,7 +4586,10 @@ function goMember(n, instant) {
 function startMemberAuto() {
   if (memberUserStopped) return;
   clearInterval(memberAutoTimer);
-  memberAutoTimer = setInterval(() => goMember(memberCur + 1, false), 3500);
+  memberAutoTimer = setInterval(() => {
+    if (memberCur + 1 < memberData.length) goMember(memberCur + 1, false);
+    else stopMemberAuto();
+  }, 3500);
 }
 function stopMemberAuto()  { clearInterval(memberAutoTimer); memberAutoTimer = null; }
 function stopMemberByUser(){ memberUserStopped = true; stopMemberAuto(); }
@@ -4577,14 +4603,20 @@ memberBoxEl.addEventListener('mousedown',  e => { memberDragX = e.clientX; });
 memberBoxEl.addEventListener('mouseup',    e => {
   if (memberDragX === null) return;
   const dx = e.clientX - memberDragX; memberDragX = null;
-  if (Math.abs(dx) > 40) { stopMemberByUser(); goMember(memberCur + (dx < 0 ? 1 : -1), false); }
+  if (Math.abs(dx) > 40) {
+    const next = memberCur + (dx < 0 ? 1 : -1);
+    if (next >= 0 && next < memberData.length) { stopMemberByUser(); goMember(next, false); }
+  }
 });
 memberBoxEl.addEventListener('mouseleave', () => { memberDragX = null; });
 memberBoxEl.addEventListener('touchstart', e => { memberDragX = e.touches[0].clientX; }, { passive: true });
 memberBoxEl.addEventListener('touchend',   e => {
   if (memberDragX === null) return;
   const dx = e.changedTouches[0].clientX - memberDragX; memberDragX = null;
-  if (Math.abs(dx) > 40) { stopMemberByUser(); goMember(memberCur + (dx < 0 ? 1 : -1), false); }
+  if (Math.abs(dx) > 40) {
+    const next = memberCur + (dx < 0 ? 1 : -1);
+    if (next >= 0 && next < memberData.length) { stopMemberByUser(); goMember(next, false); }
+  }
 }, { passive: true });
 
 /* ============================================================
@@ -6174,7 +6206,7 @@ document.addEventListener('keydown', e => {
     }
     case 4: stopBlogByUser(); goBlog(blogCarouselCtrl.getCur() + dir); break;
     case 5: stopEventByUser(); goEvent(eventCarouselCtrl.getCur() + dir); break;
-    case 6: stopMemberByUser(); goMember(memberCur + dir, false); break;
+    case 6: { const next = memberCur + dir; if (next >= 0 && next < memberData.length) { stopMemberByUser(); goMember(next, false); } break; }
   }
 });
 
