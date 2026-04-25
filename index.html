@@ -1663,7 +1663,7 @@
   }
   .lb-iframe-wrap iframe {
     width: 100%; border: none; display: block;
-    min-height: 80px;
+    min-height: 80px; overflow-y: auto;
   }
   .lb-source-wrap {
     overflow-y: auto; overflow-x: hidden;
@@ -2019,21 +2019,7 @@
     display: none;
   }
 
-  /* Long-press ripple hint */
-  .longpress-hint {
-    position: absolute; border-radius: 50%;
-    background: var(--hover-bg);
-    width: 0; height: 0;
-    transform: translate(-50%, -50%) scale(0);
-    pointer-events: none; z-index: 0;
-    transition: width 0.5s ease, height 0.5s ease, transform 0.5s ease, opacity 0.3s ease;
-    opacity: 0;
-  }
-  .longpress-hint.pressing {
-    width: 120px; height: 120px;
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-  }
+
 
   /* ============================================================
      RESPONSIVE
@@ -2828,8 +2814,18 @@ document.getElementById('linkModalGo').addEventListener('click', () => {
   closeModal(linkModal); pendingHref = null;
 });
 document.getElementById('emailModalCopy').addEventListener('click', () => {
-  navigator.clipboard.writeText(CONTACT_EMAIL).catch(() => {});
-  closeModal(emailModal);
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(CONTACT_EMAIL).then(() => {
+      closeModal(emailModal);
+    }).catch(() => {
+      /* 复制失败：fallback execCommand，成功才关闭 */
+      const ok = execCopy(CONTACT_EMAIL);
+      if (ok) closeModal(emailModal);
+    });
+  } else {
+    const ok = execCopy(CONTACT_EMAIL);
+    if (ok) closeModal(emailModal);
+  }
 });
 document.getElementById('emailModalSend').addEventListener('click', () => {
   window.location.href = `mailto:${CONTACT_EMAIL}`;
@@ -3189,6 +3185,10 @@ function lbLoadHighlight() {
     link.rel = 'stylesheet';
     link.href = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/tokyo-night-dark.min.css';
     document.head.appendChild(link);
+    // Override theme background color only, keep syntax highlight colors
+    const overrideStyle = document.createElement('style');
+    overrideStyle.textContent = '.hljs { background: transparent !important; }';
+    document.head.appendChild(overrideStyle);
     const s = document.createElement('script');
     s.src = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js';
     s.onload = resolve; document.head.appendChild(s);
@@ -4038,16 +4038,10 @@ function lbRenderHtml(html, isMarkdown) {
       pre { overflow-x: auto; } code { font-family: monospace; font-size: 0.9em; }
     </style></head><body>${rendered}</body></html>`;
   iframe.srcdoc = iframeDoc;
-  // Auto-resize iframe to content height (up to 55vh), no fixed initial height
-  iframe.addEventListener('load', () => {
-    try {
-      const h = iframe.contentDocument.documentElement.scrollHeight;
-      const maxH = Math.round(window.innerHeight * 0.55);
-      const finalH = Math.max(80, Math.min(h, maxH));
-      iframe.style.height = finalH + 'px';
-      iframeWrap.style.height = finalH + 'px';
-    } catch(_) { iframe.style.height = '200px'; iframeWrap.style.height = '200px'; }
-  });
+  // Fixed content area height
+  const fixedH = Math.round(window.innerHeight * 0.48);
+  iframe.style.height = fixedH + 'px';
+  iframeWrap.style.height = fixedH + 'px';
   iframeWrap.appendChild(iframe);
   wrap.appendChild(iframeWrap);
 
@@ -5018,8 +5012,10 @@ function execCopy(text) {
   const ta = document.createElement('textarea');
   ta.value = text; ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
   document.body.appendChild(ta); ta.select();
-  try { document.execCommand('copy'); } catch(_) {}
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch(_) {}
   document.body.removeChild(ta);
+  return ok;
 }
 /* ── Pending state helpers ── */
 let redeemPending = false;
@@ -5393,35 +5389,19 @@ galleryOverlay.addEventListener('click', e => { if (e.target === galleryOverlay 
 (function() {
   const target = document.getElementById('stackBox');
   let pressTimer = null;
-  let ripple = null;
   let pressX = 0, pressY = 0;
   let didLongPress = false;
 
-  function startRipple(x, y) {
-    ripple = document.createElement('div');
-    ripple.className = 'longpress-hint';
-    ripple.style.left = x + 'px';
-    ripple.style.top  = y + 'px';
-    target.style.position = 'relative';
-    target.appendChild(ripple);
-    requestAnimationFrame(() => ripple.classList.add('pressing'));
-  }
-  function removeRipple() {
-    if (ripple) { ripple.remove(); ripple = null; }
-  }
   function onStart(x, y) {
     didLongPress = false;
     pressX = x; pressY = y;
-    startRipple(x, y);
     pressTimer = setTimeout(() => {
       didLongPress = true;
-      removeRipple();
       openGallery();
     }, 500);
   }
   function onEnd() {
     clearTimeout(pressTimer); pressTimer = null;
-    removeRipple();
   }
   target.addEventListener('mousedown', e => { onStart(e.offsetX, e.offsetY); });
   target.addEventListener('mouseup',   () => { onEnd(); });
@@ -5482,33 +5462,17 @@ blogListOverlay.addEventListener('click', e => { if (e.target === blogListOverla
 (function() {
   const target = document.getElementById('blogCarousel');
   let pressTimer = null;
-  let ripple = null;
   let didLongPress = false;
 
-  function startRipple(x, y) {
-    ripple = document.createElement('div');
-    ripple.className = 'longpress-hint';
-    ripple.style.left = x + 'px';
-    ripple.style.top  = y + 'px';
-    target.style.position = 'relative';
-    target.appendChild(ripple);
-    requestAnimationFrame(() => ripple.classList.add('pressing'));
-  }
-  function removeRipple() {
-    if (ripple) { ripple.remove(); ripple = null; }
-  }
   function onStart(x, y) {
     didLongPress = false;
-    startRipple(x, y);
     pressTimer = setTimeout(() => {
       didLongPress = true;
-      removeRipple();
       openBlogList();
     }, 500);
   }
   function onEnd() {
     clearTimeout(pressTimer); pressTimer = null;
-    removeRipple();
   }
   target.addEventListener('mousedown', e => { onStart(e.offsetX, e.offsetY); });
   target.addEventListener('mouseup',   () => { onEnd(); });
@@ -5823,7 +5787,7 @@ blogListOverlay.addEventListener('click', e => { if (e.target === blogListOverla
             <span class="blog-list-card-time">${d.readTime}</span>
             <span class="blog-list-card-arrow">→</span>
           </div>`;
-        card.addEventListener('click', () => { closeSearch(); openBlog(idx); });
+        card.addEventListener('click', () => { openBlog(idx); });
         resultsEl.appendChild(card);
       });
     } else {
@@ -5904,27 +5868,17 @@ blogListOverlay.addEventListener('click', e => { if (e.target === blogListOverla
 
 (function() {
   const target = document.getElementById('blogListGrid');
-  let pressTimer = null, ripple = null, didLongPress = false;
-
-  function startRipple(x, y) {
-    ripple = document.createElement('div');
-    ripple.className = 'longpress-hint';
-    ripple.style.left = x + 'px'; ripple.style.top = y + 'px';
-    target.appendChild(ripple);
-    requestAnimationFrame(() => ripple.classList.add('pressing'));
-  }
-  function removeRipple() { if (ripple) { ripple.remove(); ripple = null; } }
+  let pressTimer = null, didLongPress = false;
 
   function onStart(x, y) {
     /* ignore multi-touch */
     didLongPress = false;
-    startRipple(x, y);
     pressTimer = setTimeout(() => {
-      didLongPress = true; removeRipple();
+      didLongPress = true;
       openSearch('blog');
     }, 500);
   }
-  function onEnd() { clearTimeout(pressTimer); pressTimer = null; removeRipple(); }
+  function onEnd() { clearTimeout(pressTimer); pressTimer = null; }
 
   target.addEventListener('mousedown',  e => { if (e.button !== 0) return; onStart(e.offsetX, e.offsetY); });
   target.addEventListener('mouseup',    () => onEnd());
@@ -5942,27 +5896,17 @@ blogListOverlay.addEventListener('click', e => { if (e.target === blogListOverla
 /* ── Long-press on fileList → open search ── */
 (function() {
   const target = document.getElementById('fileList');
-  let pressTimer = null, ripple = null, didLongPress = false;
-
-  function startRipple(x, y) {
-    ripple = document.createElement('div');
-    ripple.className = 'longpress-hint';
-    ripple.style.left = x + 'px'; ripple.style.top = y + 'px';
-    target.appendChild(ripple);
-    requestAnimationFrame(() => ripple.classList.add('pressing'));
-  }
-  function removeRipple() { if (ripple) { ripple.remove(); ripple = null; } }
+  let pressTimer = null, didLongPress = false;
 
   function onStart(x, y) {
     if (didLongPress) return;
     didLongPress = false;
-    startRipple(x, y);
     pressTimer = setTimeout(() => {
-      didLongPress = true; removeRipple();
+      didLongPress = true;
       openSearch('file');
     }, 500);
   }
-  function onEnd() { clearTimeout(pressTimer); pressTimer = null; removeRipple(); }
+  function onEnd() { clearTimeout(pressTimer); pressTimer = null; }
 
   target.addEventListener('mousedown',  e => { if (e.button !== 0) return; onStart(e.offsetX, e.offsetY); });
   target.addEventListener('mouseup',    () => onEnd());
@@ -6018,14 +5962,52 @@ window.addEventListener('wheel', e => {
 }, { passive: true });
 
 /* ── Touch swipe for vertical page navigation ── */
+function findScrollParent(el) {
+  /* 找到触点下最近的可滚动祖先（不含 body/html） */
+  while (el && el !== document.body) {
+    const style = window.getComputedStyle(el);
+    const overflowY = style.overflowY;
+    if ((overflowY === 'auto' || overflowY === 'scroll') && el.scrollHeight > el.clientHeight) {
+      return el;
+    }
+    el = el.parentElement;
+  }
+  return null;
+}
+
 function addPageSwipe(pageId) {
   let touchY = null;
+  let touchT = null;
+  let startTarget = null;
   const el = document.getElementById(pageId);
-  el.addEventListener('touchstart', e => { touchY = e.touches[0].clientY; }, { passive: true });
-  el.addEventListener('touchend',   e => {
+
+  el.addEventListener('touchstart', e => {
+    touchY = e.touches[0].clientY;
+    touchT = Date.now();
+    startTarget = e.target;
+  }, { passive: true });
+
+  el.addEventListener('touchend', e => {
     if (touchY === null) return;
-    const dy = e.changedTouches[0].clientY - touchY; touchY = null;
-    if (Math.abs(dy) > 50) tryPageNav(dy > 0 ? -1 : 1);
+    const dy = e.changedTouches[0].clientY - touchY;
+    const dt = Date.now() - touchT;
+    touchY = null; touchT = null;
+
+    const absDy = Math.abs(dy);
+    /* 阈值：距离 >= 120px 且速度 >= 0.4px/ms */
+    if (absDy < 120 || absDy / dt < 0.4) return;
+
+    /* 检查触点下是否有还能继续滚动的容器 */
+    const scroller = findScrollParent(startTarget);
+    if (scroller) {
+      const atTop    = scroller.scrollTop <= 0;
+      const atBottom = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 2;
+      /* 向上滑（dy>0）想往上翻页，需要 scroller 已在顶部；反之亦然 */
+      if (dy > 0 && !atTop)    return;
+      if (dy < 0 && !atBottom) return;
+    }
+
+    tryPageNav(dy > 0 ? -1 : 1);
   }, { passive: true });
 }
 ['page2','page4','page5','page6','page7','page8','page9'].forEach(addPageSwipe);
