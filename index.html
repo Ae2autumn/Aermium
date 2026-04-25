@@ -388,6 +388,45 @@
   .action-btn:hover { background: var(--hover-bg); color: var(--text-primary); }
 
   /* ============================================================
+     PAGE BG — 全屏推入式背景（page2 / page3 共用）
+  ============================================================ */
+  .page-bg-wrap {
+    position: absolute; inset: 0; z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  /* A / B 两个图层，绝对定位叠在一起 */
+  .page-bg-a,
+  .page-bg-b {
+    position: absolute; inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    /* 默认待机在右侧屏外 */
+    transform: translateX(100%);
+    will-change: transform;
+  }
+  /* 当前显示的图层：在原位 */
+  .page-bg-a.bg-active,
+  .page-bg-b.bg-active {
+    transform: translateX(0%);
+  }
+  /* 模糊 + 遮罩层，始终覆盖在图层之上 */
+  .page-bg-blur {
+    position: absolute; inset: 0;
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    background: var(--overlay-blur-bg);
+    /* 整体用 opacity 控制显隐（当两张图都在屏外时隐藏） */
+    transition: opacity 0.45s ease;
+  }
+  .page-bg-wrap.bg-hidden .page-bg-blur { opacity: 0; }
+
+  /* 确保 page2/page3 的内容层在背景上方 */
+  #page2 .page-wrap,
+  #page3 .page-wrap { position: relative; z-index: 1; }
+
+  /* ============================================================
      PAGE 2 — PROJECTS CAROUSEL
   ============================================================ */
   #page2 { flex-direction: column; }
@@ -2134,6 +2173,11 @@
 
   <!-- PAGE 2: PROJECTS -->
   <div class="page" id="page2">
+    <div class="page-bg-wrap bg-hidden" id="page2Bg">
+      <div class="page-bg-a" id="page2BgA"></div>
+      <div class="page-bg-b" id="page2BgB"></div>
+      <div class="page-bg-blur"></div>
+    </div>
     <div class="page-wrap">
       <div class="panel-box project-carousel-box" id="projectCarousel">
         <div class="carousel-dots" id="projectDots"></div>
@@ -2146,6 +2190,11 @@
 
   <!-- PAGE 3: STACK VIEWER -->
   <div class="page" id="page3">
+    <div class="page-bg-wrap bg-hidden" id="page3Bg">
+      <div class="page-bg-a" id="page3BgA"></div>
+      <div class="page-bg-b" id="page3BgB"></div>
+      <div class="page-bg-blur"></div>
+    </div>
     <div class="page-wrap">
       <div class="stack-outer panel-box" id="stackOuter">
         <div class="stack-progress-row" id="stackProgress"></div>
@@ -2511,7 +2560,7 @@ function createDots(container, count, dotClass, onClick) {
  * createCarousel({ trackEl, dotsContainer, dotClass, dragEl, interval? })
  * 封装轮播逻辑，返回 { go, startAuto, stopAuto, stopByUser, getCur }。
  */
-function createCarousel({ trackEl, dotsContainer, dotClass, dragEl, interval = 3500, total }) {
+function createCarousel({ trackEl, dotsContainer, dotClass, dragEl, interval = 3500, total, onGo }) {
   // total 由调用方从数据数组传入，是唯一数据来源
   let cur = 0, timer = null, userStopped = false;
 
@@ -2539,9 +2588,15 @@ function createCarousel({ trackEl, dotsContainer, dotClass, dragEl, interval = 3
     : () => {};
 
   function go(n) {
+    const prev = cur;
     cur = (n + total) % total;
     trackEl.style.transform = `translateX(-${cur * 100}%)`;
     setDotActive(cur);
+    if (onGo) {
+      // dir: 'rtl' = 内容向左移（新项在右边），'ltr' = 内容向右移（新项在左边）
+      const dir = cur > prev ? 'rtl' : 'ltr';
+      onGo(cur, dir);
+    }
   }
   function startAuto() {
     if (userStopped) return;
@@ -4188,6 +4243,107 @@ document.addEventListener('pointerup', () => {
 }, { passive: true });
 
 /* ============================================================
+   PAGE BG — 背景图控制（A/B 双层推入）
+============================================================ */
+const page2BgEl  = document.getElementById('page2Bg');
+const page2BgA   = document.getElementById('page2BgA');
+const page2BgB   = document.getElementById('page2BgB');
+const page3BgEl  = document.getElementById('page3Bg');
+const page3BgA   = document.getElementById('page3BgA');
+const page3BgB   = document.getElementById('page3BgB');
+
+/* 每个 bg-wrap 持有当前 active 层引用 */
+const bgState = new WeakMap();
+bgState.set(page2BgEl, { active: page2BgA, standby: page2BgB });
+bgState.set(page3BgEl, { active: page3BgA, standby: page3BgB });
+
+const BG_DUR = 480; // ms，与 CSS transition 时长保持一致
+
+/**
+ * setPageBg(wrap, url, dir)
+ * wrap : .page-bg-wrap 容器
+ * url  : 图片地址，空字符串则推出当前图
+ * dir  : 'ltr' | 'rtl' | 'fade'
+ */
+function setPageBg(wrap, url, dir = 'fade') {
+  const state   = bgState.get(wrap);
+  const { active, standby } = state;
+  const dur     = dir === 'fade' ? BG_DUR : BG_DUR;
+  const easing  = dir === 'fade'
+    ? 'opacity 0.45s ease'
+    : `transform ${BG_DUR}ms cubic-bezier(0.77,0,0.175,1)`;
+
+  if (!url) {
+    /* 无图：把 active 层推出屏幕，wrap 标记隐藏（模糊层淡出） */
+    active.style.transition = easing;
+    active.style.transform  = dir === 'ltr' ? 'translateX(100%)' : 'translateX(-100%)';
+    if (dir === 'fade') {
+      active.style.transition = 'opacity 0.45s ease';
+      active.style.opacity    = '0';
+    }
+    setTimeout(() => {
+      active.classList.remove('bg-active');
+      active.style.backgroundImage = 'none';
+      if (dir === 'fade') active.style.opacity = '1'; // reset for next use
+      wrap.classList.add('bg-hidden');
+    }, BG_DUR + 50);
+    return;
+  }
+
+  /* 有图：写入 standby，从侧面滑入；active 同步滑出 */
+  const inFrom  = dir === 'rtl'  ? 'translateX(100%)'
+                : dir === 'ltr'  ? 'translateX(-100%)'
+                : 'translateX(0%)';   // fade: 同位置，用 opacity
+  const outTo   = dir === 'rtl'  ? 'translateX(-100%)'
+                : dir === 'ltr'  ? 'translateX(100%)'
+                : 'translateX(0%)';
+
+  /* 准备 standby */
+  standby.style.transition       = 'none';
+  standby.style.transform        = inFrom;
+  standby.style.backgroundImage  = `url(${url})`;
+  if (dir === 'fade') { standby.style.opacity = '0'; }
+  standby.offsetHeight; // reflow
+
+  wrap.classList.remove('bg-hidden');
+
+  /* 滑入 standby */
+  standby.style.transition = easing;
+  standby.style.transform  = 'translateX(0%)';
+  if (dir === 'fade') { standby.style.opacity = '1'; }
+  standby.classList.add('bg-active');
+
+  /* 滑出 active（仅当它有内容时） */
+  if (active.style.backgroundImage && active.style.backgroundImage !== 'none') {
+    active.style.transition = easing;
+    active.style.transform  = outTo;
+    if (dir === 'fade') { active.style.opacity = '0'; }
+  }
+
+  /* 动画结束后清理 active，交换角色 */
+  setTimeout(() => {
+    active.classList.remove('bg-active');
+    active.style.transition      = 'none';
+    active.style.transform       = 'translateX(100%)'; // 停到屏右待命
+    active.style.backgroundImage = 'none';
+    if (dir === 'fade') { active.style.opacity = '1'; }
+    /* 交换 A/B 角色 */
+    state.active  = standby;
+    state.standby = active;
+  }, BG_DUR + 50);
+}
+
+/** initPageBg(wrap, url) — 无动画直接显示第一帧 */
+function initPageBg(wrap, url) {
+  if (!url) return;
+  const state = bgState.get(wrap);
+  state.active.style.backgroundImage = `url(${url})`;
+  state.active.style.transform       = 'translateX(0%)';
+  state.active.classList.add('bg-active');
+  wrap.classList.remove('bg-hidden');
+}
+
+/* ============================================================
    PAGE 2 — PROJECT CAROUSEL
 ============================================================ */
 const projectTrackEl = document.getElementById('projectTrack');
@@ -4200,7 +4356,15 @@ const projectCarouselCtrl = createCarousel({
   dotClass:      'dot-bar',
   dragEl:        document.getElementById('projectCarousel'),
   total:         projectData.length,  // 数组是唯一数据来源，dots 自动同步
+  onGo(idx, dir) {
+    setPageBg(page2BgEl, projectData[idx].image || '', dir);
+  },
 });
+// 初始化第一帧背景（无动画）
+{
+  const img = projectData[0] && projectData[0].image;
+  initPageBg(page2BgEl, img);
+}
 
 /* Aliases for page nav calls */
 const goProjectSlide    = n  => projectCarouselCtrl.go(n);
@@ -4298,6 +4462,10 @@ function bringToTop(card) {
   if (idx === -1 || idx === stackOrder.length - 1) return;
   stackOrder.splice(idx, 1); stackOrder.push(card);
   applyStackZIndices();
+  // 背景：堆叠模式 → 淡入淡出
+  const topCard = stackOrder[stackOrder.length - 1];
+  const topIdx  = parseInt(topCard.dataset.idx);
+  setPageBg(page3BgEl, (galleryData[topIdx] && galleryData[topIdx].image) || '', 'fade');
 }
 
 function startStackAuto() {
@@ -4307,6 +4475,9 @@ function startStackAuto() {
     if (isListMode) return;
     const top = stackOrder.pop(); stackOrder.unshift(top);
     applyStackZIndices();
+    const topCard = stackOrder[stackOrder.length - 1];
+    const topIdx  = parseInt(topCard.dataset.idx);
+    setPageBg(page3BgEl, (galleryData[topIdx] && galleryData[topIdx].image) || '', 'fade');
   }, 2200);
 }
 function stopStackAuto()  { clearInterval(stackTimer); stackTimer = null; }
@@ -4329,6 +4500,7 @@ function updateProgress(idx) {
   stackProgress.querySelectorAll('.dot-bar').forEach((b, i) => b.classList.toggle('active', i === idx));
 }
 
+let _listPrevCur = 0;
 function applyListPositions() {
   const cards = [...stackCards.querySelectorAll('.stack-card')];
   const bw = stackBox.offsetWidth, bh = stackBox.offsetHeight;
@@ -4340,6 +4512,10 @@ function applyListPositions() {
     card.style.left   = (i - listCur) * bw + 'px';
     card.style.borderRadius = '0';
   });
+  // 背景：列表模式 → 左右方向
+  const dir = listCur >= _listPrevCur ? 'rtl' : 'ltr';
+  _listPrevCur = listCur;
+  setPageBg(page3BgEl, (galleryData[listCur] && galleryData[listCur].image) || '', dir);
 }
 function restoreStackPositions() {
   const cards = [...stackCards.querySelectorAll('.stack-card')];
@@ -4366,7 +4542,7 @@ function startListAuto() {
   }, 2500);
 }
 function enterListMode() {
-  isListMode = true; listCur = 0;
+  isListMode = true; listCur = 0; _listPrevCur = 0;
   stackProgress.classList.add('visible');
   updateProgress(0); applyListPositions(); startListAuto();
 }
@@ -4374,6 +4550,10 @@ function enterStackMode() {
   isListMode = false; clearInterval(listAutoTimer);
   stackProgress.classList.remove('visible');
   restoreStackPositions(); startStackAuto();
+  // 背景：回到堆叠模式顶牌
+  const topCard = stackOrder[stackOrder.length - 1];
+  const topIdx  = parseInt(topCard.dataset.idx);
+  setPageBg(page3BgEl, (galleryData[topIdx] && galleryData[topIdx].image) || '', 'fade');
 }
 
 /* Stack overlay hint (dismiss once) */
@@ -4429,6 +4609,13 @@ swipeEl3.addEventListener('touchend', e => {
 }, { passive: true });
 
 createStackCards(); initProgress();
+// 初始化 page3 背景：顶牌（stackOrder 最后一项）
+{
+  const topCard = stackOrder[stackOrder.length - 1];
+  const topIdx  = topCard ? parseInt(topCard.dataset.idx) : 0;
+  const img = galleryData[topIdx] && galleryData[topIdx].image;
+  initPageBg(page3BgEl, img);
+}
 
 /* ============================================================
    PAGE 4 — BLOG CAROUSEL
