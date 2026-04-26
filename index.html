@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,25 +7,26 @@
 <style>
   /* ============================================================
      CSS VARIABLES
-     Dark mode: add class "dark" to <html>.
+     Light mode : default (:root) — also enforced by :root.light
+     Dark mode  : :root.dark
      Toggle via menu (E key or swipe-down on page 1).
   ============================================================ */
 
   :root {
     /* ── Backgrounds ── */
-    --bg:             #f5f4f2;
-    --bg-card:        #faf9f7;
-    --bg-inner:       #f5f4f2;
-    --bg-avatar:      #ede9e4;
-    --bg-image:       #e8e4df;
-    --bg-project:     #e4e0da;
+    --bg:             #f5f4f2;   /* page / body base */
+    --bg-card:        #faf9f7;   /* card / panel surface (+1 stop lighter) */
+    --bg-inner:       #f5f4f2;   /* scrollable inner containers (= bg) */
+    --bg-avatar:      #ede9e4;   /* avatar placeholder / icon bg */
+    --bg-image:       #e8e4df;   /* image skeleton / placeholder */
+    --bg-project:     #e4e0da;   /* project slide bg (darkest neutral) */
 
     /* ── Text ── */
-    --text-primary:   #2a2a28;
-    --text-secondary: #6a6a64;
-    --text-muted:     #9a9890;
-    --text-faint:     #c8c5be;
-    --text-tag:       #a8a5a0;
+    --text-primary:   #2a2a28;   /* headings, body copy */
+    --text-secondary: #6a6a64;   /* supporting labels */
+    --text-muted:     #9a9890;   /* placeholders, metadata */
+    --text-faint:     #c8c5be;   /* disabled, decorative */
+    --text-tag:       #a8a5a0;   /* tags, chips */
 
     /* ── Borders ── */
     --border-strong:  rgba(42,42,40,0.18);
@@ -38,6 +39,7 @@
     --hover-bg:       rgba(42,42,40,0.08);
     --dot-inactive:   rgba(42,42,40,0.12);
     --dot-active:     rgba(42,42,40,0.45);
+    --focus-ring:     rgba(42,42,40,0.30);   /* keyboard focus outline */
 
     /* ── Overlays ── */
     --overlay-bg:         rgba(245,244,242,0.55);
@@ -46,16 +48,24 @@
     --stack-overlay-bg:   rgba(245,244,242,0.35);
 
     /* ── Modals ── */
+    --modal-bg:          #faf9f7;
     --modal-title:       #2a2a28;
+    --modal-border:      rgba(42,42,40,0.14);
     --btn-danger-bg:     #c0392b;
     --btn-danger-hover:  #922b21;
+    --btn-danger-text:   #ffffff;
 
     /* ── Gradients ── */
     --gradient-upper: linear-gradient(to bottom, transparent 40%, rgba(250,249,247,0.85) 100%);
     --slide-gradient: linear-gradient(to bottom, rgba(232,228,223,0) 0%, rgba(232,228,223,1) 55%, rgba(245,244,242,1) 100%);
 
     /* ── Shadows ── */
-    --card-hover-shadow: 0 4px 20px rgba(42,42,40,0.08);
+    --shadow-card:       0 1px  4px rgba(42,42,40,0.06);
+    --shadow-card-hover: 0 4px 20px rgba(42,42,40,0.10);
+    --shadow-overlay:    0 8px 32px rgba(42,42,40,0.12);
+    --shadow-modal:      0 12px 40px rgba(42,42,40,0.14);
+    /* legacy alias kept for backward compat */
+    --card-hover-shadow: var(--shadow-card-hover);
 
     /* ── Menu ── */
     --menu-bg:            rgba(245,244,242,0.72);
@@ -66,24 +76,26 @@
     --menu-border-inner:  rgba(42,42,40,0.13);
     --menu-border-slider: rgba(42,42,40,0.22);
 
-    /* ── Shared constants ── */
+    /* ── Shared constants (theme-invariant) ── */
     --font-serif:    'Times New Roman', Times, serif;
     --radius-lg:     12px;
     --radius-md:     8px;
     --radius-sm:     6px;
     --border-hair:   0.5px solid;
 
-    /* ── Spacing ── */
-    --space-frame:      15px;          /* 外框容器 padding（panel-box, sheet-frame, gallery-frame 等） */
-    --space-header:     12px 18px;     /* section-header / header-bar padding */
-    --space-inner:      12px;          /* 内部滚动容器 padding（gallery-inner, blog-list-inner 等） */
-    --space-slide-v:    22px;          /* slide / sheet 垂直 padding */
-    --space-slide-h:    24px;          /* slide / sheet 水平 padding */
-    --space-card:       16px 18px;     /* 列表卡片 padding（blog-list-card, member-upper/lower 等） */
-    --space-overlay:    24px;          /* 全屏 overlay / menu-card 外边距 */
-    --space-row:        10px 14px;     /* 行级元素 padding（file-row, file-info-row） */
-    --space-page-wrap:  40px 24px;     /* page-wrap 外边距（垂直安全距离） */
-    --space-dot-h:      2px;           /* dots-row 水平 padding（专用，不随整体缩放） */
+    /* ── Spacing (theme-invariant) ── */
+    --space-frame:      15px;
+    --space-header:     12px 18px;
+    --space-inner:      12px;
+    --space-slide-v:    22px;
+    --space-slide-h:    24px;
+    --space-card:       16px 18px;
+    --space-overlay:    24px;
+    --space-row:        10px 14px;
+    --space-page-wrap:  40px 24px;
+    --space-dot-h:      2px;
+
+    /* ── Transitions (theme-invariant) ── */
     --transition-fade:    opacity 0.3s ease;
     --transition-slide:   transform 0.55s cubic-bezier(0.77,0,0.175,1);
     --transition-snap:    transform 0.3s cubic-bezier(0.77,0,0.175,1);
@@ -92,51 +104,134 @@
     --backdrop-close:     blur(4px);
   }
 
+  /* ── Light forced (matches :root defaults, ensures override when switching back) ── */
+  :root.light {
+    --bg:             #f5f4f2;
+    --bg-card:        #faf9f7;
+    --bg-inner:       #f5f4f2;
+    --bg-avatar:      #ede9e4;
+    --bg-image:       #e8e4df;
+    --bg-project:     #e4e0da;
+
+    --text-primary:   #2a2a28;
+    --text-secondary: #6a6a64;
+    --text-muted:     #9a9890;
+    --text-faint:     #c8c5be;
+    --text-tag:       #a8a5a0;
+
+    --border-strong:  rgba(42,42,40,0.18);
+    --border-mid:     rgba(42,42,40,0.14);
+    --border-soft:    rgba(42,42,40,0.10);
+    --border-tag:     rgba(42,42,40,0.20);
+    --border-btn:     rgba(42,42,40,0.25);
+
+    --hover-bg:       rgba(42,42,40,0.08);
+    --dot-inactive:   rgba(42,42,40,0.12);
+    --dot-active:     rgba(42,42,40,0.45);
+    --focus-ring:     rgba(42,42,40,0.30);
+
+    --overlay-bg:         rgba(245,244,242,0.55);
+    --overlay-blur-bg:    rgba(245,244,242,0.50);
+    --close-btn-bg:       rgba(245,244,242,0.75);
+    --stack-overlay-bg:   rgba(245,244,242,0.35);
+
+    --modal-bg:          #faf9f7;
+    --modal-title:       #2a2a28;
+    --modal-border:      rgba(42,42,40,0.14);
+    --btn-danger-bg:     #c0392b;
+    --btn-danger-hover:  #922b21;
+    --btn-danger-text:   #ffffff;
+
+    --gradient-upper: linear-gradient(to bottom, transparent 40%, rgba(250,249,247,0.85) 100%);
+    --slide-gradient: linear-gradient(to bottom, rgba(232,228,223,0) 0%, rgba(232,228,223,1) 55%, rgba(245,244,242,1) 100%);
+
+    --shadow-card:       0 1px  4px rgba(42,42,40,0.06);
+    --shadow-card-hover: 0 4px 20px rgba(42,42,40,0.10);
+    --shadow-overlay:    0 8px 32px rgba(42,42,40,0.12);
+    --shadow-modal:      0 12px 40px rgba(42,42,40,0.14);
+    --card-hover-shadow: var(--shadow-card-hover);
+
+    --menu-bg:            rgba(245,244,242,0.72);
+    --menu-card-bg:       #faf9f7;
+    --menu-inner-bg:      #f0ede9;
+    --menu-slider-bg:     #faf9f7;
+    --menu-border:        rgba(42,42,40,0.16);
+    --menu-border-inner:  rgba(42,42,40,0.13);
+    --menu-border-slider: rgba(42,42,40,0.22);
+  }
+
+  /* ── Dark mode ── */
   :root.dark {
-    --bg:             #18171a;
-    --bg-card:        #1f1e22;
-    --bg-inner:       #18171a;
-    --bg-avatar:      #2a2830;
-    --bg-image:       #252329;
-    --bg-project:     #2e2b35;
+    /* ── Backgrounds ──
+       基准色改为更纯粹的暗灰（去掉蓝紫偏色），
+       card / inner 层级拉开，避免"贴在一起"的平面感。       */
+    --bg:             #141414;   /* 最底层：纯深灰 */
+    --bg-card:        #1c1c1c;   /* 卡片面：+1 层 */
+    --bg-inner:       #141414;   /* 可滚动内容区 = bg */
+    --bg-avatar:      #272727;   /* 头像/图标占位 */
+    --bg-image:       #222222;   /* 图片骨架 */
+    --bg-project:     #252525;   /* 项目 slide（略深于 card） */
 
-    --text-primary:   #e8e6e0;
-    --text-secondary: #a8a49c;
-    --text-muted:     #706c65;
-    --text-faint:     #48453f;
-    --text-tag:       #706c65;
+    /* ── Text ──
+       primary 保持高亮度但稍带暖白，避免纯白刺眼；
+       各层级间距均匀拉开约 15–20 明度点。                   */
+    --text-primary:   #e6e3dc;   /* 标题、正文 */
+    --text-secondary: #9e9b94;   /* 副标签 */
+    --text-muted:     #6b6861;   /* 占位、元信息 */
+    --text-faint:     #3d3b36;   /* 禁用、装饰 */
+    --text-tag:       #6b6861;   /* tag / chip（与 muted 对齐） */
 
-    --border-strong:  rgba(230,225,210,0.12);
-    --border-mid:     rgba(230,225,210,0.08);
-    --border-soft:    rgba(230,225,210,0.06);
-    --border-tag:     rgba(230,225,210,0.15);
-    --border-btn:     rgba(230,225,210,0.20);
+    /* ── Borders ──
+       底色改为暖白（230,225,210），透明度整体上调，
+       确保在深色背景上可见但不过于突兀。                      */
+    --border-strong:  rgba(230,225,210,0.16);
+    --border-mid:     rgba(230,225,210,0.10);
+    --border-soft:    rgba(230,225,210,0.07);
+    --border-tag:     rgba(230,225,210,0.18);
+    --border-btn:     rgba(230,225,210,0.22);
 
-    --hover-bg:       rgba(230,225,210,0.08);
-    --dot-inactive:   rgba(230,225,210,0.10);
-    --dot-active:     rgba(230,225,210,0.50);
+    /* ── Interactive states ── */
+    --hover-bg:       rgba(230,225,210,0.07);
+    --dot-inactive:   rgba(230,225,210,0.12);
+    --dot-active:     rgba(230,225,210,0.55);
+    --focus-ring:     rgba(230,225,210,0.35);
 
-    --overlay-bg:         rgba(24,23,26,0.65);
-    --overlay-blur-bg:    rgba(24,23,26,0.55);
-    --close-btn-bg:       rgba(24,23,26,0.75);
-    --stack-overlay-bg:   rgba(24,23,26,0.45);
+    /* ── Overlays ──
+       以 bg 基准色构建，透明度配合模糊滤镜。                  */
+    --overlay-bg:         rgba(20,20,20,0.70);
+    --overlay-blur-bg:    rgba(20,20,20,0.60);
+    --close-btn-bg:       rgba(20,20,20,0.80);
+    --stack-overlay-bg:   rgba(20,20,20,0.50);
 
-    --modal-title:       #e8e6e0;
-    --btn-danger-bg:     #a93226;
-    --btn-danger-hover:  #7b241c;
+    /* ── Modals ── */
+    --modal-bg:          #1c1c1c;
+    --modal-title:       #e6e3dc;
+    --modal-border:      rgba(230,225,210,0.10);
+    --btn-danger-bg:     #c0392b;   /* 危险按钮在暗色下保持饱和红，更易识别 */
+    --btn-danger-hover:  #e74c3c;
+    --btn-danger-text:   #ffffff;
 
-    --gradient-upper: linear-gradient(to bottom, transparent 40%, rgba(31,30,34,0.90) 100%);
-    --slide-gradient: linear-gradient(to bottom, rgba(37,35,41,0) 0%, rgba(37,35,41,1) 55%, rgba(24,23,26,1) 100%);
+    /* ── Gradients ──
+       与新 bg / bg-image 颜色对齐。                          */
+    --gradient-upper: linear-gradient(to bottom, transparent 40%, rgba(28,28,28,0.92) 100%);
+    --slide-gradient: linear-gradient(to bottom, rgba(34,34,34,0) 0%, rgba(34,34,34,1) 55%, rgba(20,20,20,1) 100%);
 
-    --card-hover-shadow: 0 4px 24px rgba(0,0,0,0.35);
+    /* ── Shadows ──
+       暗色下用纯黑阴影，透明度可以更高。                      */
+    --shadow-card:       0 1px  4px rgba(0,0,0,0.25);
+    --shadow-card-hover: 0 4px 24px rgba(0,0,0,0.45);
+    --shadow-overlay:    0 8px 32px rgba(0,0,0,0.55);
+    --shadow-modal:      0 12px 40px rgba(0,0,0,0.60);
+    --card-hover-shadow: var(--shadow-card-hover);
 
-    --menu-bg:            rgba(24,23,26,0.72);
-    --menu-card-bg:       #1f1e22;
-    --menu-inner-bg:      #2a2830;
-    --menu-slider-bg:     #1f1e22;
-    --menu-border:        rgba(230,225,210,0.12);
-    --menu-border-inner:  rgba(230,225,210,0.09);
-    --menu-border-slider: rgba(230,225,210,0.20);
+    /* ── Menu ── */
+    --menu-bg:            rgba(20,20,20,0.78);
+    --menu-card-bg:       #1c1c1c;
+    --menu-inner-bg:      #272727;
+    --menu-slider-bg:     #1c1c1c;
+    --menu-border:        rgba(230,225,210,0.14);
+    --menu-border-inner:  rgba(230,225,210,0.10);
+    --menu-border-slider: rgba(230,225,210,0.22);
   }
 
   /* ============================================================
@@ -155,6 +250,138 @@
   /* ── Hide scrollbars ── */
   .no-scrollbar { scrollbar-width: none; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
+
+  /* ============================================================
+     A11Y — SKIP LINK
+  ============================================================ */
+  .skip-link {
+    position: fixed; top: -100%; left: 50%; transform: translateX(-50%);
+    z-index: 9999; padding: 10px 20px;
+    background: var(--bg-card); color: var(--text-primary);
+    border: var(--border-hair) var(--border-strong);
+    border-radius: var(--radius-md);
+    font-size: 0.75rem; letter-spacing: 0.12em;
+    text-decoration: none; font-family: var(--font-serif);
+    transition: top 0.2s;
+  }
+  .skip-link:focus { top: 12px; }
+
+  /* ============================================================
+     A11Y — FOCUS VISIBLE (keyboard only, not mouse)
+  ============================================================ */
+  :focus { outline: none; }
+
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  .theme-btn:focus-visible,
+  .sound-btn:focus-visible,
+  .tab-btn:focus-visible,
+  .lb-toggle-btn:focus-visible { border-radius: var(--radius-md); }
+
+  .sheet-close:focus-visible,
+  .gallery-close-btn:focus-visible,
+  .blog-list-close-btn:focus-visible { border-radius: 4px; }
+
+  /* ============================================================
+     A11Y — REDUCED MOTION
+  ============================================================ */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+    .redeem-shimmer,
+    .lb-shimmer { display: none; }
+  }
+
+  /* ============================================================
+     HOVER — COMPLETE COVERAGE
+  ============================================================ */
+
+  /* dot-bar */
+  .dot-bar:hover { background: var(--dot-active); opacity: 0.65; }
+
+  /* stack-card */
+  .stack-card:hover  { box-shadow: var(--shadow-card-hover); }
+  .stack-card:active { opacity: 0.88; }
+
+  /* stack-overlay hint text */
+  .stack-overlay:hover span { color: var(--text-primary); }
+
+  /* masonry-item */
+  .masonry-item:active { opacity: 0.78; }
+
+  /* blog-list-card */
+  .blog-list-card:active { opacity: 0.88; }
+
+  /* sheet elements */
+  .sheet-image-bg:active  { opacity: 0.75; }
+  .sheet-close:active     { background: var(--hover-bg); }
+
+  /* overlay close buttons */
+  .gallery-close-btn:active    { background: var(--hover-bg); }
+  .blog-list-close-btn:active  { background: var(--hover-bg); }
+
+  /* doc-tab */
+  .doc-tab:active { opacity: 0.75; }
+
+  /* member-avatar-box */
+  .member-avatar-box:hover  { box-shadow: var(--shadow-card-hover); }
+  .member-avatar-box:active { opacity: 0.68; }
+
+  /* contact-card */
+  .contact-card:hover  { box-shadow: var(--shadow-card-hover); }
+  .contact-card:active { opacity: 0.88; }
+
+  /* file-row */
+  .file-row:hover  { background: var(--bg-avatar); cursor: pointer; }
+  .file-row:active { opacity: 0.82; }
+
+  /* file-icon */
+  .file-icon:active { opacity: 0.65; }
+
+  /* action-btn / file-view-btn */
+  .action-btn:active    { opacity: 0.75; }
+  .file-view-btn:active { opacity: 0.75; }
+
+  /* modal-btn */
+  .modal-btn:active        { opacity: 0.82; }
+  .modal-btn.danger:active { background: var(--btn-danger-hover); }
+
+  /* lightbox controls */
+  .lb-action-row:active:not(.copied) { opacity: 0.82; }
+  .lb-audio-ctrl:hover  { background: var(--bg-avatar); }
+  .lb-audio-ctrl:active { opacity: 0.82; }
+  .lb-video-ctrl:hover  { background: var(--bg-avatar); }
+  .lb-video-ctrl:active { opacity: 0.82; }
+  .lb-toggle-btn:active { opacity: 0.75; }
+
+  /* landing get-started */
+  .get-started:active { opacity: 0.72; }
+
+  /* menu controls */
+  .sound-btn:active  { opacity: 0.78; }
+  .theme-btn:active  { opacity: 0.75; }
+
+  /* page tab-btn */
+  .tab-btn:active { opacity: 0.72; }
+
+  /* search result items (JS-injected) */
+  .search-result-item:hover  { background: var(--hover-bg); }
+  .search-result-item:active { opacity: 0.82; }
+
+  /* redeem result-mode */
+  .redeem-input-row.result-mode:hover  { background: var(--bg-card); cursor: pointer; }
+  .redeem-input-row.result-mode:active { opacity: 0.82; }
+
+  /* project carousel slide hover */
+  .project-carousel-box:hover .slide-inner { border-color: var(--border-strong); }
 
   /* ============================================================
      MENU OVERLAY
@@ -2084,14 +2311,26 @@
 <body>
 
 <!-- ============================================================
+     A11Y — SCREEN READER ONLY UTILITY & SKIP LINK
+============================================================ -->
+<style>
+  .sr-only {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+</style>
+<a class="skip-link" href="#page-container">콘텐츠로 건너뛰기</a>
+
+<!-- ============================================================
      MENU OVERLAY
 ============================================================ -->
-<div id="menuOverlay">
+<div id="menuOverlay" role="dialog" aria-modal="true" aria-label="설정 메뉴">
   <div class="menu-card">
-    <div class="theme-group">
-      <div id="themeSlider" class="theme-slider"></div>
-      <button id="themeLight" class="theme-btn">
-        <svg width="22" height="22" viewBox="0 0 16 16" fill="none">
+    <div class="theme-group" role="group" aria-label="테마 선택">
+      <div id="themeSlider" class="theme-slider" aria-hidden="true"></div>
+      <button id="themeLight" class="theme-btn" aria-label="라이트 모드" aria-pressed="false">
+        <svg width="22" height="22" viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
           <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.2"/>
           <line x1="8" y1="1" x2="8" y2="3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
           <line x1="8" y1="13" x2="8" y2="15" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
@@ -2103,23 +2342,23 @@
           <line x1="4.34" y1="11.66" x2="2.93" y2="13.07" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
         </svg>
       </button>
-      <button id="themeAuto" class="theme-btn">
-        <svg width="22" height="22" viewBox="0 0 16 16" fill="none">
+      <button id="themeAuto" class="theme-btn" aria-label="시스템 테마" aria-pressed="true">
+        <svg width="22" height="22" viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
           <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.2"/>
           <path d="M8 2a6 6 0 0 1 0 12V2z" fill="currentColor"/>
         </svg>
       </button>
-      <button id="themeDark" class="theme-btn">
-        <svg width="22" height="22" viewBox="0 0 16 16" fill="none">
+      <button id="themeDark" class="theme-btn" aria-label="다크 모드" aria-pressed="false">
+        <svg width="22" height="22" viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
           <path d="M13.5 9.5A6 6 0 0 1 6.5 2.5a5.5 5.5 0 1 0 7 7z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
         </svg>
       </button>
     </div>
-    <button id="soundBtn" class="sound-btn">
-      <svg id="iconPlay" width="22" height="22" viewBox="0 0 16 16" fill="none">
+    <button id="soundBtn" class="sound-btn" aria-label="배경 음악 재생" aria-pressed="false">
+      <svg id="iconPlay" width="22" height="22" viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
         <polygon points="5,3 13,8 5,13" fill="currentColor"/>
       </svg>
-      <svg id="iconPause" width="22" height="22" viewBox="0 0 16 16" fill="none" style="display:none;">
+      <svg id="iconPause" width="22" height="22" viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false" style="display:none;">
         <rect x="4" y="3" width="3" height="10" rx="1" fill="currentColor"/>
         <rect x="9" y="3" width="3" height="10" rx="1" fill="currentColor"/>
       </svg>
@@ -2130,11 +2369,11 @@
 <!-- ============================================================
      PAGE CONTAINER
 ============================================================ -->
-<div id="page-container">
+<main id="page-container" aria-label="메인 콘텐츠" aria-live="polite" aria-atomic="false">
 
   <!-- PAGE 1: LANDING -->
-  <div class="page" id="page1">
-    <svg class="ink-blob top-left" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <section class="page" id="page1" aria-label="랜딩 페이지">
+    <svg class="ink-blob top-left" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
       <defs>
         <filter id="f1" x="-20%" y="-20%" width="140%" height="140%">
           <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" seed="8" result="noise"/>
@@ -2149,7 +2388,7 @@
       <path d="M 60 30 C 110 10, 200 25, 260 70 C 320 115, 360 190, 340 260 C 320 330, 240 370, 160 355 C 80 340, 20 280, 15 200 C 10 120, 10 50, 60 30 Z"
         fill="url(#g1)" stroke="rgba(58,50,38,0.09)" stroke-width="1" filter="url(#f1)"/>
     </svg>
-    <svg class="ink-blob bottom-right" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+    <svg class="ink-blob bottom-right" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
       <defs>
         <filter id="f2" x="-20%" y="-20%" width="140%" height="140%">
           <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="3" seed="23" result="noise"/>
@@ -2165,120 +2404,126 @@
         fill="url(#g2)" stroke="rgba(58,50,38,0.07)" stroke-width="1" filter="url(#f2)"/>
     </svg>
     <div class="center" id="center">
-      <div class="brand" id="brand"></div>
-      <button class="get-started" id="getStarted"></button>
-      <div class="tagline" id="tagline">Never mind.</div>
+      <h1 class="brand" id="brand" aria-label="Aermium"></h1>
+      <button class="get-started" id="getStarted" aria-label="시작하기"></button>
+      <p class="tagline" id="tagline" aria-live="polite">Never mind.</p>
     </div>
-  </div>
+  </section>
 
   <!-- PAGE 2: PROJECTS -->
-  <div class="page" id="page2">
-    <div class="page-bg-wrap bg-hidden" id="page2Bg">
+  <section class="page" id="page2" aria-label="프로젝트">
+    <div class="page-bg-wrap bg-hidden" id="page2Bg" aria-hidden="true">
       <div class="page-bg-a" id="page2BgA"></div>
       <div class="page-bg-b" id="page2BgB"></div>
       <div class="page-bg-blur"></div>
     </div>
     <div class="page-wrap">
-      <div class="panel-box project-carousel-box" id="projectCarousel">
-        <div class="carousel-dots" id="projectDots"></div>
+      <article class="panel-box project-carousel-box" id="projectCarousel"
+        role="region" aria-label="프로젝트 캐러셀" aria-roledescription="캐러셀">
+        <nav class="carousel-dots" id="projectDots" aria-label="프로젝트 탐색"></nav>
         <div class="project-track-outer">
-          <div class="carousel-track" id="projectTrack"></div>
+          <div class="carousel-track" id="projectTrack" aria-live="polite"></div>
         </div>
-      </div>
+      </article>
     </div>
-  </div>
+  </section>
 
   <!-- PAGE 3: STACK VIEWER -->
-  <div class="page" id="page3">
-    <div class="page-bg-wrap bg-hidden" id="page3Bg">
+  <section class="page" id="page3" aria-label="갤러리 스택">
+    <div class="page-bg-wrap bg-hidden" id="page3Bg" aria-hidden="true">
       <div class="page-bg-a" id="page3BgA"></div>
       <div class="page-bg-b" id="page3BgB"></div>
       <div class="page-bg-blur"></div>
     </div>
     <div class="page-wrap">
-      <div class="stack-outer panel-box" id="stackOuter">
-        <div class="stack-progress-row" id="stackProgress"></div>
-        <div class="stack-box" id="stackBox">
-          <div class="stack-cards" id="stackCards"></div>
-          <div class="stack-overlay" id="stackOverlay">
+      <article class="stack-outer panel-box" id="stackOuter" aria-label="이미지 스택">
+        <nav class="stack-progress-row" id="stackProgress" aria-label="스택 진행"></nav>
+        <div class="stack-box" id="stackBox"
+          role="listbox" aria-label="이미지 카드" tabindex="0"
+          aria-roledescription="카드 스택. 드래그하거나 키보드로 탐색하세요">
+          <div class="stack-cards" id="stackCards" aria-live="polite"></div>
+          <div class="stack-overlay" id="stackOverlay" aria-hidden="true">
             <span>右滑切换 &nbsp;·&nbsp; 左滑返回</span>
           </div>
         </div>
-      </div>
+      </article>
     </div>
-  </div>
+  </section>
 
   <!-- PAGE 4: BLOG -->
-  <div class="page" id="page4">
+  <section class="page" id="page4" aria-label="글 목록">
     <div class="page-wrap">
-      <div class="blog-box panel-box">
-        <div class="section-header">Writings</div>
-        <div class="dots-row" id="blogDots"></div>
-        <div class="carousel-track-outer" id="blogCarousel">
+      <article class="blog-box panel-box">
+        <header class="section-header"><span>Writings</span></header>
+        <nav class="dots-row" id="blogDots" aria-label="글 탐색"></nav>
+        <div class="carousel-track-outer" id="blogCarousel"
+          role="region" aria-label="블로그 캐러셀" aria-live="polite">
           <div class="carousel-track" id="blogTrack"></div>
         </div>
-      </div>
+      </article>
     </div>
-  </div>
+  </section>
 
   <!-- PAGE 5: DOC VIEWER -->
-  <div class="page" id="page5">
+  <section class="page" id="page5" aria-label="문서">
     <div class="page-wrap">
-      <div class="panel-box" style="gap:12px">
-        <div class="doc-content no-scrollbar" id="docContent">
+      <article class="panel-box" style="gap:12px">
+        <div class="doc-content no-scrollbar" id="docContent" role="document" aria-live="polite">
           <div class="doc-text" id="docText"></div>
         </div>
-        <div class="doc-tabs no-scrollbar" id="docTabs">
+        <nav class="doc-tabs no-scrollbar" id="docTabs" aria-label="문서 탭">
           <div class="doc-tab-spacer"></div>
           <div class="doc-tab-spacer"></div>
-        </div>
-      </div>
+        </nav>
+      </article>
     </div>
-  </div>
+  </section>
 
   <!-- PAGE 6: EVENTS -->
-  <div class="page" id="page6">
+  <section class="page" id="page6" aria-label="근황 이벤트">
     <div class="page-wrap">
-      <div class="event-box panel-box">
-        <div class="section-header">近期活动</div>
-        <div class="dots-row" id="eventDots"></div>
-        <div class="carousel-track-outer" id="eventCarousel">
+      <article class="event-box panel-box">
+        <header class="section-header"><span>近期活动</span></header>
+        <nav class="dots-row" id="eventDots" aria-label="이벤트 탐색"></nav>
+        <div class="carousel-track-outer" id="eventCarousel"
+          role="region" aria-label="이벤트 캐러셀" aria-live="polite">
           <div class="carousel-track" id="eventTrack"></div>
         </div>
-      </div>
+      </article>
     </div>
-  </div>
+  </section>
 
   <!-- PAGE 7: MEMBERS -->
-  <div class="page" id="page7">
+  <section class="page" id="page7" aria-label="팀 멤버">
     <div class="page-wrap">
-      <div class="member-box panel-box">
-        <div class="dots-row" id="memberDots"></div>
-        <div class="member-upper" id="memberUpper">
-          <div class="member-avatar-box"><span>Avatar</span></div>
+      <article class="member-box panel-box" aria-label="멤버 소개">
+        <nav class="dots-row" id="memberDots" aria-label="멤버 탐색"></nav>
+        <header class="member-upper" id="memberUpper">
+          <div class="member-avatar-box" role="img" aria-label="멤버 아바타" tabindex="0"><span>Avatar</span></div>
           <div class="member-info-col">
-            <div class="member-name"  id="memberName"></div>
-            <div class="member-role"  id="memberRole"></div>
-            <div class="member-quote" id="memberQuote"></div>
+            <h2 class="member-name"  id="memberName"></h2>
+            <p  class="member-role"  id="memberRole"></p>
+            <blockquote class="member-quote" id="memberQuote"></blockquote>
           </div>
-        </div>
-        <div class="member-lower">
-          <div class="member-section-label">About</div>
-          <div class="member-bio no-scrollbar" id="memberBio"></div>
-        </div>
-      </div>
+        </header>
+        <section class="member-lower" aria-label="멤버 소개">
+          <p class="member-section-label" aria-hidden="true">About</p>
+          <div class="member-bio no-scrollbar" id="memberBio" aria-live="polite"></div>
+        </section>
+      </article>
     </div>
-  </div>
+  </section>
 
   <!-- PAGE 8: CONTACT / FILES / REDEEM -->
-  <div class="page" id="page8">
+  <section class="page" id="page8" aria-label="연락처 및 파일">
     <div class="page-wrap">
       <div class="contact-panel panel-box" id="contactPanel">
 
-        <div class="tab-switcher" id="tabSwitcher">
-          <div class="tab-slider" id="tabSlider"></div>
-          <button class="tab-btn" data-tab="0" id="tabBtn0">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <nav class="tab-switcher" id="tabSwitcher" role="tablist" aria-label="섹션 탭">
+          <div class="tab-slider" id="tabSlider" aria-hidden="true"></div>
+          <button class="tab-btn" data-tab="0" id="tabBtn0"
+            role="tab" aria-selected="false" aria-controls="pane-images" aria-label="파일">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
               <path d="M5 2.5h6.5L15 6v11.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-14a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/>
               <path d="M11.5 2.5V6H15" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
               <line x1="7" y1="9.5" x2="13" y2="9.5" stroke="currentColor" stroke-width="0.95" stroke-linecap="round"/>
@@ -2286,41 +2531,43 @@
               <line x1="7" y1="14.5" x2="11" y2="14.5" stroke="currentColor" stroke-width="0.95" stroke-linecap="round"/>
             </svg>
           </button>
-          <button class="tab-btn" data-tab="1" id="tabBtn1">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <button class="tab-btn" data-tab="1" id="tabBtn1"
+            role="tab" aria-selected="false" aria-controls="pane-contact" aria-label="연락처">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
               <path d="M4 5.5C4 4.67 4.67 4 5.5 4h9C15.33 4 16 4.67 16 5.5v6c0 .83-.67 1.5-1.5 1.5H8l-4 3V5.5z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/>
             </svg>
           </button>
-          <button class="tab-btn" data-tab="2" id="tabBtn2">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <button class="tab-btn" data-tab="2" id="tabBtn2"
+            role="tab" aria-selected="false" aria-controls="pane-redeem" aria-label="리딤">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
               <rect x="2" y="5.5" width="16" height="10" rx="1.8" stroke="currentColor" stroke-width="1.1"/>
               <line x1="2" y1="9" x2="18" y2="9" stroke="currentColor" stroke-width="1.8" stroke-linecap="butt"/>
               <rect x="4.5" y="11.5" width="4" height="2" rx="0.5" fill="currentColor" opacity="0.5"/>
               <line x1="11" y1="12.5" x2="14" y2="12.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
             </svg>
           </button>
-        </div>
+        </nav>
 
         <div class="pane-body" id="paneBody">
 
           <!-- Pane 0: Files -->
-          <div class="pane" id="pane-images">
-            <div class="file-list no-scrollbar" id="fileList"></div>
+          <div class="pane" id="pane-images" role="tabpanel" aria-labelledby="tabBtn0" tabindex="0">
+            <div class="file-list no-scrollbar" id="fileList" role="list" aria-label="파일 목록"></div>
           </div>
 
           <!-- Pane 1: Contact -->
-          <div class="pane" id="pane-contact">
-            <div class="contact-col">
-              <a class="contact-card" id="emailBtn" href="#">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <div class="pane" id="pane-contact" role="tabpanel" aria-labelledby="tabBtn1" tabindex="0">
+            <div class="contact-col" role="list" aria-label="연락처">
+              <a class="contact-card" id="emailBtn" href="#" role="listitem">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true" focusable="false">
                   <rect x="2" y="4" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.1"/>
                   <path d="M2 6.5l7 4.5 7-4.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
                 </svg>
                 <span class="contact-label">Email</span>
                 <span class="contact-value" id="emailVal"></span>
               </a>
-              <a class="contact-card" id="xBtn" href="#" target="_blank">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <a class="contact-card" id="xBtn" href="#" target="_blank" rel="noopener noreferrer" role="listitem">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true" focusable="false">
                   <path d="M3 3l5 6-5 6h1.5l4.3-4.9L12.5 15H16l-5.2-6.3L15.5 3H14l-3.9 4.4L10 7 7 3H3z" fill="currentColor"/>
                 </svg>
                 <span class="contact-label">𝕏 (Twitter)</span>
@@ -2330,73 +2577,89 @@
           </div>
 
           <!-- Pane 2: Redeem -->
-          <div class="pane" id="pane-redeem">
+          <div class="pane" id="pane-redeem" role="tabpanel" aria-labelledby="tabBtn2" tabindex="0">
             <div class="redeem-wrap">
-              <div class="redeem-toast-stack" id="redeemToastStack"></div>
-              <div class="redeem-top">
-                <img class="redeem-gift" src="gift.gif" alt="gift"/>
+              <div class="redeem-toast-stack" id="redeemToastStack" aria-live="assertive" aria-atomic="true"></div>
+              <div class="redeem-top" aria-hidden="true">
+                <img class="redeem-gift" src="gift.gif" alt="선물 아이콘"/>
               </div>
               <div class="redeem-input-row" id="redeemInputRow">
                 <input class="redeem-input" id="redeemInput" type="text"
-                  autocomplete="off" spellcheck="false"/>
-                <span class="redeem-result" id="redeemResult"></span>
+                  autocomplete="off" spellcheck="false"
+                  aria-label="리딤 코드 입력" placeholder="코드를 입력하세요"
+                  aria-describedby="redeemHint"/>
+                <span class="redeem-result" id="redeemResult" aria-live="polite"></span>
                 <svg class="redeem-check" id="redeemCheck" width="18" height="18"
                   viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                  stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                  aria-hidden="true" focusable="false">
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
               </div>
+              <span id="redeemHint" class="sr-only">코드를 입력 후 Enter 키를 누르세요</span>
             </div>
           </div>
 
         </div>
       </div>
     </div>
-  </div>
+  </section>
 
   <!-- PAGE 9: OUTRO -->
-  <div class="page" id="page9">
-    <div class="final-wrap">
-      <div class="final-brand" id="finalBrand"></div>
-      <div class="final-suffix" id="finalSuffix"></div>
-      <div class="final-by"     id="finalBy"></div>
-      <div class="final-name"   id="finalName"></div>
-    </div>
-  </div>
+  <section class="page" id="page9" aria-label="아웃트로">
+    <footer class="final-wrap">
+      <div class="final-brand" id="finalBrand" aria-hidden="true"></div>
+      <div class="final-suffix" id="finalSuffix" aria-live="polite"></div>
+      <p class="final-by"     id="finalBy"></p>
+      <p class="final-name"   id="finalName"></p>
+    </footer>
+  </section>
 
-</div><!-- /#page-container -->
+</main><!-- /#page-container -->
 
 <!-- ============================================================
      SEARCH OVERLAY (long-press on blogListOverlay / fileList)
 ============================================================ -->
-<div id="searchOverlay">
+<div id="searchOverlay" role="dialog" aria-modal="true" aria-label="검색">
   <div class="search-frame">
     <!-- Input -->
     <div class="search-input-wrap" id="searchInputWrap">
-      <input class="search-input" id="searchInput" type="text"
-        autocomplete="off" spellcheck="false" enterkeyhint="search"/>
+      <input class="search-input" id="searchInput" type="search"
+        autocomplete="off" spellcheck="false" enterkeyhint="search"
+        aria-label="검색어 입력" placeholder="검색…"
+        aria-controls="searchResults" aria-autocomplete="list"/>
     </div>
     <!-- Tabs -->
-    <div class="search-tabs-wrap" id="searchTabsWrap">
-      <div class="search-tabs" id="searchTabs">
-        <div class="search-tab-slider" id="searchTabSlider"></div>
-        <button class="search-tab-btn active" id="searchTab0" data-tab="0"></button>
-        <button class="search-tab-btn"        id="searchTab1" data-tab="1"></button>
-        <button class="search-tab-btn"        id="searchTab2" data-tab="2"></button>
+    <nav class="search-tabs-wrap" id="searchTabsWrap" aria-label="검색 범위 탭">
+      <div class="search-tabs" id="searchTabs" role="tablist">
+        <div class="search-tab-slider" id="searchTabSlider" aria-hidden="true"></div>
+        <button class="search-tab-btn active" id="searchTab0" data-tab="0" role="tab" aria-selected="true"></button>
+        <button class="search-tab-btn"        id="searchTab1" data-tab="1" role="tab" aria-selected="false"></button>
+        <button class="search-tab-btn"        id="searchTab2" data-tab="2" role="tab" aria-selected="false"></button>
       </div>
-    </div>
+    </nav>
     <!-- Results -->
-    <div class="search-results no-scrollbar" id="searchResults"></div>
+    <div class="search-results no-scrollbar" id="searchResults"
+      role="listbox" aria-label="검색 결과" aria-live="polite" aria-atomic="false"></div>
   </div>
 </div>
 
 <!-- ============================================================
      GALLERY OVERLAY (long-press on page 3)
 ============================================================ -->
-<div id="galleryOverlay">
+<div id="galleryOverlay" role="dialog" aria-modal="true" aria-label="이미지 갤러리">
   <div class="gallery-frame">
+    <header class="gallery-header-bar">
+      <span>Gallery</span>
+      <button class="gallery-close-btn" id="galleryCloseBtn" aria-label="갤러리 닫기">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true" focusable="false">
+          <line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </header>
     <div class="gallery-inner no-scrollbar">
-      <div class="masonry-grid" id="masonryGrid"></div>
+      <div class="masonry-grid" id="masonryGrid" role="list" aria-label="이미지 그리드"></div>
     </div>
   </div>
 </div>
@@ -2404,29 +2667,38 @@
 <!-- ============================================================
      BLOG LIST OVERLAY (long-press on page 4)
 ============================================================ -->
-<div id="blogListOverlay">
+<div id="blogListOverlay" role="dialog" aria-modal="true" aria-label="전체 글 목록">
   <div class="blog-list-frame">
-    <div class="blog-list-inner no-scrollbar" id="blogListGrid"></div>
+    <header class="blog-list-header-bar">
+      <span>Writings</span>
+      <button class="blog-list-close-btn" id="blogListCloseBtn" aria-label="글 목록 닫기">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true" focusable="false">
+          <line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </header>
+    <div class="blog-list-inner no-scrollbar" id="blogListGrid" role="list" aria-label="블로그 목록"></div>
   </div>
 </div>
 
 <!-- ============================================================
      LIGHTBOX — full-featured preview
 ============================================================ -->
-<div class="lightbox-overlay" id="lightbox">
+<div class="lightbox-overlay" id="lightbox" role="dialog" aria-modal="true" aria-label="파일 미리보기">
   <div class="lightbox-frame">
-    <div class="lightbox-content" id="lbContent">
+    <div class="lightbox-content" id="lbContent" aria-live="polite">
       <!-- dynamically filled -->
     </div>
     <!-- action row: copy (TXT) or toggle+longpress-copy (HTML/MD), hidden otherwise -->
-    <div class="lb-action-row" id="lbActionRow" style="display:none"></div>
+    <div class="lb-action-row" id="lbActionRow" style="display:none" role="toolbar" aria-label="파일 작업"></div>
   </div>
 </div>
 
 <!-- Lightbox download modal -->
-<div class="modal-overlay" id="lbDownloadModal">
-  <div class="modal">
-    <div class="modal-title" id="lbDownloadTitle"></div>
+<div class="modal-overlay" id="lbDownloadModal" role="dialog" aria-modal="true" aria-labelledby="lbDownloadTitle">
+  <div class="modal" role="document">
+    <p class="modal-title" id="lbDownloadTitle"></p>
     <div class="modal-buttons">
       <button class="modal-btn" id="lbDownloadCancel">Cancel</button>
       <button class="modal-btn danger" id="lbDownloadBtn">Download</button>
@@ -2437,42 +2709,40 @@
 <!-- ============================================================
      SHEET OVERLAYS (project / blog / about) — shared .sheet-overlay
 ============================================================ -->
-<!-- ============================================================
-     SHEET OVERLAY — 统一骨架，project / blog / about 共用
-     data-sheet-type 由 JS 注入，用于区分当前类型
-============================================================ -->
-<div class="sheet-overlay" id="sheetOverlay">
+<div class="sheet-overlay" id="sheetOverlay" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
   <div class="sheet-frame">
     <div class="sheet-inner" id="sheetInner">
-      <button class="sheet-close" id="sheetClose">
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+      <button class="sheet-close" id="sheetClose" aria-label="닫기">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true" focusable="false">
           <line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
           <line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
         </svg>
       </button>
-      <div class="sheet-header">
-        <div class="sheet-image-bg"><span id="sheetImageLabel">Image</span></div>
-        <div class="sheet-header-content">
-          <div class="sheet-date"  id="sheetDate"></div>
-          <div class="sheet-title" id="sheetTitle"></div>
-          <div class="sheet-tags"  id="sheetTags"></div>
+      <header class="sheet-header">
+        <div class="sheet-image-bg" role="img" aria-labelledby="sheetImageLabel">
+          <span id="sheetImageLabel">Image</span>
         </div>
-      </div>
+        <div class="sheet-header-content" aria-hidden="true">
+          <div class="sheet-date"  id="sheetDate"></div>
+          <h2  class="sheet-title" id="sheetTitle"></h2>
+          <div class="sheet-tags"  id="sheetTags" role="list" aria-label="태그"></div>
+        </div>
+      </header>
       <div class="sheet-body no-scrollbar" id="sheetBody">
-        <div class="sheet-content" id="sheetContent"></div>
+        <article class="sheet-content" id="sheetContent"></article>
       </div>
     </div>
   </div>
 </div>
 
-<div id="globalToastStack"></div>
+<div id="globalToastStack" role="status" aria-live="polite" aria-atomic="false"></div>
 
 <!-- ============================================================
      MODAL DIALOGS
 ============================================================ -->
-<div class="modal-overlay" id="fileModal">
-  <div class="modal">
-    <div class="file-info" id="fileInfo"></div>
+<div class="modal-overlay" id="fileModal" role="dialog" aria-modal="true" aria-label="파일 정보">
+  <div class="modal" role="document">
+    <div class="file-info" id="fileInfo" role="list" aria-label="파일 메타데이터"></div>
     <div class="modal-buttons">
       <button class="modal-btn" id="fileModalClose">Close</button>
       <button class="modal-btn danger" id="fileModalDownload">Download</button>
@@ -2480,9 +2750,9 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="linkModal">
-  <div class="modal">
-    <div class="modal-title">即将离开该页面<br>确定跳转吗</div>
+<div class="modal-overlay" id="linkModal" role="dialog" aria-modal="true" aria-labelledby="linkModalTitle">
+  <div class="modal" role="document">
+    <p class="modal-title" id="linkModalTitle">即将离开该页面<br>确定跳转吗</p>
     <div class="modal-buttons">
       <button class="modal-btn" id="linkModalCancel">Cancel</button>
       <button class="modal-btn danger" id="linkModalGo">Go To</button>
@@ -2490,9 +2760,9 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="emailModal">
-  <div class="modal">
-    <div class="modal-title">确定要发送邮件吗</div>
+<div class="modal-overlay" id="emailModal" role="dialog" aria-modal="true" aria-labelledby="emailModalTitle">
+  <div class="modal" role="document">
+    <p class="modal-title" id="emailModalTitle">确定要发送邮件吗</p>
     <div class="modal-buttons">
       <button class="modal-btn" id="emailModalCopy">Copy</button>
       <button class="modal-btn danger" id="emailModalSend">Send</button>
@@ -5603,6 +5873,7 @@ function closeGallery() {
   focusPop('galleryOverlay');
 }
 galleryOverlay.addEventListener('click', e => { if (e.target === galleryOverlay && focusTop() === 'galleryOverlay') closeGallery(); });
+document.getElementById('galleryCloseBtn')?.addEventListener('click', () => closeGallery());
 
 /* Long-press on stackBox */
 (function() {
@@ -5676,6 +5947,7 @@ function closeBlogList() {
   focusPop('blogListOverlay');
 }
 blogListOverlay.addEventListener('click', e => { if (e.target === blogListOverlay && focusTop() === 'blogListOverlay') closeBlogList(); });
+document.getElementById('blogListCloseBtn')?.addEventListener('click', () => closeBlogList());
 
 /* Long-press on blogCarousel */
 (function() {
@@ -6263,11 +6535,23 @@ menuOverlay.addEventListener('click', e => { if (e.target === menuOverlay && foc
 function applyTheme(i) {
   themeCur = i;
   themeSlider.style.transform = `translateX(${i * 54}px)`;
+  /* sync aria-pressed */
+  ['themeLight','themeAuto','themeDark'].forEach((id, idx) => {
+    document.getElementById(id).setAttribute('aria-pressed', idx === i ? 'true' : 'false');
+  });
   setTimeout(() => {
     const html = document.documentElement;
-    if (i === 0)      html.classList.remove('dark');
-    else if (i === 2) html.classList.add('dark');
-    else              html.classList.toggle('dark', window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (i === 0) {
+      html.classList.add('light');
+      html.classList.remove('dark');
+    } else if (i === 2) {
+      html.classList.remove('light');
+      html.classList.add('dark');
+    } else {
+      html.classList.remove('light', 'dark');
+      html.classList.toggle('dark', prefersDark);
+    }
   }, 300);
   try { localStorage.setItem('aermium-theme', i); } catch(_) {}
 }
@@ -6286,6 +6570,8 @@ function setSound(on) {
   iconPlay.style.display  = on ? 'none'  : 'block';
   iconPause.style.display = on ? 'block' : 'none';
   soundBtn.classList.toggle('playing', on);
+  soundBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  soundBtn.setAttribute('aria-label', on ? '배경 음악 일시정지' : '배경 음악 재생');
 }
 
 document.getElementById('themeLight').addEventListener('click', () => applyTheme(0));
