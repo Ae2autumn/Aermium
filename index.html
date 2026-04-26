@@ -2649,15 +2649,6 @@
 ============================================================ -->
 <div id="galleryOverlay" role="dialog" aria-modal="true" aria-label="이미지 갤러리">
   <div class="gallery-frame">
-    <header class="gallery-header-bar">
-      <span>Gallery</span>
-      <button class="gallery-close-btn" id="galleryCloseBtn" aria-label="갤러리 닫기">
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true" focusable="false">
-          <line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-          <line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-        </svg>
-      </button>
-    </header>
     <div class="gallery-inner no-scrollbar">
       <div class="masonry-grid" id="masonryGrid" role="list" aria-label="이미지 그리드"></div>
     </div>
@@ -2669,15 +2660,6 @@
 ============================================================ -->
 <div id="blogListOverlay" role="dialog" aria-modal="true" aria-label="전체 글 목록">
   <div class="blog-list-frame">
-    <header class="blog-list-header-bar">
-      <span>Writings</span>
-      <button class="blog-list-close-btn" id="blogListCloseBtn" aria-label="글 목록 닫기">
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true" focusable="false">
-          <line x1="1" y1="1" x2="9" y2="9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-          <line x1="9" y1="1" x2="1" y2="9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-        </svg>
-      </button>
-    </header>
     <div class="blog-list-inner no-scrollbar" id="blogListGrid" role="list" aria-label="블로그 목록"></div>
   </div>
 </div>
@@ -3286,6 +3268,12 @@ function openSheet(type, data) {
 function closeSheet() {
   sheetOverlay.classList.remove('visible');
   focusPop('sheetOverlay');
+  /* 如果 blogListOverlay 还在栈里（用户从 blogList 打开的文章），
+     短暂屏蔽其背景点击，防止关闭 sheetOverlay 的同一次点击穿透误关 blogList */
+  if (focusStack.includes('blogListOverlay')) {
+    blogListGuard = true;
+    setTimeout(() => { blogListGuard = false; }, 350);
+  }
 }
 
 sheetOverlay.addEventListener('click', e => {
@@ -5929,8 +5917,8 @@ function buildBlogList() {
         <span class="blog-list-card-time">${d.readTime}</span>
         <span class="blog-list-card-arrow">→</span>
       </div>`;
-    card.addEventListener('click', () => {
-      closeBlogList();
+    card.addEventListener('click', (e) => {
+      e.stopPropagation();
       openBlog(i);
     });
     blogListGrid.appendChild(card);
@@ -5938,6 +5926,7 @@ function buildBlogList() {
 }
 buildBlogList();
 
+var blogListGuard = false;
 function openBlogList() {
   blogListOverlay.classList.add('visible');
   focusPush('blogListOverlay');
@@ -5946,7 +5935,10 @@ function closeBlogList() {
   blogListOverlay.classList.remove('visible');
   focusPop('blogListOverlay');
 }
-blogListOverlay.addEventListener('click', e => { if (e.target === blogListOverlay && focusTop() === 'blogListOverlay') closeBlogList(); });
+blogListOverlay.addEventListener('click', e => {
+  if (blogListGuard) return;
+  if (e.target === blogListOverlay && focusTop() === 'blogListOverlay') closeBlogList();
+});
 document.getElementById('blogListCloseBtn')?.addEventListener('click', () => closeBlogList());
 
 /* Long-press on blogCarousel */
