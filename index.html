@@ -2880,168 +2880,20 @@ function createCarousel({ trackEl, dotsContainer, dotClass, dragEl, interval = 3
 }
 
 /* ============================================================
-   DATA
+   DATA — 全部由 data.json 动态注入，此处为空占位
+   initApp() 在 DOMContentLoaded 后 fetch data.json 并填充以下变量，
+   然后调用 bootstrapApp() 完成所有渲染与事件绑定。
 ============================================================ */
 
-const projectData = [
-  {
-    date: '2026.01.15', title: 'Project Alpha', tags: ['Branding', 'Identity'],
-    image: '',   // e.g. 'images/projects/alpha.jpg'
-    excerpt: 'Brand identity and visual system for a technology startup based in Shanghai.',
-    content: `<p>This project began with a single question: what does trust look like in the context of a technology startup? The answer, we found, was not in bold statements or aggressive visual language, but in restraint.</p><p>We developed a brand identity system built around a refined typographic palette and a deliberately limited color range. Every decision was made in service of clarity and longevity.</p><p>The logo mark, a geometric form derived from the initial letter, was designed to function across all scales — from a favicon to a building sign. The supporting typeface was selected for its legibility and quiet authority.</p><p>The project was completed over eight weeks and delivered in full, including brand guidelines, digital templates, and a motion language document.</p>`
-  },
-  {
-    date: '2026.02.08', title: 'Studio Blanc', tags: ['Editorial', 'Print'],
-    image: '',   // e.g. 'images/projects/studio-blanc.jpg'
-    excerpt: 'Editorial design and art direction for an independent publishing house.',
-    content: `<p>Studio Blanc approached us with a deceptively simple brief: make a publishing house feel like a place. Not a logo, not a website — a feeling.</p><p>We began with the physical. The texture of uncoated paper. The weight of a well-bound book. The smell of ink. From these sensory anchors, we built a visual system that translated the tactile into the digital.</p><p>The editorial design system we developed prioritizes reading above all else. Generous margins, careful leading, a type hierarchy that guides without intruding.</p>`
-  },
-  {
-    date: '2026.02.28', title: 'Meridian', tags: ['Digital', 'UX'],
-    image: '',   // e.g. 'images/projects/meridian.jpg'
-    excerpt: 'Digital experience and interaction design for a cultural institution.',
-    content: `<p>Meridian is a digital experience project for a cultural institution navigating the tension between accessibility and depth. The challenge was to serve both the casual visitor and the dedicated scholar.</p><p>Our approach was layered navigation — a surface that reveals itself gradually, responding to curiosity rather than demanding attention. The interface is calm at first glance, dense with possibility on closer inspection.</p><p>The project included full UX research, interaction design, and a component library delivered for development handoff.</p>`
-  },
-  {
-    date: '2026.03.20', title: 'Forma', tags: ['Motion', 'Spatial'],
-    image: '',   // e.g. 'images/projects/forma.jpg'
-    excerpt: 'Motion and spatial design for a product launch event.',
-    content: `<p>Forma was a commission for a product launch event — a rare opportunity to design in space and time simultaneously. We were responsible for the full environmental and motion design language of the event.</p><p>The brief called for something that felt inevitable. Not trend-forward, not retro — simply correct. We drew from the product's own material language, translating its surfaces and proportions into projected light and spatial rhythm.</p><p>The event was attended by three hundred guests and documented by a dedicated film crew. Excerpts were later used in the brand's global campaign.</p>`
-  }
-];
-
-const blogData = [
-  {
-    date: '2026.03.28', category: 'Identity', readTime: '3 min read',
-    title: '品牌不是标志，是一种立场',
-    excerpt: '许多创始人在谈到品牌时，首先想到的是颜色和字体。这无可厚非——视觉是品牌最显眼的皮肤。但如果设计工作止步于此，品牌就只是一件衣服，而非一具骨架。<br><br>真正的品牌工作，是在一切视觉决策之前完成的：你是谁？你为谁存在？你拒绝什么？这三个问题的答案，才是视觉系统的根。没有根的设计，精致也是漂亮的空壳。',
-    content: `<p>许多创始人在谈到品牌时，首先想到的是颜色和字体。这无可厚非——视觉是品牌最显眼的皮肤。但如果设计工作止步于此，品牌就只是一件衣服，而非一具骨架。</p><p>真正的品牌工作，是在一切视觉决策之前完成的：你是谁？你为谁存在？你拒绝什么？这三个问题的答案，才是视觉系统的根。没有根的设计，精致也是漂亮的空壳。</p><p>我们曾接触过一个客户，他们拥有极其精美的 logo，但没有人能在三句话内说清楚这个品牌的立场。设计师换了三家，每次都比上一次更漂亮，但问题始终没有解决——因为问题从来不在表面。</p><p>立场意味着放弃。一个品牌如果试图对所有人说话，最终只会对任何人都毫无意义。克制，是品牌最难学会、也最值得学会的事。</p>`
-  },
-  {
-    date: '2026.02.14', category: 'Process', readTime: '4 min read',
-    title: '我们如何开始一个项目',
-    excerpt: '每个项目在进入视觉阶段之前，我们会花大量时间做一件听起来很无聊的事：提问。不是为了收集信息，而是为了发现客户自己还没意识到的问题。<br><br>我们把这个阶段称为「静听」。不出方案，不做演示，只是坐在那里，听对方讲他们的故事。最好的设计方向，往往藏在那些不起眼的细节和犹豫的措辞里。',
-    content: `<p>每个项目在进入视觉阶段之前，我们会花大量时间做一件听起来很无聊的事：提问。不是为了收集信息，而是为了发现客户自己还没意识到的问题。</p><p>我们把这个阶段称为「静听」。不出方案，不做演示，只是坐在那里，听对方讲他们的故事。最好的设计方向，往往藏在那些不起眼的细节和犹豫的措辞里。</p><p>有一次，一位客户花了二十分钟描述他们的目标用户，却在最后一句话里提到——「当然，我们不想看起来像我们的竞争对手」。那句话，才是整个项目的钥匙。</p><p>「静听」之后是「沉淀」。我们不会立刻出稿。给自己几天时间，让那些信息自然生长，直到某个方向开始有引力。好的设计往往不是被想出来的，而是被等出来的。</p>`
-  },
-  {
-    date: '2026.01.20', category: 'Editorial', readTime: '5 min read',
-    title: '字体是一种时间的感知',
-    excerpt: '选择字体从来不只是审美问题。不同的字体在视觉上承载着不同的时间感：有些字体让人觉得正在发生，有些则唤起某种已经结束的东西。<br><br>当我们为文化机构设计出版物时，会刻意选用带有历史感的衬线字体——不是为了复古，而是为了让读者感受到那种沉淀的重量。设计是在时间里工作的。',
-    content: `<p>选择字体从来不只是审美问题。不同的字体在视觉上承载着不同的时间感：有些字体让人觉得正在发生，有些则唤起某种已经结束的东西。</p><p>当我们为文化机构设计出版物时，会刻意选用带有历史感的衬线字体——不是为了复古，而是为了让读者感受到那种沉淀的重量。设计是在时间里工作的。</p><p>汉字的情况更为复杂。宋体承载的历史超过五百年，而黑体不过百年出头。在选择字体的那一刻，你其实也在选择将自己的内容放置于哪个时间坐标之上。</p><p>我们建议所有对出版物感兴趣的设计师做一个练习：把同一段文字用五种不同字体排出来，然后问自己：哪个版本在什么年代发生？答案会让你对字体的理解产生质变。</p><p>好的字体选择是隐形的。读者不会注意到它，但如果换掉，他们会感到某种说不清楚的不对劲。这种「不被察觉」，是最高的标准。</p>`
-  },
-  {
-    date: '2025.12.05', category: 'Reflection', readTime: '3 min read',
-    title: '关于克制，我们学到的事',
-    excerpt: '工作室成立三年，回看自己的作品，有一个变化很明显：早期的作品更复杂，元素更多，处理更精致。现在的作品，往往更空。<br><br>这不是因为我们变懒了，而是因为我们开始信任空白本身。空白不是什么都没有，它是让已有的东西呼吸的方式。这个认知改变了我们做设计的方式，也改变了我们审视别人作品的眼光。',
-    content: `<p>工作室成立三年，回看自己的作品，有一个变化很明显：早期的作品更复杂，元素更多，处理更精致。现在的作品，往往更空。</p><p>这不是因为我们变懒了，而是因为我们开始信任空白本身。空白不是什么都没有，它是让已有的东西呼吸的方式。这个认知改变了我们做设计的方式，也改变了我们审视别人作品的眼光。</p><p>克制是反本能的。人类天生对「空」感到不安，设计师尤其如此——空白意味着「没有完成」，意味着「可以再加点什么」。学会抵抗这种冲动，需要时间，也需要勇气。</p><p>我们现在有一个内部标准：如果一个元素被移除之后，整体变得更好，那它从一开始就不该存在。这个标准听起来简单，执行起来却会让每一个决策都变得更慎重。</p>`
-  }
-];
-
-const memberData = [
-  { name: 'Ae1autumn', role: 'Creative Director', avatar: '',  // e.g. 'images/avatars/ae1autumn.jpg'
-    quote: '设计是一种沉默的说服，\n克制才是最高的表达。', bio: '工作室创始人，毕业于同济大学视觉传达专业。曾就职于数家国际设计事务所，后回国创立 Aermium。擅长将东方美学与现代设计语言融合，关注品牌叙事与空间感知之间的关系。近年专注于文化机构与独立品牌的视觉系统建设。' },
-  { name: 'Lin Muyao',  role: 'Senior Designer',    avatar: '',  // e.g. 'images/avatars/lin-muyao.jpg'
-    quote: '留白不是空白，\n是呼吸的空间。',         bio: '平面与字体设计师，本科就读于中央美术学院，硕士毕业于 RCA。对汉字结构与拉丁字母的相互借鉴有独到研究。负责工作室大部分印刷与出版类项目的视觉执行，并主导内部字体实验项目。' },
-  { name: 'Shen Zhiyu', role: 'Motion & Digital',   avatar: '',  // e.g. 'images/avatars/shen-zhiyu.jpg'
-    quote: '时间是设计里\n被忽视的维度。',          bio: '交互与动态设计师，曾参与多个国际文化机构的数字体验项目。在 Aermium 负责数字端的交互设计与动态语言制定，同时兼顾前端原型开发。相信好的动效应如呼吸般自然，不被察觉才是最高境界。' },
-  { name: 'Yuki Harada',role: 'Strategy & Research', avatar: '',  // e.g. 'images/avatars/yuki-harada.jpg'
-    quote: '品牌不是外表，\n是一种立场。',           bio: '品牌策略师，毕业于早稻田大学商学院，后于上海生活工作超过八年。为工作室提供品牌定位、受众研究与叙事策略支持。擅长在文化差异中寻找共鸣点，将抽象的价值观转化为可落地的设计方向。' }
-];
-
-const contactData = {
-  email: 'hello@aermium.com',
-  x:     '@aermium',
-  xHref: 'https://x.com/aermium',
-};
-
-const fileData = [
-  { name: 'test.mp4',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://cropgif.net/videos/1776752686706-9e0da3fb-25e5-4355-887b-961a99d25a92.mp4' },  // 示例MP4
-  { name: 'test.mp3',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },  // 示例MP3
-  { name: 'test.txt',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://raw.githubusercontent.com/Ae2autumn/Aermium/refs/heads/main/REDEME.TXT' },  // 文本文件
-  { name: 'test.md',   size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://raw.githubusercontent.com/mdn/content/main/files/en-us/web/html/index.md' },  // Markdown文件
-  { name: 'test.html', size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://www.w3.org/People/Berners-Lee/Overview.html' },  // HTML页面
-  { name: 'test.jpg',  size: '0.1 MiB',  date: '2000.01.01', hash: '000000000000000', url: 'https://raw.githubusercontent.com/Ae2autumn/Aermium/refs/heads/main/IMG20260423075129.jpg' },  // PNG图片
-  { name: 'test.svg',  size: '0.1 MiB',  date: '', hash: '', url: 'https://upload.wikimedia.org/wikipedia/commons/8/84/Example.svg' },  // SVG矢量图
-];
-
-const docFiles = [
-  { name: 'Brief.md',       content: `# Project Brief
-
-This document outlines the scope and objectives for the Aermium studio identity project. The goal is to establish a cohesive visual language that reflects the studio's values of restraint, precision, and depth.
-
-## Scope
-
-The project encompasses brand identity, digital presence, and a set of guidelines for future creative work. All deliverables are expected by the end of Q2.
-
-## Stakeholders & Schedule
-
-Key stakeholders include the founding team and two external advisors. Weekly check-ins are scheduled every **Thursday at 10:00 AM**.
-
-## Notes
-
-- Budget is confirmed
-- Timeline is fixed
-- Scope may be adjusted with prior notice
-
-## Color Tokens
-
-\`\`\`css
---bg:             #f5f4f2;
---bg-card:        #faf9f7;
---text-primary:   #2a2a28;
---text-secondary: #6a6a64;
---border-mid:     rgba(42,42,40,0.14);
-\`\`\`
-
-## Typeface Stack
-
-\`\`\`
-Display : Cormorant Garamond, Times New Roman, serif
-Body    : Inter Light, system-ui, sans-serif
-Mono    : JetBrains Mono, Menlo, monospace
-\`\`\`` },
-  { name: 'Notes.txt',      content: `<h1>Working Notes</h1><p>— Typeface decision: Cormorant Garamond for display, Inter Light for body. Both feel right together.</p><p>— Color palette: warm off-white base, very dark warm brown for text. No pure black, no pure white.</p><p>— Motion: slow, intentional. Nothing should feel snappy or eager.</p><p>— The ink blob idea came from a conversation about impermanence. Keep it.</p>` },
-  { name: 'Proposal.md',    content: `# Design Proposal
-
-We propose a three-phase approach.
-
-## Phase 1 — Foundation
-
-Phase one focuses on foundational identity elements. Two-week review cycle. Revisions included within reason.
-
-## Phase 2 — Digital
-
-Phase two applies the identity system to digital surfaces. Includes interaction guidelines and component specs.
-
-## Phase 3 — Print & Environment
-
-Phase three covers print and environmental applications.
-
----
-
-Deliverables per phase are documented in the attached appendix. Final handoff includes all source files and a **usage guide**.` },
-  { name: 'References.txt', content: `<h1>References</h1><p>— Muji brand guidelines, 2019 edition</p><p>— Hara Kenya, "White"</p><p>— Otl Aicher, "Typographie"</p><p>— Jony Ive interviews, various</p><p>— Dieter Rams, ten principles for good design</p><p>— Neri Oxman, material ecology</p>` },
-  { name: 'Feedback.md',    content: `# Client Feedback
-
-## Round 1
-
-Overall direction approved. The team requested slightly more warmth in the color palette. The motion feels appropriate. Logo mark needs one more iteration.
-
-## Round 2
-
-Logo approved. Palette updated and confirmed. Digital mockups well received. Requested addition of a **dark mode** variant.
-
-## Round 3
-
-Dark mode approved with minor tweaks. Print specs under review. Final sign-off expected next week.` }
-];
-
-const eventData = [
-  { date: '2026.04.12', title: '春季创作展',          location: '上海 · 外滩艺术中心', desc: '工作室成员联合展出近期创作，涵盖平面、装置与影像三个方向，向公众开放参观。' },
-  { date: '2026.05.03', title: '品牌叙事工作坊',      location: '北京 · PACE 空间',    desc: '面向设计从业者的小型工作坊，探讨如何通过视觉语言构建品牌的叙事层次与情感连接。' },
-  { date: '2026.05.20', title: 'Aermium Open Studio', location: '工作室 · 仅限受邀',   desc: '开放工作室日，邀请合作伙伴与老朋友到访，分享当前进行中的项目与未发布的实验性作品。' },
-  { date: '2026.06.08', title: '设计与沉默',          location: '杭州 · 良渚文化艺术中心', desc: '一场关于留白与克制的讲座，探讨在视觉过载的时代，简省的设计语言如何重新获得力量。' },
-];
+let projectData = [];
+let blogData    = [];
+let memberData  = [];
+let contactData = { email: '', x: '', xHref: '' };
+let fileData    = [];
+let docFiles    = [];
+let eventData   = [];
+let galleryData = [];
+let aboutData   = { content: '' };
 
 /* ============================================================
    RENDER HELPERS — build carousel slides from data
@@ -3068,7 +2920,7 @@ function renderProjectSlides(trackEl) {
   });
 }
 
-const BLOG_DISPLAY_MAX = 7;
+let BLOG_DISPLAY_MAX = 7;
 
 function renderBlogSlides(trackEl) {
   trackEl.innerHTML = '';
@@ -3111,7 +2963,7 @@ function renderEventSlides(trackEl) {
 const linkModal  = document.getElementById('linkModal');
 const emailModal = document.getElementById('emailModal');
 let pendingHref  = null;
-const CONTACT_EMAIL = 'hello@aermium.com';
+let CONTACT_EMAIL = 'hello@aermium.com';
 
 /* ============================================================
    FOCUS STACK
@@ -3180,57 +3032,110 @@ const SHEET_REGISTRY = {
   project: {
     imageLabel: 'Image',
     render: d => ({
-      image:    d.image || '',
-      date:     d.date,
-      title:    d.title,
-      tags:     d.tags.map(t => `<span class="sheet-tag">${t}</span>`).join(''),
-      content:  d.markdown ? d.content : d.content,
-      markdown: !!d.markdown,
+      image:      d.image || '',
+      date:       d.date,
+      title:      d.title,
+      tags:       d.tags.map(t => `<span class="sheet-tag">${t}</span>`).join(''),
+      contentUrl: d.content || '',   // URL to fetch
     }),
   },
   blog: {
     imageLabel: 'Essay',
     render: d => ({
-      image:    d.image || '',
-      date:     d.date,
-      title:    d.title,
-      tags:     `<span class="sheet-tag">${d.category}</span><span class="sheet-tag">${d.readTime}</span>`,
-      content:  d.markdown ? d.content : d.content,
-      markdown: !!d.markdown,
+      image:      d.image || '',
+      date:       d.date,
+      title:      d.title,
+      tags:       `<span class="sheet-tag">${d.category}</span><span class="sheet-tag">${d.readTime}</span>`,
+      contentUrl: d.content || '',   // URL to fetch
     }),
   },
   about: {
     imageLabel: 'Image',
-    image: '',
     render: () => ({
-      image:   '',
-      date:  'Est. 2021 · Shanghai',
-      title: 'Aermium Studio',
-      tags:  ['Design','Identity','Editorial'].map(t => `<span class="sheet-tag">${t}</span>`).join(''),
-      markdown: true,
-      content: `Aermium is an independent design studio founded in Shanghai in 2021. We work at the intersection of brand identity, editorial design, and spatial experience — always with an emphasis on restraint, precision, and long-term thinking.
-
-Our practice is built around the belief that good design is quiet. It does not announce itself. It serves, it endures, and it earns attention through clarity rather than spectacle.
-
-## What We Do
-
-We work with cultural institutions, independent brands, and founders who share this sensibility. Each project is treated as a long-term collaboration, not a transaction.
-
-Current areas of focus:
-
-- Visual identity systems
-- Publication design
-- Digital experience
-- Environmental graphics
-
-## How We Work
-
-The studio is small by intention. We maintain a tight core team and bring in trusted collaborators when a project demands it. This keeps our work considered and our relationships direct.
-
-We are always open to conversations about new work.`,
+      image:      '',
+      date:       'Est. 2021 · Shanghai',
+      title:      'Aermium Studio',
+      tags:       ['Design','Identity','Editorial'].map(t => `<span class="sheet-tag">${t}</span>`).join(''),
+      contentUrl: aboutData.content || '',  // URL to fetch
     }),
   },
 };
+
+/* ── Sheet content fetch — AbortController ── */
+let sheetFetchController = null;
+
+function showSheetShimmer() {
+  sheetContentEl.classList.remove('md-rendered');
+  sheetContentEl.innerHTML = `<div class="sheet-content-shimmer">
+    <div class="shimmer-line" style="width:88%"></div>
+    <div class="shimmer-line" style="width:72%"></div>
+    <div class="shimmer-line" style="width:80%"></div>
+    <div class="shimmer-line" style="width:60%"></div>
+    <div class="shimmer-line" style="width:75%"></div>
+    <div class="shimmer-line" style="width:50%"></div>
+  </div>`;
+}
+
+function showSheetNoData() {
+  sheetContentEl.classList.remove('md-rendered');
+  sheetContentEl.innerHTML = `<div class="sheet-no-data">No Data</div>`;
+}
+
+async function loadSheetContent(cfg) {
+  /* abort any in-flight fetch */
+  if (sheetFetchController) sheetFetchController.abort();
+  sheetFetchController = new AbortController();
+  const signal = sheetFetchController.signal;
+
+  const url = cfg.contentUrl;
+
+  /* about type has inline content, no url */
+  if (!url) {
+    if (cfg.markdown) {
+      sheetContentEl.classList.remove('md-rendered');
+      sheetContentEl.innerHTML = '';
+      lbLoadMarked().then(() => {
+        if (signal.aborted) return;
+        const html = window.marked ? window.marked.parse(cfg.content) : cfg.content;
+        sheetContentEl.innerHTML = html;
+        sheetContentEl.classList.add('md-rendered');
+        bindCodeBlockCopy(sheetContentEl);
+      });
+    } else {
+      sheetContentEl.classList.remove('md-rendered');
+      sheetContentEl.innerHTML = cfg.content || '';
+    }
+    return;
+  }
+
+  showSheetShimmer();
+
+  try {
+    const res = await fetch(url, { signal });
+    if (!res.ok) throw new Error(res.status);
+    const text = await res.text();
+    if (signal.aborted) return;
+
+    const isMd = url.toLowerCase().endsWith('.md');
+    if (isMd) {
+      sheetContentEl.classList.remove('md-rendered');
+      sheetContentEl.innerHTML = '';
+      lbLoadMarked().then(() => {
+        if (signal.aborted) return;
+        const html = window.marked ? window.marked.parse(text) : text;
+        sheetContentEl.innerHTML = html;
+        sheetContentEl.classList.add('md-rendered');
+        bindCodeBlockCopy(sheetContentEl);
+      });
+    } else {
+      sheetContentEl.classList.remove('md-rendered');
+      sheetContentEl.innerHTML = text;
+    }
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    showSheetNoData();
+  }
+}
 
 function openSheet(type, data) {
   const reg = SHEET_REGISTRY[type];
@@ -3248,26 +3153,15 @@ function openSheet(type, data) {
   sheetImageBgEl.dataset.lbSrc = cfg.image || '';
   sheetImageBgEl.dataset.lbAlt = cfg.title  || reg.imageLabel;
 
-  // Render content: if cfg.markdown === true, render via marked.js
-  if (cfg.markdown) {
-    sheetContentEl.innerHTML = '';
-    sheetContentEl.classList.remove('md-rendered');
-    lbLoadMarked().then(() => {
-      const html = window.marked ? window.marked.parse(cfg.content) : cfg.content;
-      sheetContentEl.innerHTML = html;
-      sheetContentEl.classList.add('md-rendered');
-      bindCodeBlockCopy(sheetContentEl);
-    });
-  } else {
-    sheetContentEl.classList.remove('md-rendered');
-    sheetContentEl.innerHTML = cfg.content;
-  }
+  loadSheetContent(cfg);
 
   sheetOverlay.classList.add('visible');
   focusPush('sheetOverlay');
 }
 
 function closeSheet() {
+  /* abort any in-flight content fetch */
+  if (sheetFetchController) { sheetFetchController.abort(); sheetFetchController = null; }
   sheetOverlay.classList.remove('visible');
   focusPop('sheetOverlay');
   /* 如果 blogListOverlay 还在栈里（用户从 blogList 打开的文章），
@@ -4608,7 +4502,7 @@ function initPageBg(wrap, url) {
    PAGE 2 — PROJECT CAROUSEL
 ============================================================ */
 const projectTrackEl = document.getElementById('projectTrack');
-renderProjectSlides(projectTrackEl);
+/* [bootstrapApp] renderProjectSlides(projectTrackEl); */
 
 const projectDotsEl = document.getElementById('projectDots');
 const projectCarouselCtrl = createCarousel({
@@ -4869,20 +4763,20 @@ swipeEl3.addEventListener('touchend', e => {
   p3DragX = null; p3DragY = null;
 }, { passive: true });
 
-createStackCards(); initProgress();
-// 初始化 page3 背景：顶牌（stackOrder 最后一项）
-{
-  const topCard = stackOrder[stackOrder.length - 1];
-  const topIdx  = topCard ? parseInt(topCard.dataset.idx) : 0;
-  const img = galleryData[topIdx] && galleryData[topIdx].image;
-  initPageBg(page3BgEl, img);
-}
+/* [bootstrapApp] createStackCards(); initProgress(); */
+/* [bootstrapApp] // 初始化 page3 背景：顶牌（stackOrder 最后一项） */
+/* [bootstrapApp] { */
+/* [bootstrapApp]   const topCard = stackOrder[stackOrder.length - 1]; */
+/* [bootstrapApp]   const topIdx  = topCard ? parseInt(topCard.dataset.idx) : 0; */
+/* [bootstrapApp]   const img = galleryData[topIdx] && galleryData[topIdx].image; */
+/* [bootstrapApp]   initPageBg(page3BgEl, img); */
+/* [bootstrapApp] } */
 
 /* ============================================================
    PAGE 4 — BLOG CAROUSEL
 ============================================================ */
 const blogTrackEl = document.getElementById('blogTrack');
-renderBlogSlides(blogTrackEl);
+/* [bootstrapApp] renderBlogSlides(blogTrackEl); */
 
 const blogDotsEl = document.getElementById('blogDots');
 const blogCarouselCtrl = createCarousel({
@@ -4909,36 +4803,77 @@ let docCurIdx = 0;
 
 /* 根据 docFiles 动态生成 tab，与数组自动对齐 */
 const [spacerFirst, spacerLast] = docTabsEl.querySelectorAll('.doc-tab-spacer');
-docFiles.forEach((f, i) => {
-  const tab = document.createElement('div');
-  tab.className = 'doc-tab' + (i === 0 ? ' active' : '');
-  tab.dataset.idx = i;
-  tab.textContent = f.name;
-  docTabsEl.insertBefore(tab, spacerLast);
-});
-const docTabEls = [...docTabsEl.querySelectorAll('.doc-tab')];
+/* [bootstrapApp] docFiles.forEach((f, i) => { */
+/* [bootstrapApp]   const tab = document.createElement('div'); */
+/* [bootstrapApp]   tab.className = 'doc-tab' + (i === 0 ? ' active' : ''); */
+/* [bootstrapApp]   tab.dataset.idx = i; */
+/* [bootstrapApp]   tab.textContent = f.name; */
+/* [bootstrapApp]   docTabsEl.insertBefore(tab, spacerLast); */
+/* [bootstrapApp] }); */
+/* [bootstrapApp] const docTabEls = [...docTabsEl.querySelectorAll('.doc-tab')]; */
+let docTabEls = []; // populated by bootstrapApp after data.json load
+
+/* ── Doc fetch — AbortController ── */
+let docFetchController = null;
+
+function showDocShimmer() {
+  docTextEl.classList.remove('md-rendered');
+  docTextEl.innerHTML = `<div class="sheet-content-shimmer" style="padding:16px 0">
+    <div class="shimmer-line" style="width:55%;height:18px;margin-bottom:16px"></div>
+    <div class="shimmer-line" style="width:90%"></div>
+    <div class="shimmer-line" style="width:78%"></div>
+    <div class="shimmer-line" style="width:85%"></div>
+    <div class="shimmer-line" style="width:65%"></div>
+  </div>`;
+}
+
+function showDocNoData() {
+  docTextEl.classList.remove('md-rendered');
+  docTextEl.innerHTML = `<div class="sheet-no-data">No Data</div>`;
+}
 
 function loadDoc(idx) {
   docCurIdx = idx;
   docContent.scrollTop = 0;
   docTabEls.forEach((t, i) => t.classList.toggle('active', i === idx));
 
-  const f = docFiles[idx];
-  const isMd = f.name.toLowerCase().endsWith('.md');
+  /* abort previous fetch */
+  if (docFetchController) { docFetchController.abort(); docFetchController = null; }
 
-  if (isMd) {
-    docTextEl.classList.remove('md-rendered');
-    docTextEl.innerHTML = '';
-    lbLoadMarked().then(() => {
-      const html = window.marked ? window.marked.parse(f.content) : f.content;
-      docTextEl.innerHTML = html;
-      docTextEl.classList.add('md-rendered');
-      bindCodeBlockCopy(docTextEl);
+  const f   = docFiles[idx];
+  const url = f.content;
+
+  if (!url) { showDocNoData(); return; }
+
+  docFetchController = new AbortController();
+  const signal = docFetchController.signal;
+  const isMd   = f.name.toLowerCase().endsWith('.md');
+
+  showDocShimmer();
+
+  fetch(url, { signal })
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
+    .then(text => {
+      if (signal.aborted) return;
+      if (isMd) {
+        docTextEl.classList.remove('md-rendered');
+        docTextEl.innerHTML = '';
+        lbLoadMarked().then(() => {
+          if (signal.aborted) return;
+          const html = window.marked ? window.marked.parse(text) : text;
+          docTextEl.innerHTML = html;
+          docTextEl.classList.add('md-rendered');
+          bindCodeBlockCopy(docTextEl);
+        });
+      } else {
+        docTextEl.classList.remove('md-rendered');
+        docTextEl.innerHTML = text;
+      }
+    })
+    .catch(err => {
+      if (err.name === 'AbortError') return;
+      showDocNoData();
     });
-  } else {
-    docTextEl.classList.remove('md-rendered');
-    docTextEl.innerHTML = f.content;
-  }
 }
 function scrollTabToCenter(idx) {
   const half = docTabsEl.offsetWidth / 2;
@@ -4966,14 +4901,14 @@ docTabsEl.addEventListener('scroll', () => {
     scrollTabToCenter(idx); loadDoc(idx);
   }, 120);
 });
-loadDoc(0);
-setTimeout(() => scrollTabToCenter(0), 50);
+/* [bootstrapApp] loadDoc(0); */
+/* [bootstrapApp] setTimeout(() => scrollTabToCenter(0), 50); */
 
 /* ============================================================
    PAGE 6 — EVENT CAROUSEL
 ============================================================ */
 const eventTrackEl = document.getElementById('eventTrack');
-renderEventSlides(eventTrackEl);
+/* [bootstrapApp] renderEventSlides(eventTrackEl); */
 
 const eventDotsEl = document.getElementById('eventDots');
 const eventCarouselCtrl = createCarousel({
@@ -5000,9 +4935,9 @@ const memberDotsEl  = document.getElementById('memberDots');
 
 let memberCur = 0, memberAutoTimer = null, memberUserStopped = false;
 
-createDots(memberDotsEl, memberData.length, 'dot-bar', i => {
-  memberUserStopped = true; clearInterval(memberAutoTimer); goMember(i, false);
-});
+/* [bootstrapApp] createDots(memberDotsEl, memberData.length, 'dot-bar', i => { */
+/* [bootstrapApp]   memberUserStopped = true; clearInterval(memberAutoTimer); goMember(i, false); */
+/* [bootstrapApp] }); */
 
 function goMember(n, instant) {
   memberCur = (n + memberData.length) % memberData.length;
@@ -5042,7 +4977,7 @@ function startMemberAuto() {
 function stopMemberAuto()  { clearInterval(memberAutoTimer); memberAutoTimer = null; }
 function stopMemberByUser(){ memberUserStopped = true; stopMemberAuto(); }
 
-goMember(0, true);
+/* [bootstrapApp] goMember(0, true); */
 
 /* Member drag */
 let memberDragX = null;
@@ -5083,8 +5018,8 @@ const fileInfoEl      = document.getElementById('fileInfo');
 let curTab = 1;
 
 /* ── Contact ── */
-document.getElementById('emailVal').textContent = contactData.email;
-document.getElementById('xVal').textContent     = contactData.x;
+/* [bootstrapApp] document.getElementById('emailVal').textContent = contactData.email; */
+/* [bootstrapApp] document.getElementById('xVal').textContent     = contactData.x; */
 document.getElementById('emailBtn').addEventListener('click', e => { e.preventDefault(); openModal(emailModal); });
 document.getElementById('xBtn').addEventListener('click', e => {
   e.preventDefault(); pendingHref = contactData.xHref; openModal(linkModal);
@@ -5214,30 +5149,30 @@ function isFilePreviewable(name) {
   return LB_PREVIEWABLE.has(ext);
 }
 
-fileData.forEach((f, i) => {
-  const row = document.createElement('div');
-  row.className = 'file-row';
-  const previewable = isFilePreviewable(f.name);
-  if (previewable) row.style.cursor = 'pointer';
-  row.innerHTML = `
-    <div class="file-icon">
-      ${getFileIcon(f.name)}
-    </div>
-    <div class="file-meta">
-      <div class="file-name">${f.name}</div>
-      <div class="file-size">${f.size}</div>
-    </div>
-    <button class="file-view-btn">View</button>
-  `;
-  row.querySelector('.file-view-btn').addEventListener('click', e => { e.stopPropagation(); openFileModal(i); });
-  if (previewable) {
-    row.addEventListener('click', e => {
-      if (e.target.closest('.file-view-btn')) return;
-      openLightbox({ url: f.url || '', filename: f.name });
-    });
-  }
-  fileListEl.appendChild(row);
-});
+/* [bootstrapApp] fileData.forEach((f, i) => { */
+/* [bootstrapApp]   const row = document.createElement('div'); */
+/* [bootstrapApp]   row.className = 'file-row'; */
+/* [bootstrapApp]   const previewable = isFilePreviewable(f.name); */
+/* [bootstrapApp]   if (previewable) row.style.cursor = 'pointer'; */
+/* [bootstrapApp]   row.innerHTML = ` */
+/* [bootstrapApp]     <div class="file-icon"> */
+/* [bootstrapApp]       ${getFileIcon(f.name)} */
+/* [bootstrapApp]     </div> */
+/* [bootstrapApp]     <div class="file-meta"> */
+/* [bootstrapApp]       <div class="file-name">${f.name}</div> */
+/* [bootstrapApp]       <div class="file-size">${f.size}</div> */
+/* [bootstrapApp]     </div> */
+/* [bootstrapApp]     <button class="file-view-btn">View</button> */
+/* [bootstrapApp]   `; */
+/* [bootstrapApp]   row.querySelector('.file-view-btn').addEventListener('click', e => { e.stopPropagation(); openFileModal(i); }); */
+/* [bootstrapApp]   if (previewable) { */
+/* [bootstrapApp]     row.addEventListener('click', e => { */
+/* [bootstrapApp]       if (e.target.closest('.file-view-btn')) return; */
+/* [bootstrapApp]       openLightbox({ url: f.url || '', filename: f.name }); */
+/* [bootstrapApp]     }); */
+/* [bootstrapApp]   } */
+/* [bootstrapApp]   fileListEl.appendChild(row); */
+/* [bootstrapApp] }); */
 
 let fileModalCurIdx = -1;
 const fileModalDownloadBtn = document.getElementById('fileModalDownload');
@@ -5787,7 +5722,7 @@ function stopAllAutos() {
   stopBlogAuto(); stopMemberAuto();
 }
 
-function goToPage(n) {
+function _goToPageCore(n) {
   currentPage = Math.max(0, Math.min(n, 8));
   pageContainerEl.style.transform = `translateY(-${currentPage * 100}vh)`;
   // 切页时关闭 sheet overlay 并同步清栈
@@ -5820,6 +5755,8 @@ function goToPage(n) {
     case 8: startFinalAnim(); break;
   }
 }
+/* goToPage is the public API — overridden below with hash routing */
+function goToPage(n) { _goToPageCore(n); }
 
 /* ============================================================
    GALLERY OVERLAY (long-press on page 3 — stack box)
@@ -5853,7 +5790,7 @@ function buildMasonry() {
     masonryGrid.appendChild(el);
   });
 }
-buildMasonry();
+/* [bootstrapApp] buildMasonry(); */
 
 function openGallery() {
   galleryOverlay.classList.add('visible');
@@ -6512,9 +6449,9 @@ document.getElementById('page1').addEventListener('wheel', e => {
 /* ============================================================
    MENU
 ============================================================ */
-const MUSIC_SRC = 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
+let MUSIC_SRC = '';
 const menuOverlay = document.getElementById('menuOverlay');
-const menuAudio   = new Audio(MUSIC_SRC);
+const menuAudio   = new Audio();
 menuAudio.loop    = true;
 
 let menuOpen = false, themeCur = 1, isPlaying = false;
@@ -6678,6 +6615,237 @@ document.addEventListener('keydown', e => {
   }
 });
 
+/* ============================================================
+   SHEET / DOC SHIMMER & NO-DATA  (injected as inline style)
+============================================================ */
+(function injectShimmerStyles() {
+  const s = document.createElement('style');
+  s.textContent = `
+    /* Shimmer animation */
+    @keyframes shimmer-sweep {
+      0%   { background-position: -300px 0; }
+      100% { background-position:  300px 0; }
+    }
+    .sheet-content-shimmer {
+      display: flex; flex-direction: column; gap: 10px;
+      padding: 4px 0;
+      width: 100%;
+    }
+    .shimmer-line {
+      height: 12px; border-radius: 6px;
+      background: linear-gradient(
+        90deg,
+        var(--border-mid, rgba(42,42,40,.12)) 25%,
+        var(--bg-inner,  rgba(42,42,40,.06)) 50%,
+        var(--border-mid, rgba(42,42,40,.12)) 75%
+      );
+      background-size: 600px 100%;
+      animation: shimmer-sweep 1.4s infinite linear;
+    }
+    .sheet-no-data {
+      display: flex; align-items: center; justify-content: center;
+      height: 100%; min-height: 120px;
+      font-family: var(--font-serif); font-size: 0.8rem;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--text-faint, #aaa);
+    }
+  `;
+  document.head.appendChild(s);
+})();
+
+/* ============================================================
+   HASH ROUTER — SPA 化
+   页面映射: #home=0, #projects=1, #gallery=2, #docs=3,
+             #blog=4, #events=5, #members=6, #contact=7, #about=8
+============================================================ */
+const HASH_TO_PAGE = {
+  '':         0,
+  'home':     0,
+  'projects': 1,
+  'gallery':  2,
+  'docs':     3,
+  'blog':     4,
+  'events':   5,
+  'members':  6,
+  'contact':  7,
+  'about':    8,
+};
+const PAGE_TO_HASH = ['home','projects','gallery','docs','blog','events','members','contact','about'];
+
+function routerGetHash() {
+  return location.hash.replace('#', '').toLowerCase();
+}
+
+function routerNavigate(pageIdx, { replace = false } = {}) {
+  const hash = PAGE_TO_HASH[pageIdx] || 'home';
+  if (location.hash.replace('#','') === hash) return;
+  if (replace) history.replaceState({ page: pageIdx }, '', '#' + hash);
+  else         history.pushState(   { page: pageIdx }, '', '#' + hash);
+}
+
+/* Patch goToPage to also push hash — function declarations are hoisted
+   so we reassign after all functions are parsed. */
+(function patchRouter() {
+  const orig = goToPage;
+  goToPage = function(n) { _goToPageCore(n); routerNavigate(n); };
+})();
+
+window.addEventListener('popstate', e => {
+  const pageIdx = (e.state && e.state.page != null)
+    ? e.state.page
+    : (HASH_TO_PAGE[routerGetHash()] ?? 0);
+  _goToPageCore(pageIdx);
+});
+
+/* ============================================================
+   INIT — fetch data.json, then bootstrap everything
+============================================================ */
+async function initApp() {
+  try {
+    const res = await fetch('./data.json');
+    if (!res.ok) throw new Error(res.status);
+    const json = await res.json();
+
+    /* ── Inject data ── */
+    projectData = json.projects   || [];
+    blogData    = json.blog       || [];
+    memberData  = json.members    || [];
+    contactData = json.contact    || { email:'', x:'', xHref:'' };
+    fileData    = json.files      || [];
+    galleryData = json.gallery    || [];
+    eventData   = json.events     || [];
+    aboutData   = json.about      || { content:'' };
+
+    /* docFiles: content field stays as URL string */
+    docFiles = (json.docs || []).map(d => ({ name: d.name, content: d.content }));
+
+    /* ── Constants from config ── */
+    if (json.config) {
+      if (json.config.musicSrc)      MUSIC_SRC        = json.config.musicSrc;
+      if (json.config.contactEmail)  CONTACT_EMAIL    = json.config.contactEmail;
+      if (json.config.blogDisplayMax) BLOG_DISPLAY_MAX = json.config.blogDisplayMax;
+    }
+
+    /* ── Apply music src now that we have it ── */
+    if (MUSIC_SRC) menuAudio.src = MUSIC_SRC;
+
+    bootstrapApp();
+
+  } catch (err) {
+    console.error('[Aermium] Failed to load data.json:', err);
+    /* Still bootstrap with empty arrays so UI doesn't break */
+    bootstrapApp();
+  }
+}
+
+function bootstrapApp() {
+  /* ── Contact panel ── */
+  const emailValEl = document.getElementById('emailVal');
+  const xValEl     = document.getElementById('xVal');
+  if (emailValEl) emailValEl.textContent = contactData.email;
+  if (xValEl)     xValEl.textContent     = contactData.x;
+
+  /* ── Render carousels ── */
+  const projectTrackEl = document.getElementById('projectTrack');
+  if (projectTrackEl) renderProjectSlides(projectTrackEl);
+
+  const blogTrackEl = document.getElementById('blogTrack');
+  if (blogTrackEl) renderBlogSlides(blogTrackEl);
+
+  const eventTrackEl = document.getElementById('eventTrack');
+  if (eventTrackEl) renderEventSlides(eventTrackEl);
+
+  /* ── File list ── */
+  const fileListEl = document.getElementById('fileList');
+  if (fileListEl) {
+    fileListEl.innerHTML = '';
+    fileData.forEach((f, i) => {
+      const row = document.createElement('div');
+      row.className = 'file-row';
+      const previewable = isFilePreviewable(f.name);
+      if (previewable) row.style.cursor = 'pointer';
+      row.innerHTML = `
+        <div class="file-icon">${getFileIcon(f.name)}</div>
+        <div class="file-meta">
+          <div class="file-name">${f.name}</div>
+          <div class="file-size">${f.size}</div>
+        </div>
+        <button class="file-view-btn">View</button>`;
+      row.querySelector('.file-view-btn').addEventListener('click', e => { e.stopPropagation(); openFileModal(i); });
+      if (previewable) {
+        row.addEventListener('click', e => {
+          if (e.target.closest('.file-view-btn')) return;
+          openLightbox({ url: f.url || '', filename: f.name });
+        });
+      }
+      fileListEl.appendChild(row);
+    });
+  }
+
+  /* ── Doc tabs ── */
+  const docTabsEl = document.getElementById('docTabs');
+  if (docTabsEl) {
+    const [spacerFirst, spacerLast] = docTabsEl.querySelectorAll('.doc-tab-spacer');
+    /* remove any previously rendered tabs (safety) */
+    docTabsEl.querySelectorAll('.doc-tab').forEach(t => t.remove());
+    docFiles.forEach((f, i) => {
+      const tab = document.createElement('div');
+      tab.className = 'doc-tab' + (i === 0 ? ' active' : '');
+      tab.dataset.idx = i;
+      tab.textContent = f.name;
+      docTabsEl.insertBefore(tab, spacerLast);
+    });
+    /* re-bind tab click / scroll (docTabEls already declared globally) */
+    const freshTabs = [...docTabsEl.querySelectorAll('.doc-tab')];
+    /* Update the global reference */
+    docTabEls.length = 0;
+    freshTabs.forEach(t => docTabEls.push(t));
+    freshTabs.forEach((tab, i) => {
+      tab.addEventListener('click', () => { scrollTabToCenter(i); loadDoc(i); });
+    });
+    loadDoc(0);
+    setTimeout(() => scrollTabToCenter(0), 50);
+  }
+
+  /* ── Members ── */
+  const memberDotsEl = document.getElementById('memberDots');
+  if (memberDotsEl) {
+    memberDotsEl.innerHTML = '';
+    createDots(memberDotsEl, memberData.length, 'dot-bar', i => {
+      memberUserStopped = true; clearInterval(memberAutoTimer); goMember(i, false);
+    });
+    goMember(0, true);
+  }
+
+  /* ── Gallery ── */
+  const masonryGrid = document.getElementById('masonryGrid');
+  if (masonryGrid) buildMasonry();
+
+  /* ── Stack cards (page 3) ── */
+  createStackCards();
+  initProgress();
+  {
+    const page3BgEl = document.getElementById('page3Bg');
+    const topCard   = stackOrder && stackOrder[stackOrder.length - 1];
+    const topIdx    = topCard ? parseInt(topCard.dataset.idx) : 0;
+    const img       = galleryData[topIdx] && galleryData[topIdx].image;
+    if (page3BgEl) initPageBg(page3BgEl, img);
+  }
+
+  /* ── Hash router: read initial URL ── */
+  const initHash  = routerGetHash();
+  const initPage  = HASH_TO_PAGE[initHash] ?? 0;
+  history.replaceState({ page: initPage }, '', location.hash || '#home');
+  if (initPage !== 0) {
+    _goToPageCore(initPage);
+  }
+}
+
+/* ── Kick off on DOMContentLoaded ── */
+initApp();
+
+
+-e 
 </script>
 </body>
 </html>
