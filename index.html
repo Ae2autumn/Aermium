@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -2328,11 +2328,11 @@
 <!-- ============================================================
      MENU OVERLAY
 ============================================================ -->
-<div id="menuOverlay" role="dialog" aria-modal="true" aria-label="설정 메뉴">
+<div id="menuOverlay" role="dialog" aria-modal="true" aria-label="设置菜单">
   <div class="menu-card">
     <div class="theme-group" role="group" aria-label="테마 선택">
       <div id="themeSlider" class="theme-slider" aria-hidden="true"></div>
-      <button id="themeLight" class="theme-btn" aria-label="라이트 모드" aria-pressed="false">
+      <button id="themeLight" class="theme-btn" aria-label="亮色模式" aria-pressed="false">
         <svg width="22" height="22" viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
           <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.2"/>
           <line x1="8" y1="1" x2="8" y2="3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
@@ -2345,19 +2345,19 @@
           <line x1="4.34" y1="11.66" x2="2.93" y2="13.07" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
         </svg>
       </button>
-      <button id="themeAuto" class="theme-btn" aria-label="시스템 테마" aria-pressed="true">
+      <button id="themeAuto" class="theme-btn" aria-label="跟随系统" aria-pressed="true">
         <svg width="22" height="22" viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
           <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.2"/>
           <path d="M8 2a6 6 0 0 1 0 12V2z" fill="currentColor"/>
         </svg>
       </button>
-      <button id="themeDark" class="theme-btn" aria-label="다크 모드" aria-pressed="false">
+      <button id="themeDark" class="theme-btn" aria-label="深色模式" aria-pressed="false">
         <svg width="22" height="22" viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
           <path d="M13.5 9.5A6 6 0 0 1 6.5 2.5a5.5 5.5 0 1 0 7 7z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
         </svg>
       </button>
     </div>
-    <button id="soundBtn" class="sound-btn" aria-label="배경 음악 재생" aria-pressed="false">
+    <button id="soundBtn" class="sound-btn" aria-label="背景音乐播放" aria-pressed="false">
       <svg id="iconPlay" width="22" height="22" viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
         <polygon points="5,3 13,8 5,13" fill="currentColor"/>
       </svg>
@@ -2375,7 +2375,7 @@
 <main id="page-container" aria-label="메인 콘텐츠" aria-live="polite" aria-atomic="false">
 
   <!-- PAGE 1: LANDING -->
-  <section class="page" id="page1" aria-label="랜딩 페이지">
+  <section class="page" id="page1" aria-label="首页">
     <svg class="ink-blob top-left" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
       <defs>
         <filter id="f1" x="-20%" y="-20%" width="140%" height="140%">
@@ -2414,7 +2414,7 @@
   </section>
 
   <!-- PAGE 2: PROJECTS -->
-  <section class="page" id="page2" aria-label="프로젝트">
+  <section class="page" id="page2" aria-label="项目">
     <div class="page-bg-wrap bg-hidden" id="page2Bg" aria-hidden="true">
       <div class="page-bg-a" id="page2BgA"></div>
       <div class="page-bg-b" id="page2BgB"></div>
@@ -2422,7 +2422,7 @@
     </div>
     <div class="page-wrap">
       <article class="panel-box project-carousel-box" id="projectCarousel"
-        role="region" aria-label="프로젝트 캐러셀" aria-roledescription="캐러셀">
+        role="region" aria-label="프로젝트 캐러셀" aria-roledescription="轮播">
         <nav class="carousel-dots" id="projectDots" aria-label="프로젝트 탐색"></nav>
         <div class="project-track-outer">
           <div class="carousel-track" id="projectTrack" aria-live="polite"></div>
@@ -2432,18 +2432,18 @@
   </section>
 
   <!-- PAGE 3: STACK VIEWER -->
-  <section class="page" id="page3" aria-label="갤러리 스택">
+  <section class="page" id="page3" aria-label="图库堆叠">
     <div class="page-bg-wrap bg-hidden" id="page3Bg" aria-hidden="true">
       <div class="page-bg-a" id="page3BgA"></div>
       <div class="page-bg-b" id="page3BgB"></div>
       <div class="page-bg-blur"></div>
     </div>
     <div class="page-wrap">
-      <article class="stack-outer panel-box" id="stackOuter" aria-label="이미지 스택">
+      <article class="stack-outer panel-box" id="stackOuter" aria-label="图片堆叠">
         <nav class="stack-progress-row" id="stackProgress" aria-label="스택 진행"></nav>
         <div class="stack-box" id="stackBox"
           role="listbox" aria-label="이미지 카드" tabindex="0"
-          aria-roledescription="카드 스택. 드래그하거나 키보드로 탐색하세요">
+          aria-roledescription="카드 스택. 拖动或使用键盘浏览">
           <div class="stack-cards" id="stackCards" aria-live="polite"></div>
           <div class="stack-overlay" id="stackOverlay" aria-hidden="true">
             <span>右滑切换 &nbsp;·&nbsp; 左滑返回</span>
@@ -2454,13 +2454,13 @@
   </section>
 
   <!-- PAGE 4: BLOG -->
-  <section class="page" id="page4" aria-label="글 목록">
+  <section class="page" id="page4" aria-label="文章列表">
     <div class="page-wrap">
       <article class="blog-box panel-box">
         <header class="section-header"><span>Writings</span></header>
         <nav class="dots-row" id="blogDots" aria-label="글 탐색"></nav>
         <div class="carousel-track-outer" id="blogCarousel"
-          role="region" aria-label="블로그 캐러셀" aria-live="polite">
+          role="region" aria-label="博客轮播" aria-live="polite">
           <div class="carousel-track" id="blogTrack"></div>
         </div>
       </article>
@@ -2468,7 +2468,7 @@
   </section>
 
   <!-- PAGE 5: DOC VIEWER -->
-  <section class="page" id="page5" aria-label="문서">
+  <section class="page" id="page5" aria-label="文档">
     <div class="page-wrap">
       <article class="panel-box" style="gap:12px">
         <div class="doc-content no-scrollbar" id="docContent" role="document" aria-live="polite">
@@ -2483,13 +2483,13 @@
   </section>
 
   <!-- PAGE 6: EVENTS -->
-  <section class="page" id="page6" aria-label="근황 이벤트">
+  <section class="page" id="page6" aria-label="近期活动">
     <div class="page-wrap">
       <article class="event-box panel-box">
         <header class="section-header"><span>近期活动</span></header>
         <nav class="dots-row" id="eventDots" aria-label="이벤트 탐색"></nav>
         <div class="carousel-track-outer" id="eventCarousel"
-          role="region" aria-label="이벤트 캐러셀" aria-live="polite">
+          role="region" aria-label="活动轮播" aria-live="polite">
           <div class="carousel-track" id="eventTrack"></div>
         </div>
       </article>
@@ -2497,9 +2497,9 @@
   </section>
 
   <!-- PAGE 7: MEMBERS -->
-  <section class="page" id="page7" aria-label="팀 멤버">
+  <section class="page" id="page7" aria-label="团队成员">
     <div class="page-wrap">
-      <article class="member-box panel-box" aria-label="멤버 소개">
+      <article class="member-box panel-box" aria-label="成员介绍">
         <nav class="dots-row" id="memberDots" aria-label="멤버 탐색"></nav>
         <header class="member-upper" id="memberUpper">
           <div class="member-avatar-box" role="img" aria-label="멤버 아바타" tabindex="0"><span>Avatar</span></div>
@@ -2509,7 +2509,7 @@
             <blockquote class="member-quote" id="memberQuote"></blockquote>
           </div>
         </header>
-        <section class="member-lower" aria-label="멤버 소개">
+        <section class="member-lower" aria-label="成员介绍">
           <p class="member-section-label" aria-hidden="true">About</p>
           <div class="member-bio no-scrollbar" id="memberBio" aria-live="polite"></div>
         </section>
@@ -2518,7 +2518,7 @@
   </section>
 
   <!-- PAGE 8: CONTACT / FILES / REDEEM -->
-  <section class="page" id="page8" aria-label="연락처 및 파일">
+  <section class="page" id="page8" aria-label="联系与文件">
     <div class="page-wrap">
       <div class="contact-panel panel-box" id="contactPanel">
 
@@ -2608,7 +2608,7 @@
   </section>
 
   <!-- PAGE 9: OUTRO -->
-  <section class="page" id="page9" aria-label="아웃트로">
+  <section class="page" id="page9" aria-label="结尾">
     <footer class="final-wrap">
       <div class="final-brand" id="finalBrand" aria-hidden="true"></div>
       <div class="final-suffix" id="finalSuffix" aria-live="polite"></div>
@@ -2622,7 +2622,7 @@
 <!-- ============================================================
      SEARCH OVERLAY (long-press on blogListOverlay / fileList)
 ============================================================ -->
-<div id="searchOverlay" role="dialog" aria-modal="true" aria-label="검색">
+<div id="searchOverlay" role="dialog" aria-modal="true" aria-label="搜索">
   <div class="search-frame">
     <!-- Input -->
     <div class="search-input-wrap" id="searchInputWrap">
@@ -2649,7 +2649,7 @@
 <!-- ============================================================
      GALLERY OVERLAY (long-press on page 3)
 ============================================================ -->
-<div id="galleryOverlay" role="dialog" aria-modal="true" aria-label="이미지 갤러리">
+<div id="galleryOverlay" role="dialog" aria-modal="true" aria-label="图片画廊">
   <div class="gallery-frame">
     <div class="gallery-inner no-scrollbar">
       <div class="masonry-grid" id="masonryGrid" role="list" aria-label="이미지 그리드"></div>
@@ -2660,7 +2660,7 @@
 <!-- ============================================================
      BLOG LIST OVERLAY (long-press on page 4)
 ============================================================ -->
-<div id="blogListOverlay" role="dialog" aria-modal="true" aria-label="전체 글 목록">
+<div id="blogListOverlay" role="dialog" aria-modal="true" aria-label="全部文章">
   <div class="blog-list-frame">
     <div class="blog-list-inner no-scrollbar" id="blogListGrid" role="list" aria-label="블로그 목록"></div>
   </div>
@@ -2669,7 +2669,7 @@
 <!-- ============================================================
      LIGHTBOX — full-featured preview
 ============================================================ -->
-<div class="lightbox-overlay" id="lightbox" role="dialog" aria-modal="true" aria-label="파일 미리보기">
+<div class="lightbox-overlay" id="lightbox" role="dialog" aria-modal="true" aria-label="文件预览">
   <div class="lightbox-frame">
     <div class="lightbox-content" id="lbContent" aria-live="polite">
       <!-- dynamically filled -->
