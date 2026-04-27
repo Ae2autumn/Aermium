@@ -4536,24 +4536,16 @@ const stackCards    = document.getElementById('stackCards');
 const stackOverlay  = document.getElementById('stackOverlay');
 const stackProgress = document.getElementById('stackProgress');
 
-/* galleryData — Page 3 唯一数据来源：轮播取前7条，长按画廊显示全部 */
-const galleryData = [
-  { image: '' },  // e.g. { image: 'images/gallery/01.jpg' }
-  { image: '' },
-  { image: '' },
-  { image: '' },
-  { image: '' },
-  { image: '' },
-  { image: '' },
-  { image: '' },
-];
-const STACK_COUNT  = Math.min(7, galleryData.length);
+/* galleryData — populated by bootstrapApp from data.json */
+/* STACK_COUNT is computed dynamically in createStackCards */
+let STACK_COUNT = 0;
 
 let stackOrder = [], stackTimer = null, stackUserStopped = false;
 let isListMode = false, listCur = 0;
 let listAutoTimer = null, listUserStopped = false;
 
 function createStackCards() {
+  STACK_COUNT = Math.min(7, galleryData.length);
   stackCards.innerHTML = ''; stackOrder = [];
   galleryData.slice(0, STACK_COUNT).forEach((d, i) => {
     const card = document.createElement('div');
@@ -4940,6 +4932,7 @@ let memberCur = 0, memberAutoTimer = null, memberUserStopped = false;
 /* [bootstrapApp] }); */
 
 function goMember(n, instant) {
+  if (!memberData.length) return;
   memberCur = (n + memberData.length) % memberData.length;
   const d = memberData[memberCur];
   const memberAvatarBoxEl = document.querySelector('.member-avatar-box');
@@ -5149,30 +5142,10 @@ function isFilePreviewable(name) {
   return LB_PREVIEWABLE.has(ext);
 }
 
-/* [bootstrapApp] fileData.forEach((f, i) => { */
-/* [bootstrapApp]   const row = document.createElement('div'); */
-/* [bootstrapApp]   row.className = 'file-row'; */
-/* [bootstrapApp]   const previewable = isFilePreviewable(f.name); */
-/* [bootstrapApp]   if (previewable) row.style.cursor = 'pointer'; */
-/* [bootstrapApp]   row.innerHTML = ` */
-/* [bootstrapApp]     <div class="file-icon"> */
-/* [bootstrapApp]       ${getFileIcon(f.name)} */
-/* [bootstrapApp]     </div> */
-/* [bootstrapApp]     <div class="file-meta"> */
-/* [bootstrapApp]       <div class="file-name">${f.name}</div> */
-/* [bootstrapApp]       <div class="file-size">${f.size}</div> */
-/* [bootstrapApp]     </div> */
-/* [bootstrapApp]     <button class="file-view-btn">View</button> */
-/* [bootstrapApp]   `; */
-/* [bootstrapApp]   row.querySelector('.file-view-btn').addEventListener('click', e => { e.stopPropagation(); openFileModal(i); }); */
-/* [bootstrapApp]   if (previewable) { */
-/* [bootstrapApp]     row.addEventListener('click', e => { */
-/* [bootstrapApp]       if (e.target.closest('.file-view-btn')) return; */
-/* [bootstrapApp]       openLightbox({ url: f.url || '', filename: f.name }); */
-/* [bootstrapApp]     }); */
-/* [bootstrapApp]   } */
-/* [bootstrapApp]   fileListEl.appendChild(row); */
-/* [bootstrapApp] }); */
+
+/* fileData rendering moved to bootstrapApp() */
+
+
 
 let fileModalCurIdx = -1;
 const fileModalDownloadBtn = document.getElementById('fileModalDownload');
@@ -5755,8 +5728,12 @@ function _goToPageCore(n) {
     case 8: startFinalAnim(); break;
   }
 }
-/* goToPage is the public API — overridden below with hash routing */
-function goToPage(n) { _goToPageCore(n); }
+/* goToPage is the public API — syncs hash then delegates to _goToPageCore */
+function goToPage(n) {
+  _goToPageCore(n);
+  /* routerNavigate is defined below; guard against early calls before it exists */
+  if (typeof routerNavigate === 'function') routerNavigate(n);
+}
 
 /* ============================================================
    GALLERY OVERLAY (long-press on page 3 — stack box)
@@ -6685,11 +6662,6 @@ function routerNavigate(pageIdx, { replace = false } = {}) {
 
 /* Patch goToPage to also push hash — function declarations are hoisted
    so we reassign after all functions are parsed. */
-(function patchRouter() {
-  const orig = goToPage;
-  goToPage = function(n) { _goToPageCore(n); routerNavigate(n); };
-})();
-
 window.addEventListener('popstate', e => {
   const pageIdx = (e.state && e.state.page != null)
     ? e.state.page
@@ -6705,8 +6677,6 @@ async function initApp() {
     const res = await fetch('./data.json');
     if (!res.ok) throw new Error(res.status);
     const json = await res.json();
-
-    /* ── Inject data ── */
     projectData = json.projects   || [];
     blogData    = json.blog       || [];
     memberData  = json.members    || [];
@@ -6814,7 +6784,7 @@ function bootstrapApp() {
     createDots(memberDotsEl, memberData.length, 'dot-bar', i => {
       memberUserStopped = true; clearInterval(memberAutoTimer); goMember(i, false);
     });
-    goMember(0, true);
+    if (memberData.length > 0) goMember(0, true);
   }
 
   /* ── Gallery ── */
@@ -6844,8 +6814,6 @@ function bootstrapApp() {
 /* ── Kick off on DOMContentLoaded ── */
 initApp();
 
-
--e 
 </script>
 </body>
 </html>
