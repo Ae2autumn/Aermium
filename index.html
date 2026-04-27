@@ -1761,7 +1761,7 @@
     content: '';
     position: absolute; left: 0; top: 0; bottom: 0;
     width: var(--lb-buf, 0%);
-    background: var(--border-soft);
+    background: var(--bg-card);
     border-radius: var(--radius-md);
     pointer-events: none;
     z-index: 0;
@@ -1771,7 +1771,7 @@
   .lb-audio-progress {
     position: absolute; left: 0; top: 0; bottom: 0;
     width: 0%;
-    background: var(--hover-bg);
+    background: var(--bg-avatar);
     border-radius: var(--radius-md);
     pointer-events: none;
     z-index: 1;
@@ -1938,8 +1938,9 @@
   }
   .lb-iframe-wrap iframe {
     width: 100%; border: none; display: block;
-    min-height: 80px; overflow-y: auto;
+    height: 60vh; overflow-y: auto;
   }
+  .lb-iframe-wrap::-webkit-scrollbar { display: none; }
   .lb-source-wrap {
     overflow-y: auto; overflow-x: hidden;
     scrollbar-width: none;
@@ -2306,6 +2307,7 @@
     .sheet-frame { max-width: 500px; max-height: 700px; }
   }
 
+  .search-input::-webkit-search-cancel-button { display: none; }
 </style>
 </head>
 <body>
@@ -2319,6 +2321,7 @@
     padding: 0; margin: -1px; overflow: hidden;
     clip: rect(0,0,0,0); white-space: nowrap; border: 0;
   }
+  .search-input::-webkit-search-cancel-button { display: none; }
 </style>
 <a class="skip-link" href="#page-container">콘텐츠로 건너뛰기</a>
 
@@ -2584,9 +2587,9 @@
                 <img class="redeem-gift" src="gift.gif" alt="선물 아이콘"/>
               </div>
               <div class="redeem-input-row" id="redeemInputRow">
-                <input class="redeem-input" id="redeemInput" type="text"
+                <input class="redeem-input" id="redeemInput" enterkeyhint="done" type="text"
                   autocomplete="off" spellcheck="false"
-                  aria-label="리딤 코드 입력" placeholder="코드를 입력하세요"
+                  aria-label="리딤 코드 입력"
                   aria-describedby="redeemHint"/>
                 <span class="redeem-result" id="redeemResult" aria-live="polite"></span>
                 <svg class="redeem-check" id="redeemCheck" width="18" height="18"
@@ -2596,7 +2599,6 @@
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
               </div>
-              <span id="redeemHint" class="sr-only">코드를 입력 후 Enter 키를 누르세요</span>
             </div>
           </div>
 
@@ -4372,7 +4374,8 @@ function lbRenderHtml(html, isMarkdown) {
              padding: 14px 16px; margin: 0; word-break: break-word; }
       a { color: inherit; } img { max-width: 100%; }
       pre { overflow-x: auto; } code { font-family: monospace; font-size: 0.9em; }
-    </style></head><body>${rendered}</body></html>`;
+      .search-input::-webkit-search-cancel-button { display: none; }
+</style></head><body>${rendered}</body></html>`;
   iframe.srcdoc = iframeDoc;
   // Fixed content area height
   const fixedH = Math.round(window.innerHeight * 0.48);
