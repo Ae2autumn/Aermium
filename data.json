@@ -1,0 +1,145 @@
+{
+  "config": {
+    "musicSrc": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+    "contactEmail": "hello@aermium.com",
+    "blogDisplayMax": 7
+  },
+  "contact": {
+    "email": "hello@aermium.com",
+    "x": "@aermium",
+    "xHref": "https://x.com/aermium"
+  },
+  "projects": [
+    {
+      "date": "2026.01.15",
+      "title": "Project Alpha",
+      "tags": ["Branding", "Identity"],
+      "image": "",
+      "excerpt": "Brand identity and visual system for a technology startup based in Shanghai.",
+      "content": "content/projects/alpha.md"
+    },
+    {
+      "date": "2026.02.08",
+      "title": "Studio Blanc",
+      "tags": ["Editorial", "Print"],
+      "image": "",
+      "excerpt": "Editorial design and art direction for an independent publishing house.",
+      "content": "content/projects/studio-blanc.md"
+    },
+    {
+      "date": "2026.02.28",
+      "title": "Meridian",
+      "tags": ["Digital", "UX"],
+      "image": "",
+      "excerpt": "Digital experience and interaction design for a cultural institution.",
+      "content": "content/projects/meridian.md"
+    },
+    {
+      "date": "2026.03.20",
+      "title": "Forma",
+      "tags": ["Motion", "Spatial"],
+      "image": "",
+      "excerpt": "Motion and spatial design for a product launch event.",
+      "content": "content/projects/forma.md"
+    }
+  ],
+  "blog": [
+    {
+      "date": "2026.03.28",
+      "category": "Identity",
+      "readTime": "3 min read",
+      "title": "品牌不是标志，是一种立场",
+      "excerpt": "许多创始人在谈到品牌时，首先想到的是颜色和字体。这无可厚非——视觉是品牌最显眼的皮肤。但如果设计工作止步于此，品牌就只是一件衣服，而非一具骨架。<br><br>真正的品牌工作，是在一切视觉决策之前完成的：你是谁？你为谁存在？你拒绝什么？这三个问题的答案，才是视觉系统的根。没有根的设计，精致也是漂亮的空壳。",
+      "content": "content/blog/brand-position.md"
+    },
+    {
+      "date": "2026.02.14",
+      "category": "Process",
+      "readTime": "4 min read",
+      "title": "我们如何开始一个项目",
+      "excerpt": "每个项目在进入视觉阶段之前，我们会花大量时间做一件听起来很无聊的事：提问。不是为了收集信息，而是为了发现客户自己还没意识到的问题。<br><br>我们把这个阶段称为「静听」。不出方案，不做演示，只是坐在那里，听对方讲他们的故事。最好的设计方向，往往藏在那些不起眼的细节和犹豫的措辞里。",
+      "content": "content/blog/how-we-start.md"
+    },
+    {
+      "date": "2026.01.20",
+      "category": "Editorial",
+      "readTime": "5 min read",
+      "title": "字体是一种时间的感知",
+      "excerpt": "选择字体从来不只是审美问题。不同的字体在视觉上承载着不同的时间感：有些字体让人觉得正在发生，有些则唤起某种已经结束的东西。<br><br>当我们为文化机构设计出版物时，会刻意选用带有历史感的衬线字体——不是为了复古，而是为了让读者感受到那种沉淀的重量。设计是在时间里工作的。",
+      "content": "content/blog/typeface-time.md"
+    },
+    {
+      "date": "2025.12.05",
+      "category": "Reflection",
+      "readTime": "3 min read",
+      "title": "关于克制，我们学到的事",
+      "excerpt": "工作室成立三年，回看自己的作品，有一个变化很明显：早期的作品更复杂，元素更多，处理更精致。现在的作品，往往更空。<br><br>这不是因为我们变懒了，而是因为我们开始信任空白本身。空白不是什么都没有，它是让已有的东西呼吸的方式。这个认知改变了我们做设计的方式，也改变了我们审视别人作品的眼光。",
+      "content": "content/blog/restraint.md"
+    }
+  ],
+  "members": [
+    {
+      "name": "Ae1autumn",
+      "role": "Creative Director",
+      "avatar": "",
+      "quote": "设计是一种沉默的说服，\n克制才是最高的表达。",
+      "bio": "工作室创始人，毕业于同济大学视觉传达专业。曾就职于数家国际设计事务所，后回国创立 Aermium。擅长将东方美学与现代设计语言融合，关注品牌叙事与空间感知之间的关系。近年专注于文化机构与独立品牌的视觉系统建设。"
+    },
+    {
+      "name": "Lin Muyao",
+      "role": "Senior Designer",
+      "avatar": "",
+      "quote": "留白不是空白，\n是呼吸的空间。",
+      "bio": "平面与字体设计师，本科就读于中央美术学院，硕士毕业于 RCA。对汉字结构与拉丁字母的相互借鉴有独到研究。负责工作室大部分印刷与出版类项目的视觉执行，并主导内部字体实验项目。"
+    },
+    {
+      "name": "Shen Zhiyu",
+      "role": "Motion & Digital",
+      "avatar": "",
+      "quote": "时间是设计里\n被忽视的维度。",
+      "bio": "交互与动态设计师，曾参与多个国际文化机构的数字体验项目。在 Aermium 负责数字端的交互设计与动态语言制定，同时兼顾前端原型开发。相信好的动效应如呼吸般自然，不被察觉才是最高境界。"
+    },
+    {
+      "name": "Yuki Harada",
+      "role": "Strategy & Research",
+      "avatar": "",
+      "quote": "品牌不是外表，\n是一种立场。",
+      "bio": "品牌策略师，毕业于早稻田大学商学院，后于上海生活工作超过八年。为工作室提供品牌定位、受众研究与叙事策略支持。擅长在文化差异中寻找共鸣点，将抽象的价值观转化为可落地的设计方向。"
+    }
+  ],
+  "files": [
+    { "name": "test.mp4",  "size": "0.1 MiB", "date": "2000.01.01", "hash": "000000000000000", "url": "https://cropgif.net/videos/1776752686706-9e0da3fb-25e5-4355-887b-961a99d25a92.mp4" },
+    { "name": "test.mp3",  "size": "0.1 MiB", "date": "2000.01.01", "hash": "000000000000000", "url": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
+    { "name": "test.txt",  "size": "0.1 MiB", "date": "2000.01.01", "hash": "000000000000000", "url": "https://raw.githubusercontent.com/Ae2autumn/Aermium/refs/heads/main/REDEME.TXT" },
+    { "name": "test.md",   "size": "0.1 MiB", "date": "2000.01.01", "hash": "000000000000000", "url": "https://raw.githubusercontent.com/mdn/content/main/files/en-us/web/html/index.md" },
+    { "name": "test.html", "size": "0.1 MiB", "date": "2000.01.01", "hash": "000000000000000", "url": "https://www.w3.org/People/Berners-Lee/Overview.html" },
+    { "name": "test.jpg",  "size": "0.1 MiB", "date": "2000.01.01", "hash": "000000000000000", "url": "https://raw.githubusercontent.com/Ae2autumn/Aermium/refs/heads/main/IMG20260423075129.jpg" },
+    { "name": "test.svg",  "size": "0.1 MiB", "date": "",           "hash": "",              "url": "https://upload.wikimedia.org/wikipedia/commons/8/84/Example.svg" }
+  ],
+  "docs": [
+    { "name": "Brief.md",       "content": "content/docs/brief.md" },
+    { "name": "Notes.txt",      "content": "content/docs/notes.txt" },
+    { "name": "Proposal.md",    "content": "content/docs/proposal.md" },
+    { "name": "References.txt", "content": "content/docs/references.txt" },
+    { "name": "Feedback.md",    "content": "content/docs/feedback.md" }
+  ],
+  "events": [
+    { "date": "2026.04.12", "title": "春季创作展",          "location": "上海 · 外滩艺术中心",    "desc": "工作室成员联合展出近期创作，涵盖平面、装置与影像三个方向，向公众开放参观。" },
+    { "date": "2026.05.03", "title": "品牌叙事工作坊",      "location": "北京 · PACE 空间",       "desc": "面向设计从业者的小型工作坊，探讨如何通过视觉语言构建品牌的叙事层次与情感连接。" },
+    { "date": "2026.05.20", "title": "Aermium Open Studio", "location": "工作室 · 仅限受邀",      "desc": "开放工作室日，邀请合作伙伴与老朋友到访，分享当前进行中的项目与未发布的实验性作品。" },
+    { "date": "2026.06.08", "title": "设计与沉默",          "location": "杭州 · 良渚文化艺术中心", "desc": "一场关于留白与克制的讲座，探讨在视觉过载的时代，简省的设计语言如何重新获得力量。" }
+  ],
+  "gallery": [
+    { "image": "" },
+    { "image": "" },
+    { "image": "" },
+    { "image": "" },
+    { "image": "" },
+    { "image": "" },
+    { "image": "" },
+    { "image": "" }
+  ],
+  "about": {
+    "content": "content/about.md"
+  }
+}
