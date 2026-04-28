@@ -48,9 +48,6 @@
     --stack-overlay-bg:   rgba(245,244,242,0.35);
 
     /* ── Modals ── */
-    --modal-bg:          #faf9f7;
-    --modal-title:       #2a2a28;
-    --modal-border:      rgba(42,42,40,0.14);
     --btn-danger-bg:     #c0392b;
     --btn-danger-hover:  #922b21;
     --btn-danger-text:   #ffffff;
@@ -104,61 +101,7 @@
     --backdrop-close:     blur(4px);
   }
 
-  /* ── Light forced (matches :root defaults, ensures override when switching back) ── */
-  :root.light {
-    --bg:             #f5f4f2;
-    --bg-card:        #faf9f7;
-    --bg-inner:       #f5f4f2;
-    --bg-avatar:      #ede9e4;
-    --bg-image:       #e8e4df;
-    --bg-project:     #e4e0da;
-
-    --text-primary:   #2a2a28;
-    --text-secondary: #6a6a64;
-    --text-muted:     #9a9890;
-    --text-faint:     #c8c5be;
-    --text-tag:       #a8a5a0;
-
-    --border-strong:  rgba(42,42,40,0.18);
-    --border-mid:     rgba(42,42,40,0.14);
-    --border-soft:    rgba(42,42,40,0.10);
-    --border-tag:     rgba(42,42,40,0.20);
-    --border-btn:     rgba(42,42,40,0.25);
-
-    --hover-bg:       rgba(42,42,40,0.08);
-    --dot-inactive:   rgba(42,42,40,0.12);
-    --dot-active:     rgba(42,42,40,0.45);
-    --focus-ring:     rgba(42,42,40,0.30);
-
-    --overlay-bg:         rgba(245,244,242,0.55);
-    --overlay-blur-bg:    rgba(245,244,242,0.50);
-    --close-btn-bg:       rgba(245,244,242,0.75);
-    --stack-overlay-bg:   rgba(245,244,242,0.35);
-
-    --modal-bg:          #faf9f7;
-    --modal-title:       #2a2a28;
-    --modal-border:      rgba(42,42,40,0.14);
-    --btn-danger-bg:     #c0392b;
-    --btn-danger-hover:  #922b21;
-    --btn-danger-text:   #ffffff;
-
-    --gradient-upper: linear-gradient(to bottom, transparent 40%, rgba(250,249,247,0.85) 100%);
-    --slide-gradient: linear-gradient(to bottom, rgba(232,228,223,0) 0%, rgba(232,228,223,1) 55%, rgba(245,244,242,1) 100%);
-
-    --shadow-card:       0 1px  4px rgba(42,42,40,0.06);
-    --shadow-card-hover: 0 4px 20px rgba(42,42,40,0.10);
-    --shadow-overlay:    0 8px 32px rgba(42,42,40,0.12);
-    --shadow-modal:      0 12px 40px rgba(42,42,40,0.14);
-    --card-hover-shadow: var(--shadow-card-hover);
-
-    --menu-bg:            rgba(245,244,242,0.72);
-    --menu-card-bg:       #faf9f7;
-    --menu-inner-bg:      #f0ede9;
-    --menu-slider-bg:     #faf9f7;
-    --menu-border:        rgba(42,42,40,0.16);
-    --menu-border-inner:  rgba(42,42,40,0.13);
-    --menu-border-slider: rgba(42,42,40,0.22);
-  }
+  /* ── Light mode: :root defaults apply; class added by JS but no overrides needed ── */
 
   /* ── Dark mode ── */
   :root.dark {
@@ -204,9 +147,6 @@
     --stack-overlay-bg:   rgba(20,20,20,0.50);
 
     /* ── Modals ── */
-    --modal-bg:          #1c1c1c;
-    --modal-title:       #e6e3dc;
-    --modal-border:      rgba(230,225,210,0.10);
     --btn-danger-bg:     #c0392b;   /* 危险按钮在暗色下保持饱和红，更易识别 */
     --btn-danger-hover:  #e74c3c;
     --btn-danger-text:   #ffffff;
@@ -222,7 +162,6 @@
     --shadow-card-hover: 0 4px 24px rgba(0,0,0,0.45);
     --shadow-overlay:    0 8px 32px rgba(0,0,0,0.55);
     --shadow-modal:      0 12px 40px rgba(0,0,0,0.60);
-    --card-hover-shadow: var(--shadow-card-hover);
 
     /* ── Menu ── */
     --menu-bg:            rgba(20,20,20,0.78);
@@ -284,7 +223,8 @@
 
   .sheet-close:focus-visible,
   .gallery-close-btn:focus-visible,
-  .blog-list-close-btn:focus-visible { border-radius: 4px; }
+  .blog-list-close-btn:focus-visible,
+  .panel-close-btn:focus-visible { border-radius: 4px; }
 
   /* ============================================================
      A11Y — REDUCED MOTION
@@ -325,8 +265,9 @@
   .sheet-close:active     { background: var(--hover-bg); }
 
   /* overlay close buttons */
-  .gallery-close-btn:active    { background: var(--hover-bg); }
-  .blog-list-close-btn:active  { background: var(--hover-bg); }
+  .gallery-close-btn:active,
+  .blog-list-close-btn:active,
+  .panel-close-btn:active  { background: var(--hover-bg); }
 
   /* doc-tab */
   .doc-tab:active { opacity: 0.75; }
@@ -1630,7 +1571,7 @@
   .modal-overlay.visible .modal { transform: translateY(0); }
   .modal-title {
     font-size: 0.75rem; letter-spacing: 0.12em;
-    color: var(--modal-title); font-weight: 400;
+    color: var(--text-primary); font-weight: 400;
     text-align: center; line-height: 1.8;
   }
   .modal-buttons { display: flex; gap: 8px; width: 100%; }
@@ -1962,10 +1903,10 @@
   }
 
   /* ============================================================
-     GALLERY OVERLAY (long-press on page 3 — images masonry)
+     SHARED: PANEL OVERLAYS (gallery / blog-list / search)
   ============================================================ */
-  #galleryOverlay {
-    position: fixed; inset: 0; z-index: 4;
+  .panel-overlay {
+    position: fixed; inset: 0;
     display: flex; align-items: center; justify-content: center;
     padding: var(--space-overlay);
     backdrop-filter: var(--backdrop-overlay);
@@ -1974,9 +1915,10 @@
     opacity: 0; pointer-events: none;
     transition: var(--transition-fade);
   }
-  #galleryOverlay.visible { opacity: 1; pointer-events: all; }
+  .panel-overlay.visible { opacity: 1; pointer-events: all; }
 
-  .gallery-frame {
+  /* gallery / blog-list share identical frame geometry */
+  .panel-frame {
     width: 100%; max-width: 420px;
     height: 88vh; max-height: 640px;
     border: var(--border-hair) var(--border-strong);
@@ -1988,9 +1930,10 @@
     transition: transform 0.35s cubic-bezier(0.77,0,0.175,1);
     overflow: hidden;
   }
-  #galleryOverlay.visible .gallery-frame { transform: translateY(0) scale(1); }
+  .panel-overlay.visible .panel-frame { transform: translateY(0) scale(1); }
 
-  .gallery-header-bar {
+  /* Shared header bar for gallery and blog-list overlays */
+  .panel-header-bar {
     flex-shrink: 0;
     display: flex; align-items: center; justify-content: space-between;
     border: var(--border-hair) var(--border-mid);
@@ -1998,19 +1941,24 @@
     background: var(--bg-inner);
     padding: var(--space-header);
   }
-  .gallery-header-bar span {
+  .panel-header-bar span {
     font-family: var(--font-serif); font-weight: 400;
     font-size: 1.3rem; color: var(--text-primary);
     letter-spacing: 0.1em;
   }
-  .gallery-close-btn {
+  /* Shared close button for gallery and blog-list overlays */
+  .panel-close-btn {
     width: 28px; height: 28px; border-radius: 4px;
     background: transparent; border: none;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; color: var(--text-primary);
     transition: background 0.15s;
   }
-  .gallery-close-btn:hover { background: var(--hover-bg); }
+  .panel-close-btn:hover { background: var(--hover-bg); }
+
+  #galleryOverlay  { z-index: 4; }
+  #blogListOverlay { z-index: 4; }
+  #searchOverlay   { z-index: 5; }
 
   .gallery-inner {
     flex: 1; min-height: 0;
@@ -2019,9 +1967,9 @@
     background: var(--bg-inner);
     overflow-y: auto;
     padding: var(--space-inner);
+    scrollbar-width: none;
   }
   .gallery-inner::-webkit-scrollbar { display: none; }
-  .gallery-inner { scrollbar-width: none; }
 
   /* Grid masonry — row-first order (1,2 / 3,4 / 5,6) */
   .masonry-grid {
@@ -2049,54 +1997,6 @@
   /* ============================================================
      BLOG LIST OVERLAY (long-press on page 4 — blog cards)
   ============================================================ */
-  #blogListOverlay {
-    position: fixed; inset: 0; z-index: 4;
-    display: flex; align-items: center; justify-content: center;
-    padding: var(--space-overlay);
-    backdrop-filter: var(--backdrop-overlay);
-    -webkit-backdrop-filter: var(--backdrop-overlay);
-    background: var(--overlay-bg);
-    opacity: 0; pointer-events: none;
-    transition: var(--transition-fade);
-  }
-  #blogListOverlay.visible { opacity: 1; pointer-events: all; }
-
-  .blog-list-frame {
-    width: 100%; max-width: 420px;
-    height: 88vh; max-height: 640px;
-    border: var(--border-hair) var(--border-strong);
-    border-radius: var(--radius-lg);
-    background: var(--bg-card);
-    padding: var(--space-frame);
-    display: flex; flex-direction: column;
-    transform: translateY(12px) scale(0.98);
-    transition: transform 0.35s cubic-bezier(0.77,0,0.175,1);
-    overflow: hidden;
-  }
-  #blogListOverlay.visible .blog-list-frame { transform: translateY(0) scale(1); }
-
-  .blog-list-header-bar {
-    flex-shrink: 0;
-    display: flex; align-items: center; justify-content: space-between;
-    border: var(--border-hair) var(--border-mid);
-    border-radius: var(--radius-md);
-    background: var(--bg-inner);
-    padding: var(--space-header);
-  }
-  .blog-list-header-bar span {
-    font-family: var(--font-serif); font-weight: 400;
-    font-size: 1.3rem; color: var(--text-primary);
-    letter-spacing: 0.1em;
-  }
-  .blog-list-close-btn {
-    width: 28px; height: 28px; border-radius: 4px;
-    background: transparent; border: none;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; color: var(--text-primary);
-    transition: background 0.15s;
-  }
-  .blog-list-close-btn:hover { background: var(--hover-bg); }
-
   .blog-list-inner {
     flex: 1; min-height: 0;
     border: var(--border-hair) var(--border-mid);
@@ -2105,9 +2005,9 @@
     overflow-y: auto;
     padding: var(--space-inner);
     display: flex; flex-direction: column; gap: 8px;
+    scrollbar-width: none;
   }
   .blog-list-inner::-webkit-scrollbar { display: none; }
-  .blog-list-inner { scrollbar-width: none; }
 
   .blog-list-card {
     flex-shrink: 0;
@@ -2165,18 +2065,6 @@
   /* ============================================================
      SEARCH OVERLAY
   ============================================================ */
-  #searchOverlay {
-    position: fixed; inset: 0; z-index: 5;
-    display: flex; align-items: center; justify-content: center;
-    padding: var(--space-overlay);
-    backdrop-filter: var(--backdrop-overlay);
-    -webkit-backdrop-filter: var(--backdrop-overlay);
-    background: var(--overlay-bg);
-    opacity: 0; pointer-events: none;
-    transition: var(--transition-fade);
-  }
-  #searchOverlay.visible { opacity: 1; pointer-events: all; }
-
   .search-frame {
     width: 100%; max-width: 420px;
     max-height: 80vh;
@@ -2308,21 +2196,20 @@
   }
 
   .search-input::-webkit-search-cancel-button { display: none; }
-</style>
-</head>
-<body>
 
-<!-- ============================================================
-     A11Y — SCREEN READER ONLY UTILITY & SKIP LINK
-============================================================ -->
-<style>
+  /* ── Screen-reader only utility ── */
   .sr-only {
     position: absolute; width: 1px; height: 1px;
     padding: 0; margin: -1px; overflow: hidden;
     clip: rect(0,0,0,0); white-space: nowrap; border: 0;
   }
-  .search-input::-webkit-search-cancel-button { display: none; }
 </style>
+</head>
+<body>
+
+<!-- ============================================================
+     A11Y — SKIP LINK
+============================================================ -->
 <a class="skip-link" href="#page-container">콘텐츠로 건너뛰기</a>
 
 <!-- ============================================================
@@ -2422,7 +2309,7 @@
     </div>
     <div class="page-wrap">
       <article class="panel-box project-carousel-box" id="projectCarousel"
-        role="region" aria-label="博客" aria-roledescription="轮播">
+        role="region" aria-label="项目" aria-roledescription="轮播">
         <nav class="carousel-dots" id="projectDots" aria-label="프로젝트 탐색"></nav>
         <div class="project-track-outer">
           <div class="carousel-track" id="projectTrack" aria-live="polite"></div>
@@ -2622,7 +2509,7 @@
 <!-- ============================================================
      SEARCH OVERLAY (long-press on blogListOverlay / fileList)
 ============================================================ -->
-<div id="searchOverlay" role="dialog" aria-modal="true" aria-label="搜索">
+<div id="searchOverlay" class="panel-overlay" role="dialog" aria-modal="true" aria-label="搜索">
   <div class="search-frame">
     <!-- Input -->
     <div class="search-input-wrap" id="searchInputWrap">
@@ -2649,8 +2536,8 @@
 <!-- ============================================================
      GALLERY OVERLAY (long-press on page 3)
 ============================================================ -->
-<div id="galleryOverlay" role="dialog" aria-modal="true" aria-label="图片画廊">
-  <div class="gallery-frame">
+<div id="galleryOverlay" class="panel-overlay" role="dialog" aria-modal="true" aria-label="图片画廊">
+  <div class="panel-frame">
     <div class="gallery-inner no-scrollbar">
       <div class="masonry-grid" id="masonryGrid" role="list" aria-label="이미지 그리드"></div>
     </div>
@@ -2660,8 +2547,8 @@
 <!-- ============================================================
      BLOG LIST OVERLAY (long-press on page 4)
 ============================================================ -->
-<div id="blogListOverlay" role="dialog" aria-modal="true" aria-label="全部文章">
-  <div class="blog-list-frame">
+<div id="blogListOverlay" class="panel-overlay" role="dialog" aria-modal="true" aria-label="全部文章">
+  <div class="panel-frame">
     <div class="blog-list-inner no-scrollbar" id="blogListGrid" role="list" aria-label="블로그 목록"></div>
   </div>
 </div>
@@ -3607,8 +3494,6 @@ let lbDlPressStartX = null, lbDlPressStartY = null;
   lbContent.addEventListener('pointercancel', () => { clearTimeout(lbDlPressTimer); lbDlPressTimer = null; lbDlPressStartX = null; lbDlPressStartY = null; });
 })();
 
-function lbBindDownloadLongPress() { /* no-op: bound once at init */ }
-
 /* ── Download modal ── */
 const lbDownloadModal = document.getElementById('lbDownloadModal');
 const lbDownloadTitle = document.getElementById('lbDownloadTitle');
@@ -3669,6 +3554,16 @@ function lbRenderImage(src, alt) {
   lbContent.appendChild(wrap);
 }
 
+/* ── Shared media-player constants (used by both lbRenderAudio and lbRenderVideo) ── */
+const LB_SPEEDS = [1, 1.25, 1.5, 1.75, 2, 0.25, 0.5, 0.75];
+
+/** Format seconds → "mm:ss" */
+function lbFmtTime(s) {
+  if (!isFinite(s) || s < 0) s = 0;
+  const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+  return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+}
+
 function lbRenderAudio(url, filename) {
   if (!url) {
     lbRenderPlaceholder('Voice');
@@ -3703,36 +3598,26 @@ function lbRenderAudio(url, filename) {
   const progEl  = ctrl.querySelector('.lb-audio-progress');
   const iconEl  = ctrl.querySelector('.lb-audio-icon');
 
-  /* ── Speed steps ── */
-  const SPEEDS = [1, 1.25, 1.5, 1.75, 2, 0.25, 0.5, 0.75];
-  let speedIdx = 0;  // index into SPEEDS
+  /* ── Speed steps (uses module-level LB_SPEEDS) ── */
+  let speedIdx = 0;
 
   /* ── Display mode: 'status' | 'time' | 'speed' ── */
-  // priority: speed (long-press active) > hover > status
   let isHover     = false;
-  let isSpeedShow = false;  // true while long-press speed menu is shown
-
-  /* ── Format time mm:ss ── */
-  function fmt(s) {
-    if (!isFinite(s) || s < 0) s = 0;
-    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
-    return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
-  }
+  let isSpeedShow = false;
 
   /* ── Render icon area ── */
-  // mode: 'status' | 'time' | 'speed'
   function renderIconArea(mode) {
     const playing = !audio.paused;
     if (mode === 'speed') {
-      const sp = SPEEDS[speedIdx];
+      const sp = LB_SPEEDS[speedIdx];
       iconEl.innerHTML = `<span class="lb-audio-label"><span class="lb-pop" id="lbAudioPop">${sp === 1 ? '1.00' : sp}</span>x</span>`;
       return;
     }
     if (mode === 'time') {
       const cur = audio.currentTime || 0;
       const dur = audio.duration;
-      const total = isFinite(dur) ? fmt(dur) : '--:--';
-      iconEl.innerHTML = `<span class="lb-audio-label"><span class="lb-pop" id="lbAudioPop">${fmt(cur)}</span> – ${total}</span>`;
+      const total = isFinite(dur) ? lbFmtTime(dur) : '--:--';
+      iconEl.innerHTML = `<span class="lb-audio-label"><span class="lb-pop" id="lbAudioPop">${lbFmtTime(cur)}</span> – ${total}</span>`;
       return;
     }
     // status
@@ -3777,7 +3662,7 @@ function lbRenderAudio(url, filename) {
     // 时间模式下只更新文字，不重建DOM（保留pop active状态）
     if (currentMode() === 'time') {
       const popEl = iconEl.querySelector('#lbAudioPop');
-      if (popEl) popEl.textContent = fmt(audio.currentTime || 0);
+      if (popEl) popEl.textContent = lbFmtTime(audio.currentTime || 0);
     }
   }
 
@@ -3816,8 +3701,8 @@ function lbRenderAudio(url, filename) {
   let speedPopTimer  = null;  // 1s 后收起倍速pop
 
   function activateSpeed() {
-    speedIdx = (speedIdx + 1) % SPEEDS.length;
-    audio.playbackRate = SPEEDS[speedIdx];
+    speedIdx = (speedIdx + 1) % LB_SPEEDS.length;
+    audio.playbackRate = LB_SPEEDS[speedIdx];
     isSpeedShow = true;
     renderIconArea('speed');
     // 重置1s收起计时器
@@ -4012,34 +3897,26 @@ function lbRenderVideo(url, filename) {
   const iconEl = ctrl.querySelector('.lb-video-icon');
   let ctrlVisible = false;
 
-  /* ── Speed steps ── */
-  const SPEEDS = [1, 1.25, 1.5, 1.75, 2, 0.25, 0.5, 0.75];
+  /* ── Speed steps (uses module-level LB_SPEEDS) ── */
   let speedIdx = 0;
 
   /* ── Display mode ── */
   let isHover     = false;
   let isSpeedShow = false;
 
-  /* ── Format time ── */
-  function fmt(s) {
-    if (!isFinite(s) || s < 0) s = 0;
-    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
-    return String(m).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
-  }
-
   /* ── Render icon area ── */
   function renderIconArea(mode) {
     const playing = !vid.paused;
     if (mode === 'speed') {
-      const sp = SPEEDS[speedIdx];
+      const sp = LB_SPEEDS[speedIdx];
       iconEl.innerHTML = `<span class="lb-video-label"><span class="lb-pop" id="lbVideoPop">${sp === 1 ? '1.00' : sp}</span>x</span>`;
       return;
     }
     if (mode === 'time') {
       const cur = vid.currentTime || 0;
       const dur = vid.duration;
-      const total = isFinite(dur) ? fmt(dur) : '--:--';
-      iconEl.innerHTML = `<span class="lb-video-label"><span class="lb-pop" id="lbVideoPop">${fmt(cur)}</span> – ${total}</span>`;
+      const total = isFinite(dur) ? lbFmtTime(dur) : '--:--';
+      iconEl.innerHTML = `<span class="lb-video-label"><span class="lb-pop" id="lbVideoPop">${lbFmtTime(cur)}</span> – ${total}</span>`;
       return;
     }
     iconEl.innerHTML = playing
@@ -4066,7 +3943,7 @@ function lbRenderVideo(url, filename) {
     if (progEl) progEl.style.width = pct + '%';
     if (currentMode() === 'time') {
       const popEl = iconEl.querySelector('#lbVideoPop');
-      if (popEl) popEl.textContent = fmt(vid.currentTime || 0);
+      if (popEl) popEl.textContent = lbFmtTime(vid.currentTime || 0);
     }
   }
 
@@ -4107,8 +3984,8 @@ function lbRenderVideo(url, filename) {
   let speedPopTimer  = null;
 
   function activateSpeed() {
-    speedIdx = (speedIdx + 1) % SPEEDS.length;
-    vid.playbackRate = SPEEDS[speedIdx];
+    speedIdx = (speedIdx + 1) % LB_SPEEDS.length;
+    vid.playbackRate = LB_SPEEDS[speedIdx];
     isSpeedShow = true;
     renderIconArea('speed');
     clearTimeout(speedPopTimer);
@@ -4315,7 +4192,6 @@ function openLightbox(arg) {
 
     lightbox.classList.add('visible');
     focusPush('lightbox');
-    lbBindDownloadLongPress();
 
     if (!url) {
       // No URL: show placeholder only, no media controls
@@ -4423,7 +4299,6 @@ const BG_DUR = 480; // ms，与 CSS transition 时长保持一致
 function setPageBg(wrap, url, dir = 'fade') {
   const state   = bgState.get(wrap);
   const { active, standby } = state;
-  const dur     = dir === 'fade' ? BG_DUR : BG_DUR;
   const easing  = dir === 'fade'
     ? 'opacity 0.45s ease'
     : `transform ${BG_DUR}ms cubic-bezier(0.77,0,0.175,1)`;
