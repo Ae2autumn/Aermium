@@ -2330,7 +2330,7 @@
 ============================================================ -->
 <div id="menuOverlay" role="dialog" aria-modal="true" aria-label="设置菜单">
   <div class="menu-card">
-    <div class="theme-group" role="group" aria-label="테마 선택">
+    <div class="theme-group" role="group" aria-label="选择主题">
       <div id="themeSlider" class="theme-slider" aria-hidden="true"></div>
       <button id="themeLight" class="theme-btn" aria-label="亮色模式" aria-pressed="false">
         <svg width="22" height="22" viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
@@ -2372,7 +2372,7 @@
 <!-- ============================================================
      PAGE CONTAINER
 ============================================================ -->
-<main id="page-container" aria-label="메인 콘텐츠" aria-live="polite" aria-atomic="false">
+<main id="page-container" aria-label="主要内容" aria-live="polite" aria-atomic="false">
 
   <!-- PAGE 1: LANDING -->
   <section class="page" id="page1" aria-label="首页">
@@ -2408,7 +2408,7 @@
     </svg>
     <div class="center" id="center">
       <h1 class="brand" id="brand" aria-label="Aermium"></h1>
-      <button class="get-started" id="getStarted" aria-label="시작하기"></button>
+      <button class="get-started" id="getStarted" aria-label="开始探索"></button>
       <p class="tagline" id="tagline" aria-live="polite">Never mind.</p>
     </div>
   </section>
@@ -2422,7 +2422,7 @@
     </div>
     <div class="page-wrap">
       <article class="panel-box project-carousel-box" id="projectCarousel"
-        role="region" aria-label="프로젝트 캐러셀" aria-roledescription="轮播">
+        role="region" aria-label="博客" aria-roledescription="轮播">
         <nav class="carousel-dots" id="projectDots" aria-label="프로젝트 탐색"></nav>
         <div class="project-track-outer">
           <div class="carousel-track" id="projectTrack" aria-live="polite"></div>
@@ -6674,7 +6674,7 @@ window.addEventListener('popstate', e => {
 ============================================================ */
 async function initApp() {
   try {
-    const res = await fetch('./data.json');
+    const res = await fetch('https://raw.githubusercontent.com/Ae2autumn/Aermium/refs/heads/main/data.json');
     if (!res.ok) throw new Error(res.status);
     const json = await res.json();
     projectData = json.projects   || [];
